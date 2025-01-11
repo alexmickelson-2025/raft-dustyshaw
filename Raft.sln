@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft", "Raft\Raft.csproj", "{5EAFF3AA-03D9-4F3E-8008-A675BDE3CDE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftTests", "RaftTests\RaftTests.csproj", "{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5EAFF3AA-03D9-4F3E-8008-A675BDE3CDE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EAFF3AA-03D9-4F3E-8008-A675BDE3CDE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EAFF3AA-03D9-4F3E-8008-A675BDE3CDE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EAFF3AA-03D9-4F3E-8008-A675BDE3CDE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BFB30D5E-7DC2-4FE9-B7DB-15794CA57677}
+	EndGlobalSection
+EndGlobal
