@@ -16,8 +16,9 @@ namespace RaftTests
             Assert.True(onlyNode.Vote);
         }
 
+        // Testing #5
         [Fact]
-        public void NodesStartAsFollowers()
+        public void TestCase3_NodesStartAsFollowers()
         {
             // Arrange
             Node newNode = new Node(true, []);
