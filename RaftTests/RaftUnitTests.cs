@@ -15,5 +15,18 @@ namespace RaftTests
 
             Assert.True(onlyNode.Vote);
         }
+
+        [Fact]
+        public void NodesStartAsFollowers()
+        {
+            // Arrange
+            Node newNode = new Node(true, []);
+
+            // Act
+            var currentNodeState = newNode.State;
+
+            // Assert
+            Assert.Equal(Node.NodeState.Follower, currentNodeState);
+        }
     }
 }

@@ -2,9 +2,18 @@
 {
     public class Node
     {
-        public int ElectionTimeout { get; set; } 
-        public bool Vote {  get; set; }
+        public enum NodeState
+        {
+            Follower,
+            Candidate,
+            Leader
+        }
+
+        public int ElectionTimeout { get; set; } // in ms
+        public bool Vote { get; set; }
         public Node[] OtherNodes { get; set; }
+
+        public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
         public Node(bool Vote, Node[] OtherNodes)
         {
