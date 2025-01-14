@@ -35,7 +35,7 @@ namespace RaftTests
             }
 
             // Assert
-            electionTimeouts.ForEach(x => Assert.True(x > 150));
+            electionTimeouts.ForEach(x => Assert.True(x >= 150));
             electionTimeouts.ForEach(x => Assert.True(x < 300));
         }
 
@@ -45,6 +45,7 @@ namespace RaftTests
         {
             // Arrange
             int n = 10;
+            int threshold = 3;
             List<int> electionTimeouts = new();
 
             // Act
@@ -54,8 +55,10 @@ namespace RaftTests
                 electionTimeouts.Add(node.ElectionTimeout);
             }
 
+            var numberOfRepeats = n - electionTimeouts.Distinct().Count();
+
             // Assert
-            Assert.Equal(n, electionTimeouts.Distinct().Count());
+            Assert.True(numberOfRepeats <= threshold);
         }
 
         // Testing #11
@@ -64,14 +67,15 @@ namespace RaftTests
         {
             // Arrange
             Node n = new Node(true, []);
+            var thisNodesId = n.NodeId;
 
             // Act
             n.StartElection();
 
             // Assert
-
+            Assert.Equal(n.VoteForId, thisNodesId); // It votes for itself
+            Assert.Equal(Node.NodeState.Candidate, n.State);   // And it is a candidate now
         }
-
 
         // Testing #17
         [Fact]

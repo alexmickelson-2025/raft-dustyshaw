@@ -9,7 +9,7 @@
             Leader
         }
         public Guid NodeId { get; set; } = Guid.NewGuid();
-        public Guid VodeForId { get; set; }
+        public Guid VoteForId { get; set; }
 
         public int ElectionTimeout { get; set; } // in ms
         public bool Vote { get; set; }
@@ -40,6 +40,12 @@
         public bool RespondToAppendEntriesRPC()
         {
             return true; // simplest case for now
+        }
+
+        public void StartElection()
+        {
+            this.State = NodeState.Candidate;
+            this.VoteForId = this.NodeId;
         }
 
     }

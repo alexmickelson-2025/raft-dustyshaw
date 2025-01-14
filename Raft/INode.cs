@@ -9,5 +9,6 @@
 
         bool RespondToAppendEntriesRPC();
         bool SendAppendEntriesRPC();
+        void StartElection();
     }
 }
