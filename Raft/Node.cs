@@ -8,6 +8,8 @@
             Candidate,
             Leader
         }
+        public Guid NodeId { get; set; } = Guid.NewGuid();
+        public Guid VodeForId { get; set; }
 
         public int ElectionTimeout { get; set; } // in ms
         public bool Vote { get; set; }
@@ -20,6 +22,10 @@
             this.Vote = Vote;
             this.OtherNodes = OtherNodes;
             this.ElectionTimeout = Random.Shared.Next(150, 300);
+        }
+
+        public Node()
+        {
         }
 
         public bool SendAppendEntriesRPC()
@@ -35,5 +41,6 @@
         {
             return true; // simplest case for now
         }
+
     }
 }

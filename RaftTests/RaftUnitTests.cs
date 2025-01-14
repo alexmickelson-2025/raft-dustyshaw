@@ -19,19 +19,6 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Follower, currentNodeState);
         }
 
-        // Testing #4
-        [Fact]
-        public void TestCase4_FollowersStartElections()
-        {
-            // Arrange
-            Node newNode = new Node(true, []);
-
-            // Act
-            
-
-            // Assert
-        }
-
         // Testing #5 (part 1)
         [Fact]
         public void TestCase5_ElectionTimesAreBetween150And300()
@@ -69,6 +56,20 @@ namespace RaftTests
 
             // Assert
             Assert.Equal(n, electionTimeouts.Distinct().Count());
+        }
+
+        // Testing #11
+        [Fact]
+        public void TestCase11_NewCandidateNodesVoteForThemselves()
+        {
+            // Arrange
+            Node n = new Node(true, []);
+
+            // Act
+            n.StartElection();
+
+            // Assert
+
         }
 
 
