@@ -41,11 +41,11 @@ namespace RaftTests
             var followerNode = Substitute.For<INode>();
             followerNode.State = Node.NodeState.Follower;
 
-            var leaderNode = Substitute.For<INode>();
+            var leaderNode = new Node(true, []);
             leaderNode.State = Node.NodeState.Leader;
 
-            leaderNode.OtherNodes = new[] { followerNode };
-            followerNode.OtherNodes = new[] { leaderNode };
+            leaderNode.OtherNodes = [followerNode];
+            followerNode.OtherNodes = [leaderNode];
 
             // Act
             leaderNode.SendAppendEntriesRPC(); // Send heartbeat
@@ -53,5 +53,6 @@ namespace RaftTests
             // Assert
             followerNode.Received(1).RespondToAppendEntriesRPC();
         }
+
     }
 }
