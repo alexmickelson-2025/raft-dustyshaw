@@ -1,6 +1,6 @@
 ﻿namespace Raft
 {
-    public class Node
+    public class Node : INode
     {
         public enum NodeState
         {
@@ -11,7 +11,7 @@
 
         public int ElectionTimeout { get; set; } // in ms
         public bool Vote { get; set; }
-        public Node[] OtherNodes { get; set; }
+        public INode[] OtherNodes { get; set; }
 
         public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
@@ -21,9 +21,18 @@
             this.OtherNodes = OtherNodes;
         }
 
-        public async void SendVoteRequest()
+        public bool SendAppendEntriesRPC()
         {
-            // Send vote
+            foreach (var node in OtherNodes)
+            {
+                node.RespondToAppendEntriesRPC();
+            }
+            return true;
+        }
+
+        public bool RespondToAppendEntriesRPC()
+        {
+            return true; // simplest case for now
         }
     }
 }
