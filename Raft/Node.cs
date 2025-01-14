@@ -19,6 +19,7 @@
         {
             this.Vote = Vote;
             this.OtherNodes = OtherNodes;
+            this.ElectionTimeout = Random.Shared.Next(150, 300);
         }
 
         public bool SendAppendEntriesRPC()
