@@ -16,6 +16,8 @@ namespace Raft
         public int ElectionTimeout { get; set; } // in ms
         public static System.Timers.Timer aTimer { get; set; }
         public int HeartbeatTimeout { get; } = 50; // in ms
+        public int timeElapsed { get; set; } = 0; // in ms
+
         public bool Vote { get; set; }
         public INode[] OtherNodes { get; set; }
 
@@ -35,6 +37,13 @@ namespace Raft
 
         public void TimeoutHasPassed(Object source, ElapsedEventArgs e)
         {
+            timeElapsed += (int)aTimer.Interval;
+
+            if (timeElapsed > ElectionTimeout)
+            {
+                StartElection();
+            }
+
             SendAppendEntriesRPC();
             aTimer.Start();
         }
@@ -57,6 +66,7 @@ namespace Raft
         {
             this.State = NodeState.Candidate;
             this.VoteForId = this.NodeId;
+            aTimer = new System.Timers.Timer(ElectionTimeout);
         }
 
     }

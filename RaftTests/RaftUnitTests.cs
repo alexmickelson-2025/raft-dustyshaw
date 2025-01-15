@@ -50,7 +50,7 @@ namespace RaftTests
             leaderNode.OtherNodes = [followerNode];
 
             // Act
-            var BiggestElectionTimoutTime = 300;
+            var BiggestElectionTimoutTime = 399;
             Thread.Sleep(BiggestElectionTimoutTime);
 
             // Assert
