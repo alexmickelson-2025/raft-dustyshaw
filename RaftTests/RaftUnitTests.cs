@@ -43,14 +43,10 @@ namespace RaftTests
         public void TestCase4_IgnoredFollowersStartElectionAfter300ms()
         {
             // Arrange
-            Node leaderNode = new Node(true, []);
-            leaderNode.State = Node.NodeState.Leader;
-
-            var followerNode = new Node(true, [leaderNode]);
-            leaderNode.OtherNodes = [followerNode];
+            var followerNode = new Node(true, []);
 
             // Act
-            var BiggestElectionTimoutTime = 399;
+            var BiggestElectionTimoutTime = 375;
             Thread.Sleep(BiggestElectionTimoutTime);
 
             // Assert

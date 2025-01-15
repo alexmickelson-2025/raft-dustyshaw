@@ -16,7 +16,7 @@ namespace Raft
         public int ElectionTimeout { get; set; } // in ms
         public static System.Timers.Timer aTimer { get; set; }
         public int HeartbeatTimeout { get; } = 50; // in ms
-        public int timeElapsed { get; set; } = 0; // in ms
+        public int timeElapsedFromHearingFromLeader { get; set; } = 0; // in ms
 
         public bool Vote { get; set; }
         public INode[] OtherNodes { get; set; }
@@ -37,9 +37,9 @@ namespace Raft
 
         public void TimeoutHasPassed(Object source, ElapsedEventArgs e)
         {
-            timeElapsed += (int)aTimer.Interval;
+            timeElapsedFromHearingFromLeader += (int)aTimer.Interval;
 
-            if (timeElapsed > ElectionTimeout)
+            if (timeElapsedFromHearingFromLeader > ElectionTimeout)
             {
                 StartElection();
             }
@@ -50,16 +50,17 @@ namespace Raft
 
         public void SendAppendEntriesRPC()
         {
+            // As the leader, I need to send an RPC to other nodes
             foreach (var node in OtherNodes)
             {
                 node.RespondToAppendEntriesRPC();
             }
         }
 
-        public bool RespondToAppendEntriesRPC()
+        public void RespondToAppendEntriesRPC()
         {
-            // As a follower, I am responding to a leaders RPC
-            return true; // simplest case for now
+            // As a follower, I have heard from the leader
+            timeElapsedFromHearingFromLeader = 0;
         }
 
         public void StartElection()
