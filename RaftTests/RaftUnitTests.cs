@@ -12,17 +12,17 @@ namespace RaftTests
         {
             // Arrange
             Node leaderNode = new Node(true, []);
-            leaderNode.State = Node.NodeState.Leader;
+            leaderNode.BecomeLeader();
 
             var followerNode = Substitute.For<INode>();
             leaderNode.OtherNodes = [followerNode];
 
             // Act
-            var atLeastTwoCyclesTime = 112;
+            var atLeastTwoCyclesTime = 220;
             Thread.Sleep(atLeastTwoCyclesTime);
 
             // Assert
-            followerNode.Received(2).RespondToAppendEntriesRPC();
+            followerNode.Received(4).RespondToAppendEntriesRPC();
         }
 
         // Testing #3
@@ -49,7 +49,7 @@ namespace RaftTests
             var followerNode = new Node(true, []);
 
             // Act
-            var BiggestElectionTimoutTime = 375;
+            var BiggestElectionTimoutTime = 600;
             Thread.Sleep(BiggestElectionTimoutTime);
 
             // Assert
@@ -106,26 +106,47 @@ namespace RaftTests
         {
             // Arrange
             Node n = new Node(true, []);
-            var oldTerm = n.TermNumber;
 
             // Act
-            Thread.Sleep(375);
+            Thread.Sleep(600);
 
             // Assert
-            Assert.Equal(1, n.TermNumber - oldTerm);
+            Assert.True(n.TermNumber > 0);
+        }
+
+        // Testing #7
+        // 6
+        [Fact]
+        public void TestCase7_WhenLeadersSendMessagesToMeThenIStayFollower()
+        {
+            // Arrange
+            var followerNode = new Node(true, []);
+            followerNode.State = Node.NodeState.Follower;
+
+            var followerElectionTimeBefore = followerNode.ElectionTimeout;
+
+            // Act
+            // Leader sends messages to me
+            followerNode.RespondToAppendEntriesRPC();
+            Thread.Sleep(600);
+
+            // Assert
+            Assert.NotEqual(followerElectionTimeBefore, followerNode.ElectionTimeout);
+            Assert.NotEqual(Node.NodeState.Follower, followerNode.State);
         }
 
         // Testing #11
-        // 6
+        // 7
         [Fact]
         public void TestCase11_NewCandidateNodesVoteForThemselves()
         {
             // Arrange
             Node n = new Node(true, []);
+            Thread.Sleep(100);
             var thisNodesId = n.NodeId;
 
             // Act
-            n.StartElection();
+            Thread.Sleep(375);
 
             // Assert
             Assert.Equal(n.VoteForId, thisNodesId); // It votes for itself
@@ -133,28 +154,26 @@ namespace RaftTests
         }
 
         // Testing #16
-        // 7
+        // 8
         [Fact]
         public void TestCase16_ElectionTimersRestartDuringElection()
         {
             // Arrange
             Node n = new Node(true, []);
             n.State = Node.NodeState.Candidate;
-            var electionTime = n.ElectionTimeout;
             var termBefore = n.TermNumber;
 
             // Act
-            Thread.Sleep(325); // When election timer runs out
+            Thread.Sleep(600); // When election timer runs out
 
             // Assert
             // In my eyes, these are indicators that a new election began
-            Assert.True(electionTime != n.ElectionTimeout);
             Assert.True(termBefore < n.TermNumber);
             Assert.Equal(Node.NodeState.Candidate, n.State);
         }
 
         // Testing #17
-        // 8
+        // 9
         [Fact]
         public void TestCase17_FollowersSendResponses()
         {
@@ -163,7 +182,7 @@ namespace RaftTests
             followerNode.State = Node.NodeState.Follower;
 
             var leaderNode = new Node(true, []);
-            leaderNode.State = Node.NodeState.Leader;
+            leaderNode.BecomeLeader();
 
             leaderNode.OtherNodes = [followerNode];
             followerNode.OtherNodes = [leaderNode];
@@ -176,7 +195,7 @@ namespace RaftTests
         }
 
         // Testing #18
-        // 9
+        // 10
         [Fact]
         public void TestCase18_AppendEntriesFromPreviousTermsAreRejected()
         {

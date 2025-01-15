@@ -16,7 +16,6 @@ namespace Raft
         public int ElectionTimeout { get; set; } // in ms
         public static System.Timers.Timer aTimer { get; set; }
         public int HeartbeatTimeout { get; } = 50; // in ms
-        public int timeElapsedFromHearingFromLeader { get; set; } = 0; // in ms
 
         public int TermNumber { get; set; } = 0;
         public bool Vote { get; set; }
@@ -26,25 +25,32 @@ namespace Raft
 
         public Node(bool Vote, Node[] OtherNodes)
         {
-            aTimer = new System.Timers.Timer(HeartbeatTimeout);
-            aTimer.Elapsed += TimeoutHasPassed;
+            this.ElectionTimeout = Random.Shared.Next(150, 300);
+            aTimer = new System.Timers.Timer(ElectionTimeout);
+            aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
             aTimer.AutoReset = false;
             aTimer.Start();
 
             this.Vote = Vote;
             this.OtherNodes = OtherNodes;
-            this.ElectionTimeout = Random.Shared.Next(150, 300);
         }
 
-        public void TimeoutHasPassed(Object source, ElapsedEventArgs e)
+        public void BecomeLeader()
         {
-            timeElapsedFromHearingFromLeader += (int)aTimer.Interval;
+            this.State = Node.NodeState.Leader;
+            aTimer = new System.Timers.Timer(HeartbeatTimeout);
+            aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };
+            aTimer.AutoReset = false;
+            aTimer.Start();
+        }
 
-            if (timeElapsedFromHearingFromLeader > ElectionTimeout)
-            {
-                StartElection();
-            }
+        public void TimeoutHasPassed()
+        {
+            StartElection();
+        }
 
+        public void TimeoutHasPassedForLeaders()
+        {
             SendAppendEntriesRPC();
             aTimer.Start();
         }
@@ -61,7 +67,7 @@ namespace Raft
         public void RespondToAppendEntriesRPC()
         {
             // As a follower, I have heard from the leader
-            timeElapsedFromHearingFromLeader = 0;
+            this.ElectionTimeout = Random.Shared.Next(150, 300);
         }
 
         public void AskForVotesFromOtherNodes()
@@ -91,6 +97,8 @@ namespace Raft
             this.ElectionTimeout = Random.Shared.Next(150, 300);
             aTimer = new System.Timers.Timer(ElectionTimeout);
         }
+
+       
 
     }
 }
