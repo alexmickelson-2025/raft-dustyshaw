@@ -49,6 +49,7 @@ namespace Raft
 
         public bool RespondToAppendEntriesRPC()
         {
+            // As a follower, I am responding to a leaders RPC
             return true; // simplest case for now
         }
 

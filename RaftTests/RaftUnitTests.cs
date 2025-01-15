@@ -38,6 +38,25 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Follower, currentNodeState);
         }
 
+        // Testing #4
+        [Fact]
+        public void TestCase4_IgnoredFollowersStartElectionAfter300ms()
+        {
+            // Arrange
+            Node leaderNode = new Node(true, []);
+            leaderNode.State = Node.NodeState.Leader;
+
+            var followerNode = new Node(true, [leaderNode]);
+            leaderNode.OtherNodes = [followerNode];
+
+            // Act
+            var BiggestElectionTimoutTime = 300;
+            Thread.Sleep(BiggestElectionTimoutTime);
+
+            // Assert
+            Assert.Equal(Node.NodeState.Candidate, followerNode.State);
+        }
+
         // Testing #5 (part 1)
         [Fact]
         public void TestCase5_ElectionTimesAreBetween150And300()
