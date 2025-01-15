@@ -132,8 +132,25 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Candidate, n.State);   // And it is a candidate now
         }
 
-        // Testing #17
+        // Testing #16
         // 7
+        [Fact]
+        public void TestCase16_ElectionTimersRestartDuringElection()
+        {
+            // Arrange
+            Node n = new Node(true, []);
+            n.State = Node.NodeState.Candidate;
+            var electionTime = n.ElectionTimeout;
+
+            // Act
+            Thread.Sleep(325); // When election timer runs out
+
+            // Assert
+            Assert.True(electionTime != n.ElectionTimeout); // making sure a new election started and they incremented?
+        }
+
+        // Testing #17
+        // 8
         [Fact]
         public void TestCase17_FollowersSendResponses()
         {
@@ -155,7 +172,7 @@ namespace RaftTests
         }
 
         // Testing #18
-        // 8
+        // 9
         [Fact]
         public void TestCase18_AppendEntriesFromPreviousTermsAreRejected()
         {
