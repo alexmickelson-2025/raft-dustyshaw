@@ -18,11 +18,11 @@ namespace RaftTests
             leaderNode.OtherNodes = [followerNode];
 
             // Act
-            var atLeastTwoCyclesTime = 220;
+            var atLeastTwoCyclesTime = 120;
             Thread.Sleep(atLeastTwoCyclesTime);
 
             // Assert
-            followerNode.Received(4).RespondToAppendEntriesRPC();
+            followerNode.Received(2).RespondToAppendEntriesRPC();
         }
 
         // Testing #3
