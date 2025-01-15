@@ -6,6 +6,7 @@ namespace RaftTests
     public class RaftUnitTests
     {
         // Testing #1
+        // 1
         [Fact]
         public void TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
         {
@@ -18,13 +19,14 @@ namespace RaftTests
 
             // Act
             var atLeastTwoCyclesTime = 112;
-            Thread.Sleep(atLeastTwoCyclesTime); 
+            Thread.Sleep(atLeastTwoCyclesTime);
 
             // Assert
             followerNode.Received(2).RespondToAppendEntriesRPC();
         }
 
         // Testing #3
+        // 2
         [Fact]
         public void TestCase3_NodesStartAsFollowers()
         {
@@ -39,6 +41,7 @@ namespace RaftTests
         }
 
         // Testing #4
+        // 
         [Fact]
         public void TestCase4_IgnoredFollowersStartElectionAfter300ms()
         {
@@ -54,6 +57,7 @@ namespace RaftTests
         }
 
         // Testing #5 (part 1)
+        // 4
         [Fact]
         public void TestCase5_ElectionTimesAreBetween150And300()
         {
@@ -95,7 +99,24 @@ namespace RaftTests
             Assert.True(numberOfRepeats <= threshold);
         }
 
+        // Testing #6
+        // 5
+        [Fact]
+        public async void TestCase6_NewElectionBegins()
+        {
+            // Arrange
+            Node n = new Node(true, []);
+            var oldTerm = n.TermNumber;
+
+            // Act
+            Thread.Sleep(300);
+
+            // Assert
+            Assert.Equal(1, n.TermNumber - oldTerm);
+        }
+
         // Testing #11
+        // 6
         [Fact]
         public void TestCase11_NewCandidateNodesVoteForThemselves()
         {
@@ -112,6 +133,7 @@ namespace RaftTests
         }
 
         // Testing #17
+        // 7
         [Fact]
         public void TestCase17_FollowersSendResponses()
         {

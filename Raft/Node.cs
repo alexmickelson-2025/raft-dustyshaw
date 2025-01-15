@@ -18,6 +18,7 @@ namespace Raft
         public int HeartbeatTimeout { get; } = 50; // in ms
         public int timeElapsedFromHearingFromLeader { get; set; } = 0; // in ms
 
+        public int TermNumber { get; set; } = 0;
         public bool Vote { get; set; }
         public INode[] OtherNodes { get; set; }
 
