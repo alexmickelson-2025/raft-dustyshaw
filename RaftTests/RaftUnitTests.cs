@@ -141,12 +141,16 @@ namespace RaftTests
             Node n = new Node(true, []);
             n.State = Node.NodeState.Candidate;
             var electionTime = n.ElectionTimeout;
+            var termBefore = n.TermNumber;
 
             // Act
             Thread.Sleep(325); // When election timer runs out
 
             // Assert
-            Assert.True(electionTime != n.ElectionTimeout); // making sure a new election started and they incremented?
+            // In my eyes, these are indicators that a new election began
+            Assert.True(electionTime != n.ElectionTimeout);
+            Assert.True(termBefore < n.TermNumber);
+            Assert.Equal(Node.NodeState.Candidate, n.State);
         }
 
         // Testing #17
