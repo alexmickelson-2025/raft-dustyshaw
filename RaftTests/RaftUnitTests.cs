@@ -8,7 +8,7 @@ namespace RaftTests
         // Testing #1
         // 1
         [Fact]
-        public void TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
+        public async void TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
         {
             // Arrange
             Node leaderNode = new Node(true, []);
@@ -19,7 +19,8 @@ namespace RaftTests
 
             // Act
             var atLeastTwoCyclesTime = 120;
-            Thread.Sleep(atLeastTwoCyclesTime);
+            //Thread.Sleep(atLeastTwoCyclesTime);
+            await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
             followerNode.Received(2).RespondToAppendEntriesRPC();

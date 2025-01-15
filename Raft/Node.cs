@@ -14,7 +14,7 @@ namespace Raft
         public Guid VoteForId { get; set; }
 
         public int ElectionTimeout { get; set; } // in ms
-        public static System.Timers.Timer aTimer { get; set; }
+        public System.Timers.Timer aTimer { get; set; }
         public int HeartbeatTimeout { get; } = 50; // in ms
 
         public int TermNumber { get; set; } = 0;
