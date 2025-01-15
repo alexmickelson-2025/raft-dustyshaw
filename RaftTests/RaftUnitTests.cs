@@ -41,7 +41,7 @@ namespace RaftTests
         }
 
         // Testing #4
-        // 
+        // 3
         [Fact]
         public void TestCase4_IgnoredFollowersStartElectionAfter300ms()
         {
