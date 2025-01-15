@@ -25,8 +25,8 @@ namespace Raft
         {
             aTimer = new System.Timers.Timer(HeartbeatTimeout);
             aTimer.Elapsed += TimeoutHasPassed;
-            aTimer.AutoReset = true; // repeat this
-            aTimer.Enabled = true; // start the timer
+            aTimer.AutoReset = false;
+            aTimer.Start();
 
             this.Vote = Vote;
             this.OtherNodes = OtherNodes;
@@ -36,6 +36,7 @@ namespace Raft
         public void TimeoutHasPassed(Object source, ElapsedEventArgs e)
         {
             SendAppendEntriesRPC();
+            aTimer.Start();
         }
 
         public void SendAppendEntriesRPC()

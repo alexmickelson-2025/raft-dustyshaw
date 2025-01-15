@@ -12,12 +12,15 @@ namespace RaftTests
             // Arrange
             Node leaderNode = new Node(true, []);
             leaderNode.State = Node.NodeState.Leader;
+
             var followerNode = Substitute.For<INode>();
             leaderNode.OtherNodes = [followerNode];
 
             // Act
-            Thread.Sleep(100);
-            leaderNode.SendAppendEntriesRPC();
+            var atLeastTwoCyclesTime = 112;
+            Thread.Sleep(atLeastTwoCyclesTime); 
+
+            // Assert
             followerNode.Received(2).RespondToAppendEntriesRPC();
         }
 
