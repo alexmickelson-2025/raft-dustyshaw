@@ -37,6 +37,7 @@ namespace Raft
 
         public void BecomeLeader()
         {
+            aTimer.Stop();  
             this.State = Node.NodeState.Leader;
             aTimer = new System.Timers.Timer(HeartbeatTimeout);
             aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };

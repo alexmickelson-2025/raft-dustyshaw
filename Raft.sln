@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft", "Raft\Raft.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftTests", "RaftTests\RaftTests.csproj", "{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftGui", "RaftGui\RaftGui.csproj", "{A7BAC38B-9C38-44DC-A24A-F797C1C58C38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7B78C10-3EE4-40C8-8E4B-EFB6300B5DAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7BAC38B-9C38-44DC-A24A-F797C1C58C38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7BAC38B-9C38-44DC-A24A-F797C1C58C38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7BAC38B-9C38-44DC-A24A-F797C1C58C38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7BAC38B-9C38-44DC-A24A-F797C1C58C38}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
