@@ -64,6 +64,25 @@ namespace Raft
             timeElapsedFromHearingFromLeader = 0;
         }
 
+        public void AskForVotesFromOtherNodes()
+        {
+            // as the candidate, I am asking for votes from other nodes
+            foreach (var node in OtherNodes)
+            {
+                node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber);
+            }
+        }
+
+        public bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
+        {
+            // as a server, I recieve a vote request from a candidate
+            if (lastLogTerm < this.TermNumber)
+            {
+                return false;
+            }
+            return true;
+        }
+
         public void StartElection()
         {
             this.State = NodeState.Candidate;

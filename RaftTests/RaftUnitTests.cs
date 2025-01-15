@@ -154,5 +154,22 @@ namespace RaftTests
             followerNode.Received(1).RespondToAppendEntriesRPC();
         }
 
+        // Testing #18
+        // 8
+        [Fact]
+        public void TestCase18_AppendEntriesFromPreviousTermsAreRejected()
+        {
+            // Arrange
+            var node = new Node(true, []);
+            node.State = Node.NodeState.Follower;
+            node.TermNumber = 2;
+
+            // Act
+            var result = node.RecieveAVoteRequestFromCandidate(Guid.NewGuid(), 1);
+
+            // Assert
+            Assert.False(result);
+        }
+
     }
 }
