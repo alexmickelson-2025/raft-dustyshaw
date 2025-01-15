@@ -1,4 +1,6 @@
-﻿namespace Raft
+﻿using System.Timers;
+
+namespace Raft
 {
     public class Node : INode
     {
@@ -12,6 +14,8 @@
         public Guid VoteForId { get; set; }
 
         public int ElectionTimeout { get; set; } // in ms
+        public static System.Timers.Timer aTimer { get; set; }
+        public int HeartbeatTimeout { get; } = 50; // in ms
         public bool Vote { get; set; }
         public INode[] OtherNodes { get; set; }
 
@@ -19,22 +23,27 @@
 
         public Node(bool Vote, Node[] OtherNodes)
         {
+            aTimer = new System.Timers.Timer(HeartbeatTimeout);
+            aTimer.Elapsed += TimeoutHasPassed;
+            aTimer.AutoReset = true; // repeat this
+            aTimer.Enabled = true; // start the timer
+
             this.Vote = Vote;
             this.OtherNodes = OtherNodes;
             this.ElectionTimeout = Random.Shared.Next(150, 300);
         }
 
-        public Node()
+        public void TimeoutHasPassed(Object source, ElapsedEventArgs e)
         {
+            SendAppendEntriesRPC();
         }
 
-        public bool SendAppendEntriesRPC()
+        public void SendAppendEntriesRPC()
         {
             foreach (var node in OtherNodes)
             {
                 node.RespondToAppendEntriesRPC();
             }
-            return true;
         }
 
         public bool RespondToAppendEntriesRPC()

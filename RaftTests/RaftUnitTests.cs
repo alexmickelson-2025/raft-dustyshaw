@@ -5,6 +5,22 @@ namespace RaftTests
 {
     public class RaftUnitTests
     {
+        // Testing #1
+        [Fact]
+        public void TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
+        {
+            // Arrange
+            Node leaderNode = new Node(true, []);
+            leaderNode.State = Node.NodeState.Leader;
+            var followerNode = Substitute.For<INode>();
+            leaderNode.OtherNodes = [followerNode];
+
+            // Act
+            Thread.Sleep(100);
+            leaderNode.SendAppendEntriesRPC();
+            followerNode.Received(2).RespondToAppendEntriesRPC();
+        }
+
         // Testing #3
         [Fact]
         public void TestCase3_NodesStartAsFollowers()

@@ -8,7 +8,7 @@
         bool Vote { get; set; }
 
         bool RespondToAppendEntriesRPC();
-        bool SendAppendEntriesRPC();
+        void SendAppendEntriesRPC();
         void StartElection();
     }
 }
