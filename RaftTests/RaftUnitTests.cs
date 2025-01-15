@@ -102,14 +102,14 @@ namespace RaftTests
         // Testing #6
         // 5
         [Fact]
-        public async void TestCase6_NewElectionBegins()
+        public void TestCase6_NewElectionBeginsAndTermIsGreater()
         {
             // Arrange
             Node n = new Node(true, []);
             var oldTerm = n.TermNumber;
 
             // Act
-            Thread.Sleep(300);
+            Thread.Sleep(375);
 
             // Assert
             Assert.Equal(1, n.TermNumber - oldTerm);

@@ -68,6 +68,7 @@ namespace Raft
         {
             this.State = NodeState.Candidate;
             this.VoteForId = this.NodeId;
+            this.TermNumber = this.TermNumber + 1;
             aTimer = new System.Timers.Timer(ElectionTimeout);
         }
 
