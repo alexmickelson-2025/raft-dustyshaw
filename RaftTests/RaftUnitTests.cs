@@ -155,17 +155,28 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Follower, followerNode.State);
         }
 
-        //// Testing #8
-        //[Fact]
-        //public void TestCase8_MajorityVotesWins()
-        //{
-        //    // 8. Given an election begins, when the candidate gets a majority of votes,
-        //    // it becomes a leader.
+        // Testing #8
+        [Fact]
+        public void TestCase8_MajorityVotesWins()
+        {
+            // 8. Given an election begins, when the candidate gets a majority of votes,
+            // it becomes a leader.
 
-        //    Node followerNode = new( []);
-        //    Node followerNode2 = new( []);
+            Node followerNode = new([]);
+            Node followerNode2 = new([followerNode]);
+            followerNode.OtherNodes = [followerNode2];
 
-        //}
+            Node candidateNode = new([followerNode, followerNode2]);
+            candidateNode.TermNumber = 100;
+
+            // Act
+            candidateNode.StartElection();
+
+            Thread.Sleep(300);
+
+            // Assert
+            Assert.Equal(Node.NodeState.Leader, candidateNode.State);   
+        }
 
         // Testing #10
         // 7

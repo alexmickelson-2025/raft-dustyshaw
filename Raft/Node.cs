@@ -81,6 +81,11 @@ namespace Raft
             {
                 votesRecieved.Add(node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber));
             }
+
+            if (votesRecieved.Count(x => x) > OtherNodes.Count() / 2)
+            {
+                BecomeLeader();
+            }
         }
 
         public bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
@@ -103,6 +108,8 @@ namespace Raft
             this.ElectionTimeout = Random.Shared.Next(150, 300);
             aTimer = new System.Timers.Timer(ElectionTimeout);
             aTimer.Start();
+
+            SendVoteRequestRPCsToOtherNodes();
         }
     }
 }
