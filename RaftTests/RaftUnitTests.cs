@@ -208,6 +208,38 @@ namespace RaftTests
             Assert.Contains(false, candidateNode2.votesRecieved);
         }
 
+        // Testing #15
+        [Fact]
+        public void TestCase15_SecondVoteRequestFromNodeInFutureTermVotesYes()
+        {
+            // 15.If a node receives a second request for a vote for a future term, it should vote for that node.
+            // Arrange
+            Node node = new Node(true, []);
+            node.TermNumber = 1;
+
+            Node candidateNode = new Node(true, [node]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.TermNumber = 50;
+
+            Node candidateNode2 = new Node(true, [node, candidateNode]);
+            candidateNode2.State = Node.NodeState.Candidate;
+            candidateNode2.TermNumber = 100;
+
+            candidateNode.OtherNodes = [node, candidateNode2];
+
+            // Act
+            candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes
+            candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for greater term is accepted
+
+            // Assert
+            Assert.Equal(node.VoteForId, candidateNode2.NodeId);
+            Assert.NotEqual(candidateNode.NodeId, node.VoteForId);
+
+            Assert.Equal(100, node.VotedForTermNumber);
+            Assert.Contains(true, candidateNode2.votesRecieved);
+            Assert.Contains(false, candidateNode.votesRecieved);
+        }
+
         // Testing #16
         // 9
         [Fact]
