@@ -1,5 +1,6 @@
 using NSubstitute;
 using Raft;
+using Xunit;
 
 namespace RaftTests
 {
@@ -136,6 +137,8 @@ namespace RaftTests
             Assert.NotEqual(Node.NodeState.Follower, followerNode.State);
         }
 
+        // Testing #10
+        // 7
         [Fact]
         public void TestCase10_FollowersRespondeYesToVotes()
         {
@@ -157,7 +160,7 @@ namespace RaftTests
         }
 
         // Testing #11
-        // 7
+        // 8
         [Fact]
         public void TestCase11_NewCandidateNodesVoteForThemselves()
         {
@@ -174,8 +177,39 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Candidate, n.State);   // And it is a candidate now
         }
 
+        // Testing #14
+        [Fact]
+        public void TestCase14_SecondVoteRequestInSameTermRespondNo()
+        {
+            // Arrange
+            Node node = new Node(true, []);
+            node.TermNumber = 1;
+
+            Node candidateNode = new Node(true, [node]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.TermNumber = 100;
+
+            Node candidateNode2 = new Node(true, [node, candidateNode]);
+            candidateNode2.State = Node.NodeState.Candidate;
+            candidateNode2.TermNumber = 100;
+
+            candidateNode.OtherNodes = [node, candidateNode2];
+
+            // Act
+            candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes in term 100
+            candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for term 100 is rejected
+
+            // Assert
+            Assert.Equal(node.VoteForId, candidateNode.NodeId);
+            Assert.NotEqual(candidateNode2.NodeId, node.VoteForId);
+
+            Assert.Equal(100, node.VotedForTermNumber);
+            Assert.Contains(true, candidateNode.votesRecieved);
+            Assert.Contains(false, candidateNode2.votesRecieved);
+        }
+
         // Testing #16
-        // 8
+        // 9
         [Fact]
         public void TestCase16_ElectionTimersRestartDuringElection()
         {
@@ -194,7 +228,7 @@ namespace RaftTests
         }
 
         // Testing #17
-        // 9
+        // 10
         [Fact]
         public void TestCase17_FollowersSendResponses()
         {
@@ -216,7 +250,7 @@ namespace RaftTests
         }
 
         // Testing #18
-        // 10
+        // 11
         [Fact]
         public void TestCase18_AppendEntriesFromPreviousTermsAreRejected()
         {

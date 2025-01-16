@@ -1,4 +1,5 @@
 ﻿using System.Timers;
+using Xunit.Sdk;
 
 namespace Raft
 {
@@ -6,6 +7,7 @@ namespace Raft
     {
         public Guid NodeId { get; set; } = Guid.NewGuid();
         public Guid VoteForId { get; set; }
+        public int VotedForTermNumber { get; set; }
 
         public int ElectionTimeout { get; set; } // in ms
         public System.Timers.Timer aTimer { get; set; }
@@ -78,11 +80,12 @@ namespace Raft
         public bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
         {
             // as a server, I recieve a vote request from a candidate
-            if (lastLogTerm < this.TermNumber)
+            if (lastLogTerm < this.TermNumber || lastLogTerm == this.VotedForTermNumber)
             {
                 return false;
             }
             this.VoteForId = candidateId;   
+            this.VotedForTermNumber = lastLogTerm;
             return true;
         }
 
