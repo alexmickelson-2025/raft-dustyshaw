@@ -5,7 +5,6 @@
         int ElectionTimeout { get; set; }
         INode[] OtherNodes { get; set; }
         Node.NodeState State { get; set; }
-        bool Vote { get; set; }
 
         void RespondToAppendEntriesRPC(Guid leaderId, int termNumber);
         void SendAppendEntriesRPC();

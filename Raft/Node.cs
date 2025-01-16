@@ -15,13 +15,12 @@ namespace Raft
         public int HeartbeatTimeout { get; } = 50; // in ms
 
         public int TermNumber { get; set; } = 0;
-        public bool Vote { get; set; }
         public INode[] OtherNodes { get; set; }
         public List<bool> votesRecieved { get; set; } = new();
 
         public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
-        public Node(bool Vote, Node[] OtherNodes)
+        public Node(Node[] OtherNodes)
         {
             this.ElectionTimeout = Random.Shared.Next(150, 300);
             aTimer = new System.Timers.Timer(ElectionTimeout);
@@ -29,7 +28,6 @@ namespace Raft
             aTimer.AutoReset = false;
             aTimer.Start();
 
-            this.Vote = Vote;
             this.OtherNodes = OtherNodes;
         }
 
@@ -65,9 +63,15 @@ namespace Raft
 
         public void RespondToAppendEntriesRPC(Guid leaderId, int TermNumber)
         {
+            if (this.State == Node.NodeState.Candidate && TermNumber >= this.TermNumber)
+            {
+                this.State = Node.NodeState.Follower; // I heard from someone with greater term #
+            }
+
             // As a follower, I have heard from the leader
             this.ElectionTimeout = Random.Shared.Next(150, 300);
             this.LeaderId = leaderId;
+
         }
 
         public void SendVoteRequestRPCsToOtherNodes()

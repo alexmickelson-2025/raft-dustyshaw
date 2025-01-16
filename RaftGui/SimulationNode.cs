@@ -13,7 +13,6 @@ public class SimulationNode : INode
     public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
     public INode[] OtherNodes { get => ((INode)InnerNode).OtherNodes; set => ((INode)InnerNode).OtherNodes = value; }
     public Node.NodeState State { get => ((INode)InnerNode).State; set => ((INode)InnerNode).State = value; }
-    public bool Vote { get => ((INode)InnerNode).Vote; set => ((INode)InnerNode).Vote = value; }
 
     public void SendVoteRequestRPCsToOtherNodes()
     {
