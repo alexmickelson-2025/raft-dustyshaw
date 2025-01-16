@@ -222,11 +222,8 @@ namespace RaftTests
 
         // Testing #12 (but opposite)
         [Fact]
-        public void TestCase12_CandidatesBecomeFollowersWhenRecieveLaterTermRPCOpposite()
+        public void TestCase12_CandidatesStaysCandidateWhenRecieveLesserTermRPC()
         {
-            // 12.Given a candidate, when it receives an AppendEntries message from a node with an earlier term,
-            // then the candidate stays a candidate
-
             // Arrange
             Node node1 = new Node(true, []);
             node1.TermNumber = 1;
@@ -242,6 +239,27 @@ namespace RaftTests
 
             // Assert
             Assert.Equal(Node.NodeState.Candidate, candidateNode.State); // Candidate stays a candidate
+        }
+
+        // Testing #13
+        [Fact]
+        public void TestCase13_CandidatesBecomeFollowersWhenRecieveEqualTermRPC()
+        {
+            // Arrange
+            Node node1 = new Node(true, []);
+            node1.TermNumber = 100; 
+
+            Node candidateNode = new Node(true, [node1]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.TermNumber = 100;  // equal terms
+
+            node1.OtherNodes = [candidateNode];
+
+            // Act
+            node1.SendAppendEntriesRPC();
+
+            // Assert
+            Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
         }
 
 
