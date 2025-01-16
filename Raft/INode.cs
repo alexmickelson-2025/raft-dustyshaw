@@ -10,7 +10,7 @@
         void RespondToAppendEntriesRPC();
         void SendAppendEntriesRPC();
         void StartElection();
-        void AskForVotesFromOtherNodes();
+        void SendVoteRequestRPCsToOtherNodes();
         bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
     }
 }

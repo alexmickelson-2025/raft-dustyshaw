@@ -149,7 +149,7 @@ namespace RaftTests
             candidateNode.TermNumber = 100;
 
             // Act
-            candidateNode.AskForVotesFromOtherNodes();
+            candidateNode.SendVoteRequestRPCsToOtherNodes();
 
             // Assert
             Assert.Equal(node.VoteForId, candidateNode.NodeId); // Node recorded that they have voted for candidate

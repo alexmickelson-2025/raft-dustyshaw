@@ -2,14 +2,8 @@
 
 namespace Raft
 {
-    public class Node : INode
+    public partial class Node : INode
     {
-        public enum NodeState
-        {
-            Follower,
-            Candidate,
-            Leader
-        }
         public Guid NodeId { get; set; } = Guid.NewGuid();
         public Guid VoteForId { get; set; }
 
@@ -72,9 +66,8 @@ namespace Raft
             this.ElectionTimeout = Random.Shared.Next(150, 300);
         }
 
-        public void AskForVotesFromOtherNodes()
+        public void SendVoteRequestRPCsToOtherNodes()
         {
-
             // as the candidate, I am asking for votes from other nodes
             foreach (var node in OtherNodes)
             {
@@ -102,8 +95,5 @@ namespace Raft
             aTimer = new System.Timers.Timer(ElectionTimeout);
             aTimer.Start();
         }
-
-       
-
     }
 }

@@ -15,9 +15,9 @@ public class SimulationNode : INode
     public Node.NodeState State { get => ((INode)InnerNode).State; set => ((INode)InnerNode).State = value; }
     public bool Vote { get => ((INode)InnerNode).Vote; set => ((INode)InnerNode).Vote = value; }
 
-    public void AskForVotesFromOtherNodes()
+    public void SendVoteRequestRPCsToOtherNodes()
     {
-        ((INode)InnerNode).AskForVotesFromOtherNodes();
+        ((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
     }
 
     public bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
