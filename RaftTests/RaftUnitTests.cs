@@ -136,6 +136,26 @@ namespace RaftTests
             Assert.NotEqual(Node.NodeState.Follower, followerNode.State);
         }
 
+        [Fact]
+        public void TestCase10_FollowersRespondeYesToVotes()
+        {
+            // Arrange
+            var node = new Node(true, []);
+            node.VoteForId = Guid.Empty; // given a follower has not voted
+            node.TermNumber = 0; // and is in an earlier term
+
+            var candidateNode = new Node(true, [node]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.TermNumber = 100;
+
+            // Act
+            candidateNode.AskForVotesFromOtherNodes();
+
+            // Assert
+            Assert.Equal(node.VoteForId, candidateNode.NodeId); // Node recorded that they have voted for candidate
+            Assert.Contains(true, candidateNode.votesRecieved); // Candidate has recieved a yes
+        }
+
         // Testing #11
         // 7
         [Fact]

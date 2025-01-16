@@ -20,6 +20,7 @@ namespace Raft
         public int TermNumber { get; set; } = 0;
         public bool Vote { get; set; }
         public INode[] OtherNodes { get; set; }
+        public List<bool> votesRecieved { get; set; } = new();
 
         public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
@@ -73,10 +74,11 @@ namespace Raft
 
         public void AskForVotesFromOtherNodes()
         {
+
             // as the candidate, I am asking for votes from other nodes
             foreach (var node in OtherNodes)
             {
-                node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber);
+                votesRecieved.Add(node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber));
             }
         }
 
@@ -87,6 +89,7 @@ namespace Raft
             {
                 return false;
             }
+            this.VoteForId = candidateId;   
             return true;
         }
 
