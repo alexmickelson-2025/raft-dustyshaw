@@ -25,9 +25,9 @@ public class SimulationNode : INode
         return ((INode)InnerNode).RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
     }
 
-    public void RespondToAppendEntriesRPC(Guid leaderId)
+    public void RespondToAppendEntriesRPC(Guid leaderId, int termNumber)
     {
-        ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId);
+        ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId, termNumber);
     }
 
     public void SendAppendEntriesRPC()

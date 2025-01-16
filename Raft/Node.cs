@@ -59,11 +59,11 @@ namespace Raft
             // As the leader, I need to send an RPC to other nodes
             foreach (var node in OtherNodes)
             {
-                node.RespondToAppendEntriesRPC(this.NodeId);
+                node.RespondToAppendEntriesRPC(this.NodeId, this.TermNumber);
             }
         }
 
-        public void RespondToAppendEntriesRPC(Guid leaderId)
+        public void RespondToAppendEntriesRPC(Guid leaderId, int TermNumber)
         {
             // As a follower, I have heard from the leader
             this.ElectionTimeout = Random.Shared.Next(150, 300);

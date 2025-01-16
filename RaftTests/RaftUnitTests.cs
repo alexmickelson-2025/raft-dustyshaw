@@ -25,7 +25,7 @@ namespace RaftTests
             await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
-            followerNode.Received(2).RespondToAppendEntriesRPC(leaderNode.NodeId);
+            followerNode.Received(2).RespondToAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
         }
 
         // Testing #2
@@ -148,7 +148,7 @@ namespace RaftTests
 
             // Act
             // Leader sends messages to me
-            followerNode.RespondToAppendEntriesRPC(Arg.Any<Guid>());
+            followerNode.RespondToAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
             Thread.Sleep(100);
 
             // Assert
@@ -209,7 +209,7 @@ namespace RaftTests
 
             Node candidateNode = new Node(true, [node1]);
             candidateNode.State = Node.NodeState.Candidate;
-            candidateNode.TermNumber = 0;
+            candidateNode.TermNumber = 1;
 
             node1.OtherNodes = [candidateNode];
 
@@ -219,6 +219,31 @@ namespace RaftTests
             // Assert
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
         }
+
+        // Testing #12 (but opposite)
+        [Fact]
+        public void TestCase12_CandidatesBecomeFollowersWhenRecieveLaterTermRPCOpposite()
+        {
+            // 12.Given a candidate, when it receives an AppendEntries message from a node with an earlier term,
+            // then the candidate stays a candidate
+
+            // Arrange
+            Node node1 = new Node(true, []);
+            node1.TermNumber = 1;
+
+            Node candidateNode = new Node(true, [node1]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.TermNumber = 100;
+
+            node1.OtherNodes = [candidateNode];
+
+            // Act
+            node1.SendAppendEntriesRPC();
+
+            // Assert
+            Assert.Equal(Node.NodeState.Candidate, candidateNode.State); // Candidate stays a candidate
+        }
+
 
         // Testing #14
         [Fact]
@@ -321,7 +346,7 @@ namespace RaftTests
             leaderNode.SendAppendEntriesRPC(); // Send heartbeat
 
             // Assert
-            followerNode.Received(1).RespondToAppendEntriesRPC(leaderNode.NodeId);
+            followerNode.Received(1).RespondToAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
         }
 
         // Testing #18
