@@ -7,7 +7,7 @@
         Node.NodeState State { get; set; }
         bool Vote { get; set; }
 
-        void RespondToAppendEntriesRPC();
+        void RespondToAppendEntriesRPC(Guid leaderId);
         void SendAppendEntriesRPC();
         void StartElection();
         void SendVoteRequestRPCsToOtherNodes();

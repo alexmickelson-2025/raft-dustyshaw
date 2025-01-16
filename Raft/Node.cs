@@ -8,6 +8,7 @@ namespace Raft
         public Guid NodeId { get; set; } = Guid.NewGuid();
         public Guid VoteForId { get; set; }
         public int VotedForTermNumber { get; set; }
+        public Guid LeaderId { get; set; }
 
         public int ElectionTimeout { get; set; } // in ms
         public System.Timers.Timer aTimer { get; set; }
@@ -58,14 +59,15 @@ namespace Raft
             // As the leader, I need to send an RPC to other nodes
             foreach (var node in OtherNodes)
             {
-                node.RespondToAppendEntriesRPC();
+                node.RespondToAppendEntriesRPC(this.NodeId);
             }
         }
 
-        public void RespondToAppendEntriesRPC()
+        public void RespondToAppendEntriesRPC(Guid leaderId)
         {
             // As a follower, I have heard from the leader
             this.ElectionTimeout = Random.Shared.Next(150, 300);
+            this.LeaderId = leaderId;
         }
 
         public void SendVoteRequestRPCsToOtherNodes()

@@ -24,7 +24,25 @@ namespace RaftTests
             await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
-            followerNode.Received(2).RespondToAppendEntriesRPC();
+            followerNode.Received(2).RespondToAppendEntriesRPC(leaderNode.NodeId);
+        }
+
+        // Testing #2
+        [Fact]
+        public void TestCase2_LeadersAreRememberedByFollowers()
+        {
+            // Arrange
+            Node leaderNode = new Node(true, []);
+            leaderNode.BecomeLeader();
+
+            var followerNode = new Node(true, [leaderNode]);
+            leaderNode.OtherNodes = [followerNode];
+
+            // Act
+            leaderNode.SendAppendEntriesRPC();
+
+            // Assert
+            Assert.Equal(followerNode.LeaderId, leaderNode.NodeId);
         }
 
         // Testing #3
@@ -129,12 +147,12 @@ namespace RaftTests
 
             // Act
             // Leader sends messages to me
-            followerNode.RespondToAppendEntriesRPC();
-            Thread.Sleep(600);
+            followerNode.RespondToAppendEntriesRPC(Arg.Any<Guid>());
+            Thread.Sleep(100);
 
             // Assert
             Assert.NotEqual(followerElectionTimeBefore, followerNode.ElectionTimeout);
-            Assert.NotEqual(Node.NodeState.Follower, followerNode.State);
+            Assert.Equal(Node.NodeState.Follower, followerNode.State);
         }
 
         // Testing #10
@@ -278,7 +296,7 @@ namespace RaftTests
             leaderNode.SendAppendEntriesRPC(); // Send heartbeat
 
             // Assert
-            followerNode.Received(1).RespondToAppendEntriesRPC();
+            followerNode.Received(1).RespondToAppendEntriesRPC(leaderNode.NodeId);
         }
 
         // Testing #18
