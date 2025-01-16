@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using NSubstitute;
 using Raft;
 using Xunit;
@@ -193,6 +194,30 @@ namespace RaftTests
             // Assert
             Assert.Equal(n.VoteForId, thisNodesId); // It votes for itself
             Assert.Equal(Node.NodeState.Candidate, n.State);   // And it is a candidate now
+        }
+
+        // Testing #12
+        [Fact]
+        public void TestCase12_CandidatesBecomeFollowersWhenRecieveLaterTermRPC()
+        {
+            // 12.Given a candidate, when it receives an AppendEntries message from a node with a later term,
+            // then the candidate loses and becomes a follower.
+
+            // Arrange
+            Node node1 = new Node(true, []);
+            node1.TermNumber = 100;
+
+            Node candidateNode = new Node(true, [node1]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.TermNumber = 0;
+
+            node1.OtherNodes = [candidateNode];
+
+            // Act
+            node1.SendAppendEntriesRPC();
+
+            // Assert
+            Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
         }
 
         // Testing #14
