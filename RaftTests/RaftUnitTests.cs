@@ -162,6 +162,7 @@ namespace RaftTests
             // 8. Given an election begins, when the candidate gets a majority of votes,
             // it becomes a leader.
 
+            // Arrange
             Node followerNode = new([]);
             Node followerNode2 = new([followerNode]);
             followerNode.OtherNodes = [followerNode2];
@@ -176,6 +177,32 @@ namespace RaftTests
 
             // Assert
             Assert.Equal(Node.NodeState.Leader, candidateNode.State);   
+        }
+
+        // Testing #9
+        [Fact]
+        public void TestCase9_NotMajorityVotesFail()
+        {
+            Node followerNode1 = new([]);
+            Node followerNode2 = new([]);
+            Node followerNode3 = new([]);
+            Node followerNode4 = new([]);
+
+            Node candidateNode = new([]);
+            candidateNode.TermNumber = 100;
+            candidateNode.ElectionTimeout = 9999999;
+            candidateNode.State = Node.NodeState.Candidate;
+            
+            // 5 node system...
+            candidateNode.OtherNodes = [followerNode1, followerNode2, followerNode3, followerNode4];
+
+            // Act
+            // Say in a 5 system I recieve only 3 votes, and have one server unresponsive
+            candidateNode.votesRecieved = [true, true, true];
+            candidateNode.DetermineElectionResults();
+
+            // Assert
+            Assert.Equal(Node.NodeState.Leader, candidateNode.State);
         }
 
         // Testing #10

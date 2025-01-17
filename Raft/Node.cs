@@ -82,6 +82,11 @@ namespace Raft
                 votesRecieved.Add(node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber));
             }
 
+            DetermineElectionResults();
+        }
+
+        public void DetermineElectionResults()
+        {
             if (votesRecieved.Count(x => x) > OtherNodes.Count() / 2)
             {
                 BecomeLeader();
