@@ -181,7 +181,7 @@ namespace RaftTests
 
         // Testing #9
         [Fact]
-        public void TestCase9_NotMajorityVotesFail()
+        public void TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
         {
             Node followerNode1 = new([]);
             Node followerNode2 = new([]);
