@@ -39,6 +39,8 @@ namespace Raft
             aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };
             aTimer.AutoReset = false;
             aTimer.Start();
+
+            SendAppendEntriesRPC();
         }
 
         public void TimeoutHasPassed()

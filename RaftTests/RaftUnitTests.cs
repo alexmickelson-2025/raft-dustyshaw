@@ -433,5 +433,21 @@ namespace RaftTests
             Assert.False(result);
         }
 
+        // Testing #19
+        [Fact]
+        public void TestCase19_NewLeadersSendRPC()
+        {
+            // 19. When a candidate wins an election, it immediately sends a heartbeat.
+            var leaderNode = new Node([]);
+            var followerNode = Substitute.For<INode>();
+            leaderNode.OtherNodes = [followerNode];
+
+            // Act
+            leaderNode.BecomeLeader();
+
+            // Assert
+            followerNode.Received(1).RespondToAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+        }
+
     }
 }
