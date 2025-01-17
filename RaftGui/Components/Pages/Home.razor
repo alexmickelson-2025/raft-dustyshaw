@@ -10,17 +10,37 @@
 
 Welcome to your new app.
 
+<label for="speed">
+	Election timeout between @(150 * IntervalScalar) and @(300 *
+	IntervalScalar) seconds
+	<br>
+	<input type="range" id="speed" name="speed" min="1" max="150" @bind:event="oninput"
+	@bind=IntervalScalar @onchange=UpdateTimer />
+</label>
+
 <button @onclick="startSimulation">Start</button>
 
+
 @foreach(var node in nodes) {
-	<div>@node.InnerNode.NodeId</div>
+	@* var timeoutRemaining = DateTime.Now - node.InnerNode.ElectionTimeout; *@
+
+	<div style="margin-bottom: 50px;">
+		@node.InnerNode.NodeId - <div style="@StateClass(node)">@node.State</div> - @node.InnerNode.ElectionTimeout ms.
+	</div>
 }
+
 
 @code {
 	List<SimulationNode> nodes = new();
 
+	private Timer? timer;
+	bool isRunning = true;
+
+	public double IntervalScalar = 1;
+
 	void startSimulation()
 	{
+
 		var node1 = new Node([]);
 		var node2 = new Node([]);
 		var node3 = new Node([]);
@@ -36,5 +56,24 @@ Welcome to your new app.
 
 		nodes = [simulation1, simulation2, simulation3];
 
+		timer = new Timer(_ =>
+		{
+			InvokeAsync(StateHasChanged);
+		}, null, 0, 200);
+	}
+
+	public void UpdateTimer()
+	{
+
+
+	}
+
+	string StateClass(SimulationNode node)
+	{
+		if (node.State == Node.NodeState.Leader)
+		{
+			return "background-color: lightblue;";
+		}
+		return "";
 	}
 }
