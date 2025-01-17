@@ -8,7 +8,6 @@ namespace RaftTests
     public class RaftUnitTests
     {
         // Testing #1
-        // 1
         [Fact]
         public async void TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
         {
@@ -47,7 +46,6 @@ namespace RaftTests
         }
 
         // Testing #3
-        // 2
         [Fact]
         public void TestCase3_NodesStartAsFollowers()
         {
@@ -62,7 +60,6 @@ namespace RaftTests
         }
 
         // Testing #4
-        // 3
         [Fact]
         public void TestCase4_IgnoredFollowersStartElectionAfter300ms()
         {
@@ -78,7 +75,6 @@ namespace RaftTests
         }
 
         // Testing #5 (part 1)
-        // 4
         [Fact]
         public void TestCase5_ElectionTimesAreBetween150And300()
         {
@@ -121,7 +117,6 @@ namespace RaftTests
         }
 
         // Testing #6
-        // 5
         [Fact]
         public void TestCase6_NewElectionBeginsAndTermIsGreater()
         {
@@ -136,7 +131,6 @@ namespace RaftTests
         }
 
         // Testing #7
-        // 6
         [Fact]
         public void TestCase7_WhenLeadersSendMessagesToMeThenIStayFollower()
         {
@@ -206,7 +200,6 @@ namespace RaftTests
         }
 
         // Testing #10
-        // 7
         [Fact]
         public void TestCase10_FollowersRespondeYesToVotes()
         {
@@ -228,7 +221,6 @@ namespace RaftTests
         }
 
         // Testing #11
-        // 8
         [Fact]
         public void TestCase11_NewCandidateNodesVoteForThemselves()
         {
@@ -376,7 +368,6 @@ namespace RaftTests
         }
 
         // Testing #16
-        // 9
         [Fact]
         public void TestCase16_ElectionTimersRestartDuringElection()
         {
@@ -395,7 +386,6 @@ namespace RaftTests
         }
 
         // Testing #17
-        // 10
         [Fact]
         public void TestCase17_FollowersSendResponses()
         {
@@ -417,7 +407,6 @@ namespace RaftTests
         }
 
         // Testing #18
-        // 11
         [Fact]
         public void TestCase18_AppendEntriesFromPreviousTermsAreRejected()
         {
