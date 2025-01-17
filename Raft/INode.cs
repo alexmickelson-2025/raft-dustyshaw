@@ -8,6 +8,7 @@
 		public Guid LeaderId { get; set; }
 		int TermNumber { get; set; }
 		public DateTime WhenTimerStarted { get; set; }
+		public System.Timers.Timer aTimer { get; set; }
 
 
 		void RespondToAppendEntriesRPC(Guid leaderId, int termNumber);

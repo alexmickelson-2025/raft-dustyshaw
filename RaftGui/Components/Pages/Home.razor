@@ -29,12 +29,8 @@
 
 <div class="row">
 @foreach(var node in nodes) {
-
-		var timeoutRemaining = (DateTime.Now - node.WhenTimerStarted);
-		var maxIntervalMilliseconds = 300 * IntervalScalar;
-		var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds) / maxIntervalMilliseconds));
-
-
+	var timeoutRemaining = (DateTime.Now.Millisecond - node.WhenTimerStarted.Millisecond);
+		var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining)  / node.ElectionTimeout));
 
 	<div class="p-3 col-4">
 		<div class="border p-3 rounded-3">
@@ -43,13 +39,11 @@
 				<div class="@StateClass(node)">@node.State</div>
 				Election Timeout: @(@node.InnerNode.ElectionTimeout) ms. <h2>Term #@node.TermNumber</h2>
 				<p>@node.LeaderId</p>
-					<div>
-						<div class="progress" role="progressbar" aria-label="Basic example"
-							 aria-valuenow=@(Math.Abs(timeoutRemaining.TotalMilliseconds)) aria-valuemin="0"
-							 aria-valuemax="@(maxIntervalMilliseconds)">
-							<div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;"></div>
-						</div>
-
+					
+					<div class="progress" role="progressbar" aria-label="Basic example"
+						 aria-valuenow=@(Math.Abs(timeoutRemaining)) aria-valuemin="0"
+						 aria-valuemax="@(node.ElectionTimeout * 300)">
+						<div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;"></div>
 					</div>
 			</div>
 		</div>
