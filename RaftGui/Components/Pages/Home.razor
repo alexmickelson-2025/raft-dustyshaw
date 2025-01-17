@@ -3,47 +3,75 @@
 @page "/"
 @rendermode InteractiveServer
 
-
 <PageTitle>Home</PageTitle>
 
-<h1>RAHH!</h1>
-
-Welcome to your new app.
-
+<div>
 <label for="speed">
-	Election timeout between @(150 * IntervalScalar) and @(300 *
-	IntervalScalar) seconds
+		Election timeout between @(150 * IntervalScalar) and @(300 *
+		IntervalScalar) seconds.
 	<br>
 	<input type="range" id="speed" name="speed" min="1" max="150" @bind:event="oninput"
-	@bind=IntervalScalar @onchange=UpdateTimer />
+	@bind=IntervalScalar @onchange=UpdateTimer /> @IntervalScalar
 </label>
+</div>
+
+<div>
+	<label for="NetworkRequestDelay">
+		Network Delay @FormatMilliSeconds(NetworkRequestDelay) seconds
+		<br>
+		<input type="range" id="NetworkRequestDelay" name="NetworkRequestDelay" min="10" max="10000"
+			   @bind:event="oninput" @bind=NetworkRequestDelay />
+	</label>
+</div>
+
 
 <button @onclick="startSimulation">Start</button>
 
-
+<div class="row">
 @foreach(var node in nodes) {
-	@* var timeoutRemaining = DateTime.Now - node.InnerNode.ElectionTimeout; *@
 
-	<div style="margin-bottom: 50px;">
-		@node.InnerNode.NodeId - <div style="@StateClass(node)">@node.State</div> - @node.InnerNode.ElectionTimeout ms.
+		var timeoutRemaining = (DateTime.Now - node.WhenTimerStarted);
+		var maxIntervalMilliseconds = 300 * IntervalScalar;
+		var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds) / maxIntervalMilliseconds));
+
+
+
+	<div class="p-3 col-4">
+		<div class="border p-3 rounded-3">
+			<div class="d-flex flex-column justify-content-between">
+				<strong>@node.InnerNode.NodeId</strong>
+				<div class="@StateClass(node)">@node.State</div>
+				Election Timeout: @(@node.InnerNode.ElectionTimeout) ms. <h2>Term #@node.TermNumber</h2>
+				<p>@node.LeaderId</p>
+					<div>
+						<div class="progress" role="progressbar" aria-label="Basic example"
+							 aria-valuenow=@(Math.Abs(timeoutRemaining.TotalMilliseconds)) aria-valuemin="0"
+							 aria-valuemax="@(maxIntervalMilliseconds)">
+							<div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;"></div>
+						</div>
+
+					</div>
+			</div>
+		</div>
 	</div>
 }
-
+</div>
 
 @code {
 	List<SimulationNode> nodes = new();
 
 	private Timer? timer;
-	bool isRunning = true;
+	bool isRunning = false;
 
-	public double IntervalScalar = 1;
+	public int IntervalScalar = 1;
+
+	public double NetworkRequestDelay = 1000;
 
 	void startSimulation()
 	{
-
-		var node1 = new Node([]);
-		var node2 = new Node([]);
-		var node3 = new Node([]);
+		var node1 = new Node([], IntervalScalar);
+		var node2 = new Node([], IntervalScalar);
+		var node3 = new Node([], IntervalScalar);
 
 
 		var simulation1 = new SimulationNode(node1);
@@ -56,6 +84,7 @@ Welcome to your new app.
 
 		nodes = [simulation1, simulation2, simulation3];
 
+		isRunning = true;
 		timer = new Timer(_ =>
 		{
 			InvokeAsync(StateHasChanged);
@@ -72,8 +101,21 @@ Welcome to your new app.
 	{
 		if (node.State == Node.NodeState.Leader)
 		{
-			return "background-color: lightblue;";
+			return "bg-primary text-white";
+		}
+		if (node.State == Node.NodeState.Candidate)
+		{
+			return "bg-success text-white";
+		}
+		if (node.State == Node.NodeState.Follower)
+		{
+			return "bg-secondary text-white";
 		}
 		return "";
+	}
+
+	public static string FormatMilliSeconds(double milliSeconds)
+	{
+		return $"{milliSeconds / 1000.0:F1}";
 	}
 }

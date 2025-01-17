@@ -12,33 +12,50 @@ namespace Raft
 
         public int ElectionTimeout { get; set; } // in ms
         public System.Timers.Timer aTimer { get; set; }
+        public DateTime WhenTimerStarted { get; set; }
         public int HeartbeatTimeout { get; } = 50; // in ms
 
         public int TermNumber { get; set; } = 0;
         public INode[] OtherNodes { get; set; }
         public List<bool> votesRecieved { get; set; } = new();
+        public int TimeScalar = 1;
 
         public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
-        public Node(Node[] OtherNodes)
+		public Node(Node[] OtherNodes)
+		{
+			this.ElectionTimeout = Random.Shared.Next(150, 300);
+			aTimer = new System.Timers.Timer(ElectionTimeout);
+
+			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
+			aTimer.AutoReset = false;
+			aTimer.Start();
+
+			this.OtherNodes = OtherNodes;
+		}
+
+		public Node(Node[] OtherNodes, int TimeScalar)
         {
-            this.ElectionTimeout = Random.Shared.Next(150, 300);
-            aTimer = new System.Timers.Timer(ElectionTimeout);
+            this.ElectionTimeout = Random.Shared.Next(150 * TimeScalar, 300 * TimeScalar);
+            aTimer = new System.Timers.Timer(ElectionTimeout * TimeScalar);
+
             aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
             aTimer.AutoReset = false;
             aTimer.Start();
 
             this.OtherNodes = OtherNodes;
+            this.TimeScalar = TimeScalar;
         }
 
         public void BecomeLeader()
         {
             aTimer.Stop();  
             this.State = Node.NodeState.Leader;
-            aTimer = new System.Timers.Timer(HeartbeatTimeout);
+            aTimer = new System.Timers.Timer(HeartbeatTimeout * TimeScalar);
             aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };
             aTimer.AutoReset = false;
             aTimer.Start();
+            WhenTimerStarted = DateTime.Now;
 
             SendAppendEntriesRPC();
         }
@@ -71,7 +88,7 @@ namespace Raft
             }
 
             // As a follower, I have heard from the leader
-            this.ElectionTimeout = Random.Shared.Next(150, 300);
+            this.ElectionTimeout = Random.Shared.Next(150 * TimeScalar, 300 * TimeScalar);
             this.LeaderId = leaderId;
 
         }
@@ -112,9 +129,10 @@ namespace Raft
             this.State = NodeState.Candidate;
             this.VoteForId = this.NodeId;
             this.TermNumber = this.TermNumber + 1;
-            this.ElectionTimeout = Random.Shared.Next(150, 300);
-            aTimer = new System.Timers.Timer(ElectionTimeout);
+            this.ElectionTimeout = Random.Shared.Next(150 * TimeScalar, 300 * TimeScalar);
+            aTimer = new System.Timers.Timer(ElectionTimeout * TimeScalar);
             aTimer.Start();
+            WhenTimerStarted = DateTime.Now;
 
             SendVoteRequestRPCsToOtherNodes();
         }
