@@ -10,36 +10,79 @@ public class SimulationNode : INode
         this.InnerNode = node;
     }
 
-    public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
-    public INode[] OtherNodes { get => ((INode)InnerNode).OtherNodes; set => ((INode)InnerNode).OtherNodes = value; }
-    public Node.NodeState State { get => ((INode)InnerNode).State; set => ((INode)InnerNode).State = value; }
-	public int TermNumber { get => ((INode)InnerNode).TermNumber; set => ((INode)InnerNode).TermNumber = value; }
-	public Guid LeaderId { get => ((INode)InnerNode).LeaderId; set => ((INode)InnerNode).LeaderId = value; }
-	public DateTime WhenTimerStarted { get => ((INode)InnerNode).WhenTimerStarted; set => ((INode)InnerNode).WhenTimerStarted = value; }
 	public System.Timers.Timer aTimer { get => ((INode)InnerNode).aTimer; set => ((INode)InnerNode).aTimer = value; }
+	public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
+
+	public int HeartbeatTimeout => ((INode)InnerNode).HeartbeatTimeout;
+
+	public Guid LeaderId { get => ((INode)InnerNode).LeaderId; set => ((INode)InnerNode).LeaderId = value; }
+	public int NetworkRequestDelay { get => ((INode)InnerNode).NetworkRequestDelay; set => ((INode)InnerNode).NetworkRequestDelay = value; }
+	public Guid NodeId { get => ((INode)InnerNode).NodeId; set => ((INode)InnerNode).NodeId = value; }
+	public INode[] OtherNodes { get => ((INode)InnerNode).OtherNodes; set => ((INode)InnerNode).OtherNodes = value; }
+	public Node.NodeState State { get => ((INode)InnerNode).State; set => ((INode)InnerNode).State = value; }
+	public int TermNumber { get => ((INode)InnerNode).TermNumber; set => ((INode)InnerNode).TermNumber = value; }
+	public int VotedForTermNumber { get => ((INode)InnerNode).VotedForTermNumber; set => ((INode)InnerNode).VotedForTermNumber = value; }
+	public Guid VoteForId { get => ((INode)InnerNode).VoteForId; set => ((INode)InnerNode).VoteForId = value; }
+	public List<bool> votesRecieved { get => ((INode)InnerNode).votesRecieved; set => ((INode)InnerNode).votesRecieved = value; }
+	public DateTime WhenTimerStarted { get => ((INode)InnerNode).WhenTimerStarted; set => ((INode)InnerNode).WhenTimerStarted = value; }
+
+	public void BecomeLeader()
+	{
+		((INode)InnerNode).BecomeLeader();
+	}
+
+	public void DetermineElectionResults()
+	{
+		((INode)InnerNode).DetermineElectionResults();
+	}
+
+	public Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
+	{
+		return ((INode)InnerNode).RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
+	}
+
+	public void RecieveVoteResults(bool result, int termNumber)
+	{
+		((INode)InnerNode).RecieveVoteResults(result, termNumber);
+	}
+
+	public void RespondBackToLeader(bool response, int myTermNumber)
+	{
+		((INode)InnerNode).RespondBackToLeader(response, myTermNumber);
+	}
+
+	public Task RespondToAppendEntriesRPC(Guid leaderId, int TermNumber)
+	{
+		return ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId, TermNumber);
+	}
+
+	public void SendAppendEntriesRPC()
+	{
+		((INode)InnerNode).SendAppendEntriesRPC();
+	}
+
+	public Task SendMyVoteToCandidate(Guid candidateId, bool result)
+	{
+		return ((INode)InnerNode).SendMyVoteToCandidate(candidateId, result);
+	}
 
 	public void SendVoteRequestRPCsToOtherNodes()
-    {
-        ((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
-    }
+	{
+		((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
+	}
 
-    public bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
-    {
-        return ((INode)InnerNode).RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
-    }
+	public void StartElection()
+	{
+		((INode)InnerNode).StartElection();
+	}
 
-    public void RespondToAppendEntriesRPC(Guid leaderId, int termNumber)
-    {
-        ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId, termNumber);
-    }
+	public void TimeoutHasPassed()
+	{
+		((INode)InnerNode).TimeoutHasPassed();
+	}
 
-    public void SendAppendEntriesRPC()
-    {
-        ((INode)InnerNode).SendAppendEntriesRPC();
-    }
-
-    public void StartElection()
-    {
-        ((INode)InnerNode).StartElection();
-    }
+	public void TimeoutHasPassedForLeaders()
+	{
+		((INode)InnerNode).TimeoutHasPassedForLeaders();
+	}
 }

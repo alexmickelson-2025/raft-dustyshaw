@@ -10,7 +10,7 @@
 		Election timeout between @(150 * IntervalScalar) and @(300 *
 		IntervalScalar) seconds.
 	<br>
-	<input type="range" id="speed" name="speed" min="1" max="150" @bind:event="oninput"
+	<input type="range" id="speed" name="speed" min="1" max="100" @bind:event="oninput"
 	@bind=IntervalScalar @onchange=UpdateTimer /> @IntervalScalar
 </label>
 </div>
@@ -57,15 +57,15 @@
 	private Timer? timer;
 	bool isRunning = false;
 
-	public int IntervalScalar = 1;
+	public int IntervalScalar = 50;
 
 	public double NetworkRequestDelay = 1000;
 
 	void startSimulation()
 	{
-		var node1 = new Node([], IntervalScalar);
-		var node2 = new Node([], IntervalScalar);
-		var node3 = new Node([], IntervalScalar);
+		var node1 = new Node([]);
+		var node2 = new Node([]);
+		var node3 = new Node([]);
 
 
 		var simulation1 = new SimulationNode(node1);

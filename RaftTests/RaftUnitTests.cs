@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using NSubstitute;
 using Raft;
+using System.Xml.Serialization;
 using Xunit;
 
 namespace RaftTests
@@ -157,20 +158,21 @@ namespace RaftTests
             // it becomes a leader.
 
             // Arrange
-            Node followerNode = new([]);
-            Node followerNode2 = new([followerNode]);
-            followerNode.OtherNodes = [followerNode2];
+            var followerNode = Substitute.For<INode>();
+			var followerNode2 = Substitute.For<INode>();
 
-            Node candidateNode = new([followerNode, followerNode2]);
-            candidateNode.TermNumber = 100;
+			Node candidateNode = new([]);
+            candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.OtherNodes = [followerNode, followerNode2];
 
             // Act
-            candidateNode.StartElection();
+            candidateNode.RecieveVoteResults(true, 100);
+            candidateNode.RecieveVoteResults(true, 100);
 
             Thread.Sleep(300);
 
             // Assert
-            Assert.Equal(Node.NodeState.Leader, candidateNode.State);   
+			Assert.Equal(Node.NodeState.Leader, candidateNode.State);   
         }
 
         // Testing #9
@@ -201,24 +203,27 @@ namespace RaftTests
 
         // Testing #10
         [Fact]
-        public void TestCase10_FollowersRespondeYesToVotes()
+        public async Task TestCase10_FollowersRespondeYesToVotes()
         {
-            // Arrange
-            var node = new Node([]);
-            node.VoteForId = Guid.Empty; // given a follower has not voted
-            node.TermNumber = 0; // and is in an earlier term
+            // A follower that has not voted and is in an earlier term responds to a RequestForVoteRPC with "yes".
 
-            var candidateNode = new Node([node]);
+            // Arrange
+            var follower = new Node([]);
+            follower.VoteForId = Guid.Empty; // given a follower has not voted
+            follower.TermNumber = 0; // and is in an earlier term
+
+            var candidateNode = Substitute.For<INode>();
+            candidateNode.OtherNodes = [follower];
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.TermNumber = 100;
 
-            // Act
-            candidateNode.SendVoteRequestRPCsToOtherNodes();
+			// Act
+            await follower.RecieveAVoteRequestFromCandidate(candidateNode.NodeId, candidateNode.TermNumber);
 
             // Assert
-            Assert.Equal(node.VoteForId, candidateNode.NodeId); // Node recorded that they have voted for candidate
-            Assert.Contains(true, candidateNode.votesRecieved); // Candidate has recieved a yes
-        }
+            Assert.Equal(follower.VoteForId, candidateNode.NodeId); // Node recorded that they have voted for candidate
+            Assert.Equal(follower.VotedForTermNumber, candidateNode.TermNumber);
+		}
 
         // Testing #11
         [Fact]
@@ -303,40 +308,69 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
         }
 
+		// Testing #14
+		[Fact]
+		public async Task TestCase14_SecondVoteRequestInSameTermRespondNo()
+		{
+			// 14. If a node receives a second request for a vote for the same term, it should respond "no". 
 
-        // Testing #14
-        [Fact]
-        public void TestCase14_SecondVoteRequestInSameTermRespondNo()
-        {
-            // Arrange
-            Node node = new Node( []);
-            node.TermNumber = 1;
+			// Arrange
+			Node node = new([]);
 
-            Node candidateNode = new Node([node]);
-            candidateNode.State = Node.NodeState.Candidate;
-            candidateNode.TermNumber = 100;
+			var c1 = Substitute.For<INode>();
+            c1.TermNumber = 100;
+            c1.NodeId = Guid.NewGuid();
+			var c2 = Substitute.For<INode>();
+            c2.TermNumber = 100;
+            c2.NodeId = Guid.NewGuid();
 
-            Node candidateNode2 = new Node([node, candidateNode]);
-            candidateNode2.State = Node.NodeState.Candidate;
-            candidateNode2.TermNumber = 100;
-
-            candidateNode.OtherNodes = [node, candidateNode2];
+            node.OtherNodes = [c1, c2];
+            c1.OtherNodes = [node, c2];
+            c2.OtherNodes = [node, c1];
 
             // Act
-            candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes in term 100
-            candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for term 100 is rejected
+            await node.RecieveAVoteRequestFromCandidate(c1.NodeId, c1.TermNumber);
+            await node.RecieveAVoteRequestFromCandidate(c2.NodeId, c2.TermNumber);
 
-            // Assert
-            Assert.Equal(node.VoteForId, candidateNode.NodeId);
-            Assert.NotEqual(candidateNode2.NodeId, node.VoteForId);
+			// Assert
+			c1.Received(1).RecieveVoteResults(true, Arg.Any<int>());
+			c2.Received(1).RecieveVoteResults(false, Arg.Any<int>());
+		}
 
-            Assert.Equal(100, node.VotedForTermNumber);
-            Assert.Contains(true, candidateNode.votesRecieved);
-            Assert.Contains(false, candidateNode2.votesRecieved);
-        }
 
-        // Testing #15
-        [Fact]
+		//// Testing #14
+		//[Fact]
+		//      public void TestCase14_SecondVoteRequestInSameTermRespondNo()
+		//      {
+		//          // Arrange
+		//          Node node = new Node( []);
+		//          node.TermNumber = 1;
+
+		//          Node candidateNode = new Node([node]);
+		//          candidateNode.State = Node.NodeState.Candidate;
+		//          candidateNode.TermNumber = 100;
+
+		//          Node candidateNode2 = new Node([node, candidateNode]);
+		//          candidateNode2.State = Node.NodeState.Candidate;
+		//          candidateNode2.TermNumber = 100;
+
+		//          candidateNode.OtherNodes = [node, candidateNode2];
+
+		//          // Act
+		//          candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes in term 100
+		//          candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for term 100 is rejected
+
+		//          // Assert
+		//          Assert.Equal(node.VoteForId, candidateNode.NodeId);
+		//          Assert.NotEqual(candidateNode2.NodeId, node.VoteForId);
+
+		//          Assert.Equal(100, node.VotedForTermNumber);
+		//          Assert.Contains(true, candidateNode.votesRecieved);
+		//          Assert.Contains(false, candidateNode2.votesRecieved);
+		//      }
+
+		// Testing #15
+		[Fact]
         public void TestCase15_SecondVoteRequestFromNodeInFutureTermVotesYes()
         {
             // 15.If a node receives a second request for a vote for a future term, it should vote for that node.
@@ -408,19 +442,28 @@ namespace RaftTests
 
         // Testing #18
         [Fact]
-        public void TestCase18_AppendEntriesFromPreviousTermsAreRejected()
+        public async Task TestCase18_AppendEntriesFromPreviousTermsAreRejected()
         {
-            // Arrange
-            var node = new Node([]);
-            node.State = Node.NodeState.Follower;
-            node.TermNumber = 2;
+			// Given a candidate receives an AppendEntries from a previous term, then it rejects.
 
-            // Act
-            var result = node.RecieveAVoteRequestFromCandidate(Guid.NewGuid(), 1);
+			// Arrange
+			var leader = new Node([]);
+			leader.TermNumber = 2;
 
-            // Assert
-            Assert.False(result);
-        }
+			var candidateNode = Substitute.For<INode>();
+            leader.TermNumber = 100;
+
+            candidateNode.OtherNodes = [leader];
+            leader.OtherNodes = [candidateNode];
+
+			// Act
+			await leader.RespondToAppendEntriesRPC(leader.NodeId, 2);
+
+			// Assert
+			candidateNode.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
+			candidateNode.Received(1).RespondBackToLeader(false, 100);
+
+		}
 
         // Testing #19
         [Fact]

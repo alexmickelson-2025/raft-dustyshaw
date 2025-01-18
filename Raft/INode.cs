@@ -1,20 +1,38 @@
-﻿namespace Raft
+﻿
+
+
+
+
+
+namespace Raft
 {
-    public interface INode
-    {
-        int ElectionTimeout { get; set; }
-        INode[] OtherNodes { get; set; }
-        Node.NodeState State { get; set; }
-		public Guid LeaderId { get; set; }
+	public interface INode
+	{
+		System.Timers.Timer aTimer { get; set; }
+		int ElectionTimeout { get; set; }
+		int HeartbeatTimeout { get; }
+		Guid LeaderId { get; set; }
+		int NetworkRequestDelay { get; set; }
+		Guid NodeId { get; set; }
+		INode[] OtherNodes { get; set; }
+		Node.NodeState State { get; set; }
 		int TermNumber { get; set; }
-		public DateTime WhenTimerStarted { get; set; }
-		public System.Timers.Timer aTimer { get; set; }
+		int VotedForTermNumber { get; set; }
+		Guid VoteForId { get; set; }
+		List<bool> votesRecieved { get; set; }
+		DateTime WhenTimerStarted { get; set; }
 
-
-		void RespondToAppendEntriesRPC(Guid leaderId, int termNumber);
-        void SendAppendEntriesRPC();
-        void StartElection();
-        void SendVoteRequestRPCsToOtherNodes();
-        bool RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
-    }
+		void BecomeLeader();
+		void DetermineElectionResults();
+		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
+		void RecieveVoteResults(bool result, int termNumber);
+		Task RespondToAppendEntriesRPC(Guid leaderId, int TermNumber);
+		void SendAppendEntriesRPC();
+		Task SendMyVoteToCandidate(Guid candidateId, bool result);
+		void SendVoteRequestRPCsToOtherNodes();
+		void StartElection();
+		void TimeoutHasPassed();
+		void TimeoutHasPassedForLeaders();
+		void RespondBackToLeader(bool response, int myTermNumber);
+	}
 }
