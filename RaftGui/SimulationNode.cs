@@ -13,8 +13,6 @@ public class SimulationNode : INode
 	public System.Timers.Timer aTimer { get => ((INode)InnerNode).aTimer; set => ((INode)InnerNode).aTimer = value; }
 	public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
 
-	//public static double IntervalScalar;
-
 	public int HeartbeatTimeout => ((INode)InnerNode).HeartbeatTimeout;
 
 	public Guid LeaderId { get => ((INode)InnerNode).LeaderId; set => ((INode)InnerNode).LeaderId = value; }
@@ -27,6 +25,8 @@ public class SimulationNode : INode
 	public Guid VoteForId { get => ((INode)InnerNode).VoteForId; set => ((INode)InnerNode).VoteForId = value; }
 	public List<bool> votesRecieved { get => ((INode)InnerNode).votesRecieved; set => ((INode)InnerNode).votesRecieved = value; }
 	public DateTime WhenTimerStarted { get => ((INode)InnerNode).WhenTimerStarted; set => ((INode)InnerNode).WhenTimerStarted = value; }
+	public int LowerBoundElectionTime { get => ((INode)InnerNode).LowerBoundElectionTime; set => ((INode)InnerNode).LowerBoundElectionTime = value; }
+	public int UpperBoundElectionTime { get => ((INode)InnerNode).UpperBoundElectionTime; set => ((INode)InnerNode).UpperBoundElectionTime = value; }
 
 	public void BecomeLeader()
 	{

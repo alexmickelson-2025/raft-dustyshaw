@@ -22,6 +22,9 @@ namespace Raft
 		List<bool> votesRecieved { get; set; }
 		DateTime WhenTimerStarted { get; set; }
 
+		int LowerBoundElectionTime { get; set; }
+		int UpperBoundElectionTime { get; set; }
+
 		void BecomeLeader();
 		void DetermineElectionResults();
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);

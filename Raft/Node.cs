@@ -22,13 +22,13 @@ namespace Raft
 
 		public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
-		public int lowerBoundElectionTime = 150;
-		public int upperBoundElectionTime = 300;
+		public int LowerBoundElectionTime { get; set; } = 150;
+		public int UpperBoundElectionTime { get; set; } = 300;
 
 
 		public Node(Node[] OtherNodes)
 		{
-			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
+			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
@@ -40,10 +40,7 @@ namespace Raft
 
 		public Node(Node[] OtherNodes, int NetworkRequestDelay, int IntervalScalar)
 		{
-			lowerBoundElectionTime = lowerBoundElectionTime * IntervalScalar;
-			upperBoundElectionTime = upperBoundElectionTime * IntervalScalar;
-			HeartbeatTimeout = HeartbeatTimeout * IntervalScalar;
-			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
+			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
@@ -105,7 +102,7 @@ namespace Raft
 			}
 
 			// Looks good, I'll keep you as my leader
-			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
+			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.LeaderId = leaderId;
 		}
 
@@ -171,7 +168,7 @@ namespace Raft
 			this.State = NodeState.Candidate;
 			this.VoteForId = this.NodeId;
 			this.TermNumber = this.TermNumber + 1;
-			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
+			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;

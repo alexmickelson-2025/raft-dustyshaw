@@ -11,7 +11,7 @@
 		this.IntervalScalar) seconds.
 	<br>
 	<input type="range" id="speed" name="speed" min="1" max="100" @bind:event="oninput"
-	@bind=SimulationNode.IntervalScalar @onchange=UpdateTimer /> @SimulationNode.IntervalScalar
+	@bind=this.IntervalScalar @onchange=UpdateTimer /> @this.IntervalScalar
 </label>
 </div>
 
@@ -39,6 +39,7 @@
 				<div class="@StateClass(node)">@node.State</div>
 				Election Timeout: @(@node.InnerNode.ElectionTimeout) ms. <h2>Term #@node.TermNumber</h2>
 				<p>@node.LeaderId</p>
+				<p>@node.LowerBoundElectionTime to @node.UpperBoundElectionTime</p>
 					
 					<div class="progress" role="progressbar" aria-label="Basic example"
 						 aria-valuenow=@(Math.Abs(timeoutRemaining)) aria-valuemin="0"
@@ -57,7 +58,7 @@
 	private Timer? timer;
 	bool isRunning = false;
 
-	public double IntervalScalar = 1;
+	public int IntervalScalar = 1;
 
 	public double NetworkRequestDelay = 1000;
 
@@ -87,8 +88,11 @@
 
 	public void UpdateTimer()
 	{
-		
-
+		foreach (var node in nodes)
+		{
+			node.InnerNode.LowerBoundElectionTime = 150 * IntervalScalar;
+			node.InnerNode.UpperBoundElectionTime = 300 * IntervalScalar;
+		}
 	}
 
 	string StateClass(SimulationNode node)
