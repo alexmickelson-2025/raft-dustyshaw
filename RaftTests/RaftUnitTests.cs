@@ -10,7 +10,7 @@ namespace RaftTests
     {
         // Testing #1
         [Fact]
-        public async void TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
+        public async Task TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
         {
             // Arrange
             Node leaderNode = new Node([]);
@@ -25,7 +25,7 @@ namespace RaftTests
             await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
-            followerNode.Received(2).RespondToAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
+            await followerNode.Received(2).RespondToAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
         }
 
         // Testing #2
@@ -133,7 +133,7 @@ namespace RaftTests
 
         // Testing #7
         [Fact]
-        public void TestCase7_WhenLeadersSendMessagesToMeThenIStayFollower()
+        public async Task TestCase7_WhenLeadersSendMessagesToMeThenIStayFollower()
         {
             // Arrange
             var followerNode = new Node( []);
@@ -142,7 +142,7 @@ namespace RaftTests
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
             // Act
             // Leader sends messages to me
-            followerNode.RespondToAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+            await followerNode.RespondToAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
             Thread.Sleep(100);
 
             // Assert
@@ -164,9 +164,11 @@ namespace RaftTests
 			Node candidateNode = new([]);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.OtherNodes = [followerNode, followerNode2];
+			followerNode.OtherNodes = [candidateNode, followerNode2];
+			followerNode2.OtherNodes = [candidateNode, followerNode];
 
-            // Act
-            candidateNode.RecieveVoteResults(true, 100);
+			// Act
+			candidateNode.RecieveVoteResults(true, 100);
             candidateNode.RecieveVoteResults(true, 100);
 
             Thread.Sleep(300);
@@ -175,8 +177,36 @@ namespace RaftTests
 			Assert.Equal(Node.NodeState.Leader, candidateNode.State);   
         }
 
-        // Testing #9
-        [Fact]
+		// Testing #8
+		[Fact]
+		public void _MajorityVotesWinsTest()
+		{
+			// 8. Given an election begins, when the candidate gets a majority of votes,
+			// it becomes a leader.
+
+			// Arrange
+			Node followerNode = new Node([]);
+			Node followerNode2 = new Node([]);
+
+			Node candidateNode = new([]);
+            candidateNode.TermNumber = 100;
+			candidateNode.State = Node.NodeState.Candidate;
+
+			candidateNode.OtherNodes = [followerNode, followerNode2];
+            followerNode.OtherNodes = [candidateNode, followerNode2];
+            followerNode2.OtherNodes = [candidateNode, followerNode];
+
+            // Act
+            candidateNode.SendVoteRequestRPCsToOtherNodes();
+            Thread.Sleep(300);
+
+			// Assert
+			Assert.Equal(Node.NodeState.Leader, candidateNode.State);
+            Assert.Contains(true, candidateNode.votesRecieved);
+		}
+
+		// Testing #9
+		[Fact]
         public void TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
         {
             Node followerNode1 = new([]);
@@ -336,38 +366,6 @@ namespace RaftTests
 			c1.Received(1).RecieveVoteResults(true, Arg.Any<int>());
 			c2.Received(1).RecieveVoteResults(false, Arg.Any<int>());
 		}
-
-
-		//// Testing #14
-		//[Fact]
-		//      public void TestCase14_SecondVoteRequestInSameTermRespondNo()
-		//      {
-		//          // Arrange
-		//          Node node = new Node( []);
-		//          node.TermNumber = 1;
-
-		//          Node candidateNode = new Node([node]);
-		//          candidateNode.State = Node.NodeState.Candidate;
-		//          candidateNode.TermNumber = 100;
-
-		//          Node candidateNode2 = new Node([node, candidateNode]);
-		//          candidateNode2.State = Node.NodeState.Candidate;
-		//          candidateNode2.TermNumber = 100;
-
-		//          candidateNode.OtherNodes = [node, candidateNode2];
-
-		//          // Act
-		//          candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes in term 100
-		//          candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for term 100 is rejected
-
-		//          // Assert
-		//          Assert.Equal(node.VoteForId, candidateNode.NodeId);
-		//          Assert.NotEqual(candidateNode2.NodeId, node.VoteForId);
-
-		//          Assert.Equal(100, node.VotedForTermNumber);
-		//          Assert.Contains(true, candidateNode.votesRecieved);
-		//          Assert.Contains(false, candidateNode2.votesRecieved);
-		//      }
 
 		// Testing #15
 		[Fact]

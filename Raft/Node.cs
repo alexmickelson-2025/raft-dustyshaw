@@ -86,9 +86,9 @@ namespace Raft
 			if (this.State == Node.NodeState.Candidate && TermNumber >= this.TermNumber)
 			{
 				this.State = Node.NodeState.Follower; // I heard from someone with greater term #
-				
 			}
-			if (TermNumber <= this.TermNumber)
+
+			if (TermNumber < this.TermNumber)
 			{
 				foreach (var n in OtherNodes)
 				{
@@ -97,6 +97,7 @@ namespace Raft
 				}
 			}
 
+			// Looks good, I'll keep you as my leader
 			this.ElectionTimeout = Random.Shared.Next(150, 300);
 			this.LeaderId = leaderId;
 		}
@@ -135,14 +136,15 @@ namespace Raft
 		public async Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
 		{
 			// as a server, I recieve a vote request from a candidate
+			bool result = true;
 			if (lastLogTerm < this.TermNumber || lastLogTerm == this.VotedForTermNumber)
 			{
-				await SendMyVoteToCandidate(candidateId, false);
-				return;
+				result = false;
 			}
+
 			this.VoteForId = candidateId;
 			this.VotedForTermNumber = lastLogTerm;
-			await SendMyVoteToCandidate(candidateId, true);
+			await SendMyVoteToCandidate(candidateId, result);
 		}
 
 		public async Task SendMyVoteToCandidate(Guid candidateId, bool result)
