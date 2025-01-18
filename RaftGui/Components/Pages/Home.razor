@@ -7,11 +7,11 @@
 
 <div>
 <label for="speed">
-		Election timeout between @(150 * IntervalScalar) and @(300 *
-		IntervalScalar) seconds.
+		Election timeout between @(150 * this.IntervalScalar) and @(300 *
+		this.IntervalScalar) seconds.
 	<br>
 	<input type="range" id="speed" name="speed" min="1" max="100" @bind:event="oninput"
-	@bind=IntervalScalar @onchange=UpdateTimer /> @IntervalScalar
+	@bind=SimulationNode.IntervalScalar @onchange=UpdateTimer /> @SimulationNode.IntervalScalar
 </label>
 </div>
 
@@ -57,7 +57,7 @@
 	private Timer? timer;
 	bool isRunning = false;
 
-	public int IntervalScalar = 50;
+	public double IntervalScalar = 1;
 
 	public double NetworkRequestDelay = 1000;
 
@@ -87,7 +87,7 @@
 
 	public void UpdateTimer()
 	{
-
+		
 
 	}
 

@@ -13,6 +13,8 @@ public class SimulationNode : INode
 	public System.Timers.Timer aTimer { get => ((INode)InnerNode).aTimer; set => ((INode)InnerNode).aTimer = value; }
 	public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
 
+	//public static double IntervalScalar;
+
 	public int HeartbeatTimeout => ((INode)InnerNode).HeartbeatTimeout;
 
 	public Guid LeaderId { get => ((INode)InnerNode).LeaderId; set => ((INode)InnerNode).LeaderId = value; }

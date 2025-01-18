@@ -22,9 +22,13 @@ namespace Raft
 
 		public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
+		public int lowerBoundElectionTime = 150;
+		public int upperBoundElectionTime = 300;
+
+
 		public Node(Node[] OtherNodes)
 		{
-			this.ElectionTimeout = Random.Shared.Next(150, 300);
+			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
@@ -34,9 +38,12 @@ namespace Raft
 			this.OtherNodes = OtherNodes;
 		}
 
-		public Node(Node[] OtherNodes, int NetworkRequestDelay)
+		public Node(Node[] OtherNodes, int NetworkRequestDelay, int IntervalScalar)
 		{
-			this.ElectionTimeout = Random.Shared.Next(150, 300);
+			lowerBoundElectionTime = lowerBoundElectionTime * IntervalScalar;
+			upperBoundElectionTime = upperBoundElectionTime * IntervalScalar;
+			HeartbeatTimeout = HeartbeatTimeout * IntervalScalar;
+			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
@@ -98,7 +105,7 @@ namespace Raft
 			}
 
 			// Looks good, I'll keep you as my leader
-			this.ElectionTimeout = Random.Shared.Next(150, 300);
+			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
 			this.LeaderId = leaderId;
 		}
 
@@ -164,7 +171,7 @@ namespace Raft
 			this.State = NodeState.Candidate;
 			this.VoteForId = this.NodeId;
 			this.TermNumber = this.TermNumber + 1;
-			this.ElectionTimeout = Random.Shared.Next(150, 300);
+			this.ElectionTimeout = Random.Shared.Next(lowerBoundElectionTime, upperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
