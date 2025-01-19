@@ -116,6 +116,7 @@ namespace Raft
 			// Looks good, I'll keep you as my leader
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.LeaderId = leaderId;
+			WhenTimerStarted = DateTime.Now;
 		}
 
 		public void RespondBackToLeader(bool response, int myTermNumber)
