@@ -40,7 +40,13 @@ public class SimulationNode : INode
 
 	public Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
 	{
-		return ((INode)InnerNode).RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
+		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+		{
+			await InnerNode.RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
+		});
+		return Task.CompletedTask;
+
+		//return ((INode)InnerNode).RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
 	}
 
 	public void RecieveVoteResults(bool result, int termNumber)
@@ -55,7 +61,13 @@ public class SimulationNode : INode
 
 	public Task RespondToAppendEntriesRPC(Guid leaderId, int TermNumber)
 	{
-		return ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId, TermNumber);
+		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+		{
+			await InnerNode.RespondToAppendEntriesRPC(leaderId, TermNumber);
+		});
+		return Task.CompletedTask;
+
+		//return ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId, TermNumber);
 	}
 
 	public void SendAppendEntriesRPC()
@@ -65,7 +77,12 @@ public class SimulationNode : INode
 
 	public Task SendMyVoteToCandidate(Guid candidateId, bool result)
 	{
-		return ((INode)InnerNode).SendMyVoteToCandidate(candidateId, result);
+		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+		{
+			await InnerNode.SendMyVoteToCandidate(candidateId, result);
+		});
+		return Task.CompletedTask;
+		//return ((INode)InnerNode).SendMyVoteToCandidate(candidateId, result);
 	}
 
 	public void SendVoteRequestRPCsToOtherNodes()
