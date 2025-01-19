@@ -8,7 +8,7 @@
 <div>
 <label for="speed">
 		Election timeout between @(150 * this.IntervalScalar) and @(300 *
-		this.IntervalScalar) seconds.
+		this.IntervalScalar) ms.
 	<br>
 	<input type="range" id="speed" name="speed" min="1" max="100" @bind:event="oninput"
 	@bind=this.IntervalScalar @onchange=UpdateTimer /> @this.IntervalScalar
@@ -29,13 +29,8 @@
 
 <div class="row">
 @foreach(var node in nodes) {
-	//var timeoutRemaining = (DateTime.Now.Millisecond - node.WhenTimerStarted.Millisecond);
-		//var maxIntervalSeconds = 300 * this.IntervalScalar;
-		//var percentageRemaining = (int)(100 * (timeoutRemaining / maxIntervalSeconds));
-
-		//var timeoutRemaining = Math.Abs((DateTime.Now.Millisecond - node.InnerNode.WhenTimerStarted.Millisecond) * 1000);
 		var timeoutRemaining = Math.Abs((DateTime.Now - node.InnerNode.WhenTimerStarted).TotalMilliseconds);
-		var maxIntervalSeconds = 300 * this.IntervalScalar * 1000; // converting to milliseconds
+		var maxIntervalSeconds = 300 * this.IntervalScalar * 100; // converting to milliseconds
 		var percentageRemaining = (int)(100 * (timeoutRemaining / maxIntervalSeconds));
 
 
@@ -44,15 +39,12 @@
 			<div class="d-flex flex-column justify-content-between">
 				<strong>@node.InnerNode.NodeId</strong>
 				<div class="@StateClass(node)">@node.State</div>
-				Election Timeout: @(@node.InnerNode.ElectionTimeout) ms. 
+					<p>Election Timeout: @(@node.InnerNode.ElectionTimeout) ms.</p>
 				<h2>Term #@node.TermNumber</h2>
 				<p>Leader Id: @node.LeaderId</p>
-					 <p>Timeout Remaining = @timeoutRemaining</p>
-					<p>Max = @maxIntervalSeconds</p>
-					<p>% (@(100000 * timeoutRemaining / maxIntervalSeconds))</p>
 					<div class="progress" role="progressbar" aria-label="Basic example"
-						 aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
-						 aria-valuemax="@(maxIntervalSeconds)">
+							aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
+							aria-valuemax="@(maxIntervalSeconds)">
 						<div class="progress-bar bg-dark-subtle" style="width: @(10000 * timeoutRemaining / maxIntervalSeconds)%;"></div>
 					</div>
 			</div>
@@ -67,7 +59,7 @@
 	private Timer? timer;
 	bool isRunning = false;
 
-	public int IntervalScalar = 1;
+	public int IntervalScalar = 2;
 
 	public double NetworkRequestDelay = 1000;
 
