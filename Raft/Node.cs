@@ -26,26 +26,36 @@ namespace Raft
 		public int UpperBoundElectionTime { get; set; } = 300;
 
 
-		public Node(Node[] OtherNodes)
+		public Node(Node[] OtherNodes, int? IntervalScalar)
 		{
+			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
+			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
+			HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
+
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
-
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
 			aTimer.AutoReset = false;
 			aTimer.Start();
+			WhenTimerStarted = DateTime.Now;
 
 			this.OtherNodes = OtherNodes;
 		}
 
-		public Node(Node[] OtherNodes, int NetworkRequestDelay, int IntervalScalar)
+		public Node(Node[] OtherNodes, int NetworkRequestDelay, int? IntervalScalar)
 		{
+			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
+			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
+			HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
+
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
 			aTimer.AutoReset = false;
 			aTimer.Start();
+			WhenTimerStarted = DateTime.Now;
+
 
 			this.OtherNodes = OtherNodes;
 			this.NetworkRequestDelay = NetworkRequestDelay;
@@ -73,6 +83,7 @@ namespace Raft
 		{
 			SendAppendEntriesRPC();
 			aTimer.Start();
+			WhenTimerStarted = DateTime.Now;
 		}
 
 		public void SendAppendEntriesRPC()

@@ -29,22 +29,31 @@
 
 <div class="row">
 @foreach(var node in nodes) {
-	var timeoutRemaining = (DateTime.Now.Millisecond - node.WhenTimerStarted.Millisecond);
-		var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining)  / node.ElectionTimeout));
+	//var timeoutRemaining = (DateTime.Now.Millisecond - node.WhenTimerStarted.Millisecond);
+		//var maxIntervalSeconds = 300 * this.IntervalScalar;
+		//var percentageRemaining = (int)(100 * (timeoutRemaining / maxIntervalSeconds));
+
+		//var timeoutRemaining = Math.Abs((DateTime.Now.Millisecond - node.InnerNode.WhenTimerStarted.Millisecond) * 1000);
+		var timeoutRemaining = Math.Abs((DateTime.Now - node.InnerNode.WhenTimerStarted).TotalMilliseconds);
+		var maxIntervalSeconds = 300 * this.IntervalScalar * 1000; // converting to milliseconds
+		var percentageRemaining = (int)(100 * (timeoutRemaining / maxIntervalSeconds));
+
 
 	<div class="p-3 col-4">
 		<div class="border p-3 rounded-3">
 			<div class="d-flex flex-column justify-content-between">
 				<strong>@node.InnerNode.NodeId</strong>
 				<div class="@StateClass(node)">@node.State</div>
-				Election Timeout: @(@node.InnerNode.ElectionTimeout) ms. <h2>Term #@node.TermNumber</h2>
-				<p>@node.LeaderId</p>
-				<p>@node.LowerBoundElectionTime to @node.UpperBoundElectionTime</p>
-					
+				Election Timeout: @(@node.InnerNode.ElectionTimeout) ms. 
+				<h2>Term #@node.TermNumber</h2>
+				<p>Leader Id: @node.LeaderId</p>
+					 <p>Timeout Remaining = @timeoutRemaining</p>
+					<p>Max = @maxIntervalSeconds</p>
+					<p>% (@(100000 * timeoutRemaining / maxIntervalSeconds))</p>
 					<div class="progress" role="progressbar" aria-label="Basic example"
-						 aria-valuenow=@(Math.Abs(timeoutRemaining)) aria-valuemin="0"
-						 aria-valuemax="@(node.ElectionTimeout * 300)">
-						<div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;"></div>
+						 aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
+						 aria-valuemax="@(maxIntervalSeconds)">
+						<div class="progress-bar bg-dark-subtle" style="width: @(10000 * timeoutRemaining / maxIntervalSeconds)%;"></div>
 					</div>
 			</div>
 		</div>
@@ -64,9 +73,9 @@
 
 	void startSimulation()
 	{
-		var node1 = new Node([]);
-		var node2 = new Node([]);
-		var node3 = new Node([]);
+		var node1 = new Node([], IntervalScalar);
+		var node2 = new Node([], IntervalScalar);
+		var node3 = new Node([], IntervalScalar);
 
 
 		var simulation1 = new SimulationNode(node1);
@@ -93,21 +102,28 @@
 			node.InnerNode.LowerBoundElectionTime = 150 * IntervalScalar;
 			node.InnerNode.UpperBoundElectionTime = 300 * IntervalScalar;
 		}
+
+		 timer?.Dispose();
+    timer = new Timer(_ =>
+    {
+      InvokeAsync(StateHasChanged);
+    }, null, 0, 100 * (int)this.IntervalScalar); 
+
 	}
 
 	string StateClass(SimulationNode node)
 	{
 		if (node.State == Node.NodeState.Leader)
 		{
-			return "bg-primary text-white";
+			return "bg-primary text-white p-1 rounded";
 		}
 		if (node.State == Node.NodeState.Candidate)
 		{
-			return "bg-success text-white";
+			return "bg-success text-white p-1 rounded";
 		}
 		if (node.State == Node.NodeState.Follower)
 		{
-			return "bg-secondary text-white";
+			return "bg-secondary text-white p-1 rounded";
 		}
 		return "";
 	}

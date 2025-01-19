@@ -161,7 +161,7 @@ namespace RaftTests
             var followerNode = Substitute.For<INode>();
 			var followerNode2 = Substitute.For<INode>();
 
-			Node candidateNode = new([]);
+			Node candidateNode = new([], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.OtherNodes = [followerNode, followerNode2];
 			followerNode.OtherNodes = [candidateNode, followerNode2];
@@ -188,7 +188,7 @@ namespace RaftTests
 			Node followerNode = new Node([]);
 			Node followerNode2 = new Node([]);
 
-			Node candidateNode = new([]);
+			Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
 			candidateNode.State = Node.NodeState.Candidate;
 
@@ -209,12 +209,12 @@ namespace RaftTests
 		[Fact]
         public void TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
         {
-            Node followerNode1 = new([]);
-            Node followerNode2 = new([]);
-            Node followerNode3 = new([]);
-            Node followerNode4 = new([]);
+            Node followerNode1 = new([], null);
+            Node followerNode2 = new([], null);
+            Node followerNode3 = new([], null);
+            Node followerNode4 = new([], null);
 
-            Node candidateNode = new([]);
+            Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
             candidateNode.ElectionTimeout = 9999999;
             candidateNode.State = Node.NodeState.Candidate;
@@ -345,7 +345,7 @@ namespace RaftTests
 			// 14. If a node receives a second request for a vote for the same term, it should respond "no". 
 
 			// Arrange
-			Node node = new([]);
+			Node node = new([], null);
 
 			var c1 = Substitute.For<INode>();
             c1.TermNumber = 100;
