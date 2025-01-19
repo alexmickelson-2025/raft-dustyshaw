@@ -39,14 +39,14 @@
 			<div class="d-flex flex-column justify-content-between">
 				<strong>@node.InnerNode.NodeId</strong>
 				<div class="@StateClass(node)">@node.State</div>
-					<p>Election Timeout: @(@node.InnerNode.ElectionTimeout) ms.</p>
+				<p>Election Timeout: @(@node.InnerNode.ElectionTimeout) ms.</p>
 				<h2>Term #@node.TermNumber</h2>
 				<p>Leader Id: @node.LeaderId</p>
-					<div class="progress" role="progressbar" aria-label="Basic example"
-							aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
-							aria-valuemax="@(maxIntervalSeconds)">
-						<div class="progress-bar bg-dark-subtle" style="width: @(10000 * timeoutRemaining / maxIntervalSeconds)%;"></div>
-					</div>
+				<div class="progress" role="progressbar" aria-label="Basic example"
+						aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
+						aria-valuemax="@(maxIntervalSeconds)">
+					<div class="progress-bar bg-dark-subtle" style="width: @(10000 * timeoutRemaining / maxIntervalSeconds)%;"></div>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -70,6 +70,7 @@ namespace Raft
 			aTimer.AutoReset = false;
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
+			this.LeaderId = this.NodeId;
 
 			SendAppendEntriesRPC();
 		}
