@@ -26,11 +26,12 @@ namespace Raft
 		public int UpperBoundElectionTime { get; set; } = 300;
 
 
-		public Node(Node[] OtherNodes, int? IntervalScalar)
+		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{
 			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
 			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
 			HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
+			NetworkRequestDelay = NetworkDelayInMs ?? 0;	
 
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			aTimer = new System.Timers.Timer(ElectionTimeout);
@@ -42,24 +43,24 @@ namespace Raft
 			this.OtherNodes = OtherNodes;
 		}
 
-		public Node(Node[] OtherNodes, int NetworkRequestDelay, int? IntervalScalar)
-		{
-			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
-			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
-			HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
+		//public Node(Node[] OtherNodes, int NetworkRequestDelay, int? IntervalScalar)
+		//{
+		//	LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
+		//	UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
+		//	HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
 
-			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
-			aTimer = new System.Timers.Timer(ElectionTimeout);
+		//	this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
+		//	aTimer = new System.Timers.Timer(ElectionTimeout);
 
-			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
-			aTimer.AutoReset = false;
-			aTimer.Start();
-			WhenTimerStarted = DateTime.Now;
+		//	aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
+		//	aTimer.AutoReset = false;
+		//	aTimer.Start();
+		//	WhenTimerStarted = DateTime.Now;
 
 
-			this.OtherNodes = OtherNodes;
-			this.NetworkRequestDelay = NetworkRequestDelay;
-		}
+		//	this.OtherNodes = OtherNodes;
+		//	this.NetworkRequestDelay = NetworkRequestDelay;
+		//}
 
 		public void BecomeLeader()
 		{

@@ -61,13 +61,13 @@
 
 	public int IntervalScalar = 2;
 
-	public double NetworkRequestDelay = 1000;
+	public int NetworkRequestDelay = 1000;
 
 	void startSimulation()
 	{
-		var node1 = new Node([], IntervalScalar);
-		var node2 = new Node([], IntervalScalar);
-		var node3 = new Node([], IntervalScalar);
+		var node1 = new Node([], IntervalScalar, NetworkRequestDelay);
+		var node2 = new Node([], IntervalScalar, NetworkRequestDelay);
+		var node3 = new Node([], IntervalScalar, NetworkRequestDelay);
 
 
 		var simulation1 = new SimulationNode(node1);
