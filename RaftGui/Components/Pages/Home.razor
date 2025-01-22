@@ -17,7 +17,7 @@
 
 <div>
 	<label for="NetworkRequestDelay">
-		Network Delay @FormatMilliSeconds(NetworkRequestDelay) seconds
+		Network Delay @NetworkRequestDelay milliseconds
 		<br>
 		<input type="range" id="NetworkRequestDelay" name="NetworkRequestDelay" min="10" max="10000"
 			   @bind:event="oninput" @bind=NetworkRequestDelay />
@@ -37,11 +37,11 @@
 	<div class="p-3 col-4">
 		<div class="border p-3 rounded-3">
 			<div class="d-flex flex-column justify-content-between">
-				<strong>@node.InnerNode.NodeId</strong>
+				<h1> @(FormatId(node.InnerNode.NodeId))</h1>
 				<div class="@StateClass(node)">@node.State</div>
 				<p>Election Timeout: @(@node.InnerNode.ElectionTimeout) ms.</p>
 				<h2>Term #@node.TermNumber</h2>
-				<p>Leader Id: @node.LeaderId</p>
+				<p>Leader Id: @(FormatId(node.LeaderId) )</p>
 				<div class="progress" role="progressbar" aria-label="Basic example"
 						aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
 						aria-valuemax="@(maxIntervalSeconds)">
@@ -61,7 +61,7 @@
 
 	public int IntervalScalar = 2;
 
-	public int NetworkRequestDelay = 1000;
+	public int NetworkRequestDelay = 10;
 
 	void startSimulation()
 	{
@@ -95,11 +95,11 @@
 			node.InnerNode.UpperBoundElectionTime = 300 * IntervalScalar;
 		}
 
-		 timer?.Dispose();
-    timer = new Timer(_ =>
-    {
-      InvokeAsync(StateHasChanged);
-    }, null, 0, 100 * (int)this.IntervalScalar); 
+		timer?.Dispose();
+		timer = new Timer(_ =>
+		{
+			InvokeAsync(StateHasChanged);
+		}, null, 0, 100 * (int)this.IntervalScalar); 
 
 	}
 
@@ -123,5 +123,10 @@
 	public static string FormatMilliSeconds(double milliSeconds)
 	{
 		return $"{milliSeconds / 1000.0:F1}";
+	}
+
+	public static string FormatId(Guid id)
+	{
+		return id.ToString("N").Substring(0, 4);
 	}
 }
