@@ -18,7 +18,7 @@ namespace Raft
 		public int TermNumber { get; set; } = 0;
 		public INode[] OtherNodes { get; set; }
 		public List<bool> votesRecieved { get; set; } = new();
-		public int NetworkRequestDelay { get; set; } = 1000;
+		public int NetworkRequestDelay { get; set; } = 0;
 
 		public NodeState State { get; set; } = NodeState.Follower; // nodes start as followers
 
@@ -42,25 +42,6 @@ namespace Raft
 
 			this.OtherNodes = OtherNodes;
 		}
-
-		//public Node(Node[] OtherNodes, int NetworkRequestDelay, int? IntervalScalar)
-		//{
-		//	LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
-		//	UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
-		//	HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
-
-		//	this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
-		//	aTimer = new System.Timers.Timer(ElectionTimeout);
-
-		//	aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
-		//	aTimer.AutoReset = false;
-		//	aTimer.Start();
-		//	WhenTimerStarted = DateTime.Now;
-
-
-		//	this.OtherNodes = OtherNodes;
-		//	this.NetworkRequestDelay = NetworkRequestDelay;
-		//}
 
 		public void BecomeLeader()
 		{
@@ -183,10 +164,15 @@ namespace Raft
 			this.VoteForId = this.NodeId;
 			this.TermNumber = this.TermNumber + 1;
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
+
+			//aTimer.Stop();
+			//aTimer.Dispose();
 			aTimer = new System.Timers.Timer(ElectionTimeout);
+			//aTimer.Elapsed += (s, e) => { StartElection(); };
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
 
+			// Send vote requests
 			SendVoteRequestRPCsToOtherNodes();
 		}
 	}

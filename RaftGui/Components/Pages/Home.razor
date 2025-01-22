@@ -19,7 +19,7 @@
 	<label for="NetworkRequestDelay">
 		Network Delay @NetworkRequestDelay milliseconds
 		<br>
-		<input type="range" id="NetworkRequestDelay" name="NetworkRequestDelay" min="10" max="10000"
+		<input type="range" id="NetworkRequestDelay" name="NetworkRequestDelay" min="0" max="10000"
 			   @bind:event="oninput" @bind=NetworkRequestDelay />
 	</label>
 </div>
@@ -61,7 +61,7 @@
 
 	public int IntervalScalar = 2;
 
-	public int NetworkRequestDelay = 10;
+	public int NetworkRequestDelay = 0;
 
 	void startSimulation()
 	{
