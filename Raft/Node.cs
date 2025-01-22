@@ -24,7 +24,10 @@ namespace Raft
 
 		public int LowerBoundElectionTime { get; set; } = 150;
 		public int UpperBoundElectionTime { get; set; } = 300;
-		public Log[] Entries { get; set; } = [];	
+
+
+		// Log Replications
+		public List<Entry> Entries { get; set; } = new();
 
 		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{
@@ -174,6 +177,14 @@ namespace Raft
 
 			// Send vote requests
 			SendVoteRequestRPCsToOtherNodes();
+		}
+
+		public void RecieveClientCommand(string command)
+		{
+			Entry l = new Entry(command);
+			l.TermReceived = this.TermNumber;
+
+			this.Entries.Add(l);	
 		}
 	}
 }

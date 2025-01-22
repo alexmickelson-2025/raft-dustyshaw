@@ -15,8 +15,7 @@ namespace RaftTests
 		{
 			// Arrange
 			Node n = new Node([], null, null);
-			Log l = new Log();
-			l.Command = "a";
+			Entry l = new Entry("set a");
 			n.Entries = [l];
 
 			// Act
@@ -24,6 +23,30 @@ namespace RaftTests
 
 			// Assert
 			Assert.True(n.Entries.Count() > 0);
+		}
+
+		// Testing #2
+		[Fact]
+		public void TestCase02_NodesRecieveCommands()
+		{
+			Node n = new Node([], null, null);
+			Entry l = new Entry("set a");
+
+			n.RecieveClientCommand(l.Command);
+
+
+			Assert.True(n.Entries.Count() > 0);
+			//Assert.Contains(l, n.Entries);
+		}
+
+		// Testing #3
+		[Fact]
+		public void TestCase02_NodesStartWithNoLogs()
+		{
+			Node n = new([], null, null);
+
+
+			Assert.True(n.Entries.Count() == 0);
 		}
 	}
 }
