@@ -24,7 +24,7 @@ namespace Raft
 
 		public int LowerBoundElectionTime { get; set; } = 150;
 		public int UpperBoundElectionTime { get; set; } = 300;
-
+		public Log[] Entries { get; set; } = [];	
 
 		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{

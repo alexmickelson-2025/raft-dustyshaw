@@ -6,7 +6,7 @@ using Xunit;
 
 namespace RaftTests
 {
-    public class RaftUnitTests
+    public class ElectionTests
     {
         // Testing #1
         [Fact]
