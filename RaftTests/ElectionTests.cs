@@ -25,7 +25,7 @@ namespace RaftTests
             await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
-            await followerNode.Received(2).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>());
+            await followerNode.Received(2).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
         }
 
         // Testing #2
@@ -142,7 +142,7 @@ namespace RaftTests
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
             // Act
             // Leader sends messages to me
-            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
+            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
             Thread.Sleep(100);
 
             // Assert
@@ -435,7 +435,7 @@ namespace RaftTests
             leaderNode.SendAppendEntriesRPC(); // Send heartbeat
 
             // Assert
-            followerNode.Received(1).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
         }
 
         // Testing #18
@@ -455,7 +455,7 @@ namespace RaftTests
             leader.OtherNodes = [candidateNode];
 
 			// Act
-			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex);
+			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex, Arg.Any<List<Entry>>());
 
 			// Assert
 			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
@@ -476,7 +476,7 @@ namespace RaftTests
             leaderNode.BecomeLeader();
 
             // Assert
-            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
         }
 
     }

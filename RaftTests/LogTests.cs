@@ -30,7 +30,7 @@ namespace RaftTests
 			n.RecieveClientCommand(l.Command);
 
 			// Assert
-			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
+			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
 		}
 
 
@@ -78,7 +78,7 @@ namespace RaftTests
 
 			// assert
 			// The follower should have recieved the leaders commit index (along with its id and term)
-			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex);
+			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex, Arg.Any<List<Entry>>());
 		}
 
 		// Testing #10
@@ -89,9 +89,12 @@ namespace RaftTests
 
 			// arrange
 			var f = new Node([], null, null);
+			List<Entry> entries = new List<Entry>();
+			Entry e = new Entry("set a");
+			entries.Add(e);	
 
 			// act
-			await f.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
+			await f.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), entries);
 
 			//assert
 			Assert.True(f.Entries.Count() > 0);	

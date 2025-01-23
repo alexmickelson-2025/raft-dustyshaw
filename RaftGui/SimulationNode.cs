@@ -61,11 +61,11 @@ public class SimulationNode : INode
 		((INode)InnerNode).RespondBackToLeader(response, myTermNumber);
 	}
 
-	public Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex)
+	public Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex, List<Entry> LeadersLog)
 	{
 		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
-			await InnerNode.RecieveAppendEntriesRPC(leaderId, TermNumber, CommitIndex);
+			await InnerNode.RecieveAppendEntriesRPC(leaderId, TermNumber, CommitIndex, LeadersLog);
 		});
 		return Task.CompletedTask;
 

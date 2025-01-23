@@ -30,7 +30,7 @@ namespace Raft
 		void DetermineElectionResults();
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
 		void RecieveVoteResults(bool result, int termNumber);
-		Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex);
+		Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex, List<Entry> LeadersLog);
 		void SendAppendEntriesRPC();
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
 		void SendVoteRequestRPCsToOtherNodes();

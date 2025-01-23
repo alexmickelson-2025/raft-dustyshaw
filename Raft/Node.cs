@@ -79,11 +79,11 @@ namespace Raft
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
-				node.RecieveAppendEntriesRPC(this.NodeId, this.TermNumber, this.CommitIndex);
+				node.RecieveAppendEntriesRPC(this.NodeId, this.TermNumber, this.CommitIndex, this.Entries);
 			}
 		}
 
-		public async Task RecieveAppendEntriesRPC(Guid leaderId, int LeadersTermNumber, int LeadersCommitIndex)
+		public async Task RecieveAppendEntriesRPC(Guid leaderId, int LeadersTermNumber, int LeadersCommitIndex, List<Entry> LeadersLog)
 		{
 			// As a follower, I have heard from the leader
 			if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
@@ -104,6 +104,10 @@ namespace Raft
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.LeaderId = leaderId;
 			WhenTimerStarted = DateTime.Now;
+
+			foreach (var l in LeadersLog) {
+				this.Entries.Add(l);
+			}
 		}
 
 		public void RespondBackToLeader(bool response, int myTermNumber)
