@@ -24,7 +24,7 @@ namespace RaftTests
 
 			var follower = Substitute.For<INode>();
 
-			n.OtherNodes = [follower];	
+			n.OtherNodes = [follower];
 
 			// Act
 			n.RecieveClientCommand(l.Command);
@@ -45,7 +45,7 @@ namespace RaftTests
 
 
 			Assert.True(n.Entries.Count() > 0);
-			
+
 			//Assert.StrictEqual([l], n.Entries);	// node should contain the log
 		}
 
@@ -81,9 +81,26 @@ namespace RaftTests
 			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex, Arg.Any<List<Entry>>());
 		}
 
+		// Testing #9
+		[Fact]
+		public void TestCase09_LeadersCommitEntriesByIncreasingTheirIndex()
+		{
+			//  the leader commits logs by incrementing its committed log index
+
+			// arrange
+			Node leader = new Node([], null, null);
+			int indexBefore = leader.CommitIndex;
+
+			// act
+			leader.CommitEntry();
+
+			// assert
+			Assert.True(leader.CommitIndex - 1 == indexBefore);
+		}
+
 		// Testing #10
 		[Fact]
-		public async Task TestCase10_FollowersAddEntriesToTheirLog()
+		public async Task TestCase10_FollowersAddOneEntryToTheirLog()
 		{
 			// 10. given a follower receives an appendentries with log(s) it will add those entries to its personal log
 
@@ -91,13 +108,45 @@ namespace RaftTests
 			var f = new Node([], null, null);
 			List<Entry> entries = new List<Entry>();
 			Entry e = new Entry("set a");
-			entries.Add(e);	
+			entries.Add(e);
 
 			// act
 			await f.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), entries);
 
 			//assert
-			Assert.True(f.Entries.Count() > 0);	
+			Assert.True(f.Entries.Count() > 0);
+			Assert.Contains(e, entries);
 		}
+
+		// Testing #10
+		[Fact]
+		public async Task TestCase10_FollowersAddMultipleEntriesToTheirLogInOrder()
+		{
+			// I want to make sure that the logs are appended in the order the follower recieved them.
+
+			// arrange
+			var f = new Node([], null, null);
+			f.Entries = new List<Entry> { new Entry("set a") };
+
+			List<Entry> entriesFromLeader = new List<Entry>();
+			Entry e1 = new("set a");
+			Entry e2 = new("set b");
+			entriesFromLeader.Add(e1);
+			entriesFromLeader.Add(e2);
+
+
+			// act
+			await f.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), entriesFromLeader);
+
+			//assert
+			// Check the order
+			var entriesList = f.Entries.ToList();
+			Assert.Equal(entriesList.Last(), e2);  // Ensure e2 is the last one in the list
+			Assert.Equal(entriesList[entriesList.Count - 2], e1);  // Ensure e is the one before the last one
+
+		}
+
+
+
 	}
 }

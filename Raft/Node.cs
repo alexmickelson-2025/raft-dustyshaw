@@ -195,5 +195,10 @@ namespace Raft
 
 			SendAppendEntriesRPC();
 		}
+
+		public void CommitEntry()
+		{
+			this.CommitIndex++;
+		}
 	}
 }
