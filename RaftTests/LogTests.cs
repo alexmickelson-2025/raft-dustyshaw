@@ -60,6 +60,14 @@ namespace RaftTests
 			Assert.True(n.Entries.Count() == 0);
 		}
 
+		// Testing #5
+		[Fact]
+		public void TestCase05_LeadersSendAppendEntriesRPCWithEntriesUpToCommittedIndex()
+		{
+			// leaders maintain an "nextIndex" for each follower that is the index
+			// of the next log entry the leader will send to that follower
+		}
+
 		// Testing #6
 		[Fact]
 		public void TestCase06_CommittedIndexIsIncludedInAppendEntriesRPC()

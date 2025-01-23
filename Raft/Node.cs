@@ -36,43 +36,60 @@ namespace Raft
 			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
 			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
 			HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
-			NetworkRequestDelay = NetworkDelayInMs ?? 0;	
+			NetworkRequestDelay = NetworkDelayInMs ?? 0;
 
-			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
+			StartElectionTimer();
+
+			this.OtherNodes = OtherNodes;
+		}
+
+		public void StartElectionTimer()
+		{
+			if (aTimer is not null)
+			{
+				aTimer.Stop();
+			}
+			int randomMs = new Random().Next(LowerBoundElectionTime, UpperBoundElectionTime);
+			this.ElectionTimeout = randomMs;
 			aTimer = new System.Timers.Timer(ElectionTimeout);
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
 			aTimer.AutoReset = false;
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
-
-			this.OtherNodes = OtherNodes;
 		}
 
 		public void BecomeLeader()
 		{
-			aTimer.Stop();
 			this.State = Node.NodeState.Leader;
+			this.LeaderId = this.NodeId;
 
+			StartLeaderTimer();
+
+			SendAppendEntriesRPC();
+		}
+
+		public void StartLeaderTimer()
+		{
+			aTimer.Stop();
 			aTimer = new System.Timers.Timer(HeartbeatTimeout);
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };
 			aTimer.AutoReset = false;
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
-
-			this.LeaderId = this.NodeId;
-			SendAppendEntriesRPC();
 		}
 
 		public void TimeoutHasPassed()
 		{
 			StartElection();
+
+			//StartElectionTimer();
 		}
 
 		public void TimeoutHasPassedForLeaders()
 		{
 			SendAppendEntriesRPC();
-			aTimer.Start();
-			WhenTimerStarted = DateTime.Now;
+
+			StartLeaderTimer();
 		}
 
 		public void SendAppendEntriesRPC()
@@ -99,8 +116,8 @@ namespace Raft
 			}
 
 			// Looks good, I'll keep you as my leader
-			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.LeaderId = leaderId;
+			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			WhenTimerStarted = DateTime.Now;
 
 			if (LeadersLog.Count > 0)
@@ -183,6 +200,7 @@ namespace Raft
 			this.State = NodeState.Candidate;
 			this.VoteForId = this.NodeId;
 			this.TermNumber = this.TermNumber + 1;
+
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 
 			//aTimer.Stop();
