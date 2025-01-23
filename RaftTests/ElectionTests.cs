@@ -25,7 +25,7 @@ namespace RaftTests
             await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
-            await followerNode.Received(2).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
+            await followerNode.Received(2).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>());
         }
 
         // Testing #2
@@ -40,7 +40,7 @@ namespace RaftTests
             leaderNode.OtherNodes = [followerNode];
 
             // Act
-            leaderNode.SendAppendEntriesRPC(0);
+            leaderNode.SendAppendEntriesRPC();
 
             // Assert
             Assert.Equal(followerNode.LeaderId, leaderNode.NodeId);
@@ -142,7 +142,7 @@ namespace RaftTests
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
             // Act
             // Leader sends messages to me
-            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
             Thread.Sleep(100);
 
             // Assert
@@ -290,7 +290,7 @@ namespace RaftTests
             node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC(node1.CommitIndex);
+            node1.SendAppendEntriesRPC();
 
             // Assert
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
@@ -311,7 +311,7 @@ namespace RaftTests
             node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC(node1.CommitIndex);
+            node1.SendAppendEntriesRPC();
 
             // Assert
             Assert.Equal(Node.NodeState.Candidate, candidateNode.State); // Candidate stays a candidate
@@ -332,7 +332,7 @@ namespace RaftTests
             node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC(node1.CommitIndex);
+            node1.SendAppendEntriesRPC();
 
             // Assert
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
@@ -432,10 +432,10 @@ namespace RaftTests
             followerNode.OtherNodes = [leaderNode];
 
             // Act
-            leaderNode.SendAppendEntriesRPC(leaderNode.CommitIndex); // Send heartbeat
+            leaderNode.SendAppendEntriesRPC(); // Send heartbeat
 
             // Assert
-            followerNode.Received(1).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>());
         }
 
         // Testing #18
@@ -445,26 +445,26 @@ namespace RaftTests
 			// Given a candidate receives an AppendEntries from a previous term, then it rejects.
 
 			// Arrange
-			var leader = new Node([], null, null);
+			var leader = Substitute.For<INode>();
 			leader.TermNumber = 2;
 
-			var candidateNode = Substitute.For<INode>();
-            leader.TermNumber = 100;
+			Node candidateNode = new([], null, null);
+            candidateNode.TermNumber = 100;
 
             candidateNode.OtherNodes = [leader];
             leader.OtherNodes = [candidateNode];
 
 			// Act
-			await leader.RecieveAppendEntriesRPC(leader.NodeId, 2);
+			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex);
 
 			// Assert
-			candidateNode.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
-			candidateNode.Received(1).RespondBackToLeader(false, 100);
+			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
+			leader.Received(1).RespondBackToLeader(false, 100);
 
 		}
 
-        // Testing #19
-        [Fact]
+		// Testing #19
+		[Fact]
         public void TestCase19_NewLeadersSendRPC()
         {
             // 19. When a candidate wins an election, it immediately sends a heartbeat.
@@ -476,7 +476,7 @@ namespace RaftTests
             leaderNode.BecomeLeader();
 
             // Assert
-            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
         }
 
     }

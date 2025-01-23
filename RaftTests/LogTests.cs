@@ -30,7 +30,7 @@ namespace RaftTests
 			n.RecieveClientCommand(l.Command);
 
 			// Assert
-			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>());
 		}
 
 
@@ -69,14 +69,14 @@ namespace RaftTests
 			leader.BecomeLeader();
 
 			var follower = Substitute.For<INode>();
-			leader.OtherNodes = [leader];
+			leader.OtherNodes = [follower];
 
 			// Act
 			leader.CommitIndex = 100;
 			leader.SendAppendEntriesRPC();
 
 			// assert
-			follower.Received(1).RecieveAppendEntriesRPC(leader.LeaderId, Arg.Any<int>(), leader.CommitIndex);
+			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex);
 
 		}
 	}

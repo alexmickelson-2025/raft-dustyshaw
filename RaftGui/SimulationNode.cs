@@ -29,7 +29,6 @@ public class SimulationNode : INode
 	public int UpperBoundElectionTime { get => ((INode)InnerNode).UpperBoundElectionTime; set => ((INode)InnerNode).UpperBoundElectionTime = value; }
 
 	public int CommitIndex { get => ((INode)InnerNode).CommitIndex; set => ((INode)InnerNode).CommitIndex = value; }
-	public int CommitIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
 	public void BecomeLeader()
 	{

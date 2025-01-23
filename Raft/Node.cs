@@ -83,15 +83,15 @@ namespace Raft
 			}
 		}
 
-		public async Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex)
+		public async Task RecieveAppendEntriesRPC(Guid leaderId, int LeadersTermNumber, int LeadersCommitIndex)
 		{
 			// As a follower, I have heard from the leader
-			if (this.State == Node.NodeState.Candidate && TermNumber >= this.TermNumber)
+			if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
 			{
 				this.State = Node.NodeState.Follower; // I heard from someone with greater term #
 			}
 
-			if (TermNumber < this.TermNumber)
+			if (LeadersTermNumber < this.TermNumber)
 			{
 				foreach (var n in OtherNodes)
 				{
@@ -108,6 +108,7 @@ namespace Raft
 
 		public void RespondBackToLeader(bool response, int myTermNumber)
 		{
+			// This is the leader
 			this.TermNumber = myTermNumber;
 			this.State = NodeState.Follower;
 		}
