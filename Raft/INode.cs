@@ -24,12 +24,13 @@ namespace Raft
 
 		int LowerBoundElectionTime { get; set; }
 		int UpperBoundElectionTime { get; set; }
+		int CommitIndex { get; set; }
 
 		void BecomeLeader();
 		void DetermineElectionResults();
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
 		void RecieveVoteResults(bool result, int termNumber);
-		Task RespondToAppendEntriesRPC(Guid leaderId, int TermNumber);
+		Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex);
 		void SendAppendEntriesRPC();
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
 		void SendVoteRequestRPCsToOtherNodes();

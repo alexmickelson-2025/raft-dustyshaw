@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System.Runtime.CompilerServices;
+using System.Timers;
 using Xunit.Sdk;
 
 namespace Raft
@@ -28,6 +29,7 @@ namespace Raft
 
 		// Log Replications
 		public List<Entry> Entries { get; set; } = new();
+		public int CommitIndex { get; set; } = 0;
 
 		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{
@@ -77,11 +79,11 @@ namespace Raft
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
-				node.RespondToAppendEntriesRPC(this.NodeId, this.TermNumber);
+				node.RecieveAppendEntriesRPC(this.NodeId, this.TermNumber, this.CommitIndex);
 			}
 		}
 
-		public async Task RespondToAppendEntriesRPC(Guid leaderId, int TermNumber)
+		public async Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex)
 		{
 			// As a follower, I have heard from the leader
 			if (this.State == Node.NodeState.Candidate && TermNumber >= this.TermNumber)
@@ -184,7 +186,9 @@ namespace Raft
 			Entry l = new Entry(command);
 			l.TermReceived = this.TermNumber;
 
-			this.Entries.Add(l);	
+			this.Entries.Add(l);
+
+			SendAppendEntriesRPC();
 		}
 	}
 }

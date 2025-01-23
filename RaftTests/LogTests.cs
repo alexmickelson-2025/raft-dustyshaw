@@ -1,4 +1,5 @@
-﻿using Raft;
+﻿using NSubstitute;
+using Raft;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,19 +12,27 @@ namespace RaftTests
 	{
 		// Testing #1
 		[Fact]
-		public void TestCase01_NodesHoldLogs()
+		public void TestCase01_LeadersSendRPCToFollowersWhenRecieveAnEntry()
 		{
+			// when a leader receives a client command, the leader sends the
+			// log entry in the next appendentries RPC to all nodes
+
 			// Arrange
 			Node n = new Node([], null, null);
 			Entry l = new Entry("set a");
 			n.Entries = [l];
 
+			var follower = Substitute.For<INode>();
+
+			n.OtherNodes = [follower];	
+
 			// Act
-			Thread.Sleep(600);
+			n.RecieveClientCommand(l.Command);
 
 			// Assert
-			Assert.True(n.Entries.Count() > 0);
+			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
 		}
+
 
 		// Testing #2
 		[Fact]
@@ -41,12 +50,34 @@ namespace RaftTests
 
 		// Testing #3
 		[Fact]
-		public void TestCase02_NodesStartWithNoLogs()
+		public void TestCase03_NodesStartWithNoLogs()
 		{
+			// Arrange and Act
 			Node n = new([], null, null);
 
-
+			// Assert
 			Assert.True(n.Entries.Count() == 0);
+		}
+
+		// Testing #6
+		[Fact]
+		public void TestCase6_CommittedIndexIsIncludedInAppendEntriesRPC()
+		{
+			// 6. Highest committed index from the leader is included in AppendEntries RPC's
+			// Arrange
+			var leader = new Node([], null, null);
+			leader.BecomeLeader();
+
+			var follower = Substitute.For<INode>();
+			leader.OtherNodes = [leader];
+
+			// Act
+			leader.CommitIndex = 100;
+			leader.SendAppendEntriesRPC();
+
+			// assert
+			follower.Received(1).RecieveAppendEntriesRPC(leader.LeaderId, Arg.Any<int>(), leader.CommitIndex);
+
 		}
 	}
 }

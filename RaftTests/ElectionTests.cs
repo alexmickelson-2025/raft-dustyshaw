@@ -25,7 +25,7 @@ namespace RaftTests
             await Task.Delay(atLeastTwoCyclesTime); 
 
             // Assert
-            await followerNode.Received(2).RespondToAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
+            await followerNode.Received(2).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
         }
 
         // Testing #2
@@ -40,7 +40,7 @@ namespace RaftTests
             leaderNode.OtherNodes = [followerNode];
 
             // Act
-            leaderNode.SendAppendEntriesRPC();
+            leaderNode.SendAppendEntriesRPC(0);
 
             // Assert
             Assert.Equal(followerNode.LeaderId, leaderNode.NodeId);
@@ -142,7 +142,7 @@ namespace RaftTests
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
             // Act
             // Leader sends messages to me
-            await followerNode.RespondToAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
             Thread.Sleep(100);
 
             // Assert
@@ -290,7 +290,7 @@ namespace RaftTests
             node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC();
+            node1.SendAppendEntriesRPC(node1.CommitIndex);
 
             // Assert
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
@@ -311,7 +311,7 @@ namespace RaftTests
             node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC();
+            node1.SendAppendEntriesRPC(node1.CommitIndex);
 
             // Assert
             Assert.Equal(Node.NodeState.Candidate, candidateNode.State); // Candidate stays a candidate
@@ -332,7 +332,7 @@ namespace RaftTests
             node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC();
+            node1.SendAppendEntriesRPC(node1.CommitIndex);
 
             // Assert
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
@@ -432,10 +432,10 @@ namespace RaftTests
             followerNode.OtherNodes = [leaderNode];
 
             // Act
-            leaderNode.SendAppendEntriesRPC(); // Send heartbeat
+            leaderNode.SendAppendEntriesRPC(leaderNode.CommitIndex); // Send heartbeat
 
             // Assert
-            followerNode.Received(1).RespondToAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>());
         }
 
         // Testing #18
@@ -455,7 +455,7 @@ namespace RaftTests
             leader.OtherNodes = [candidateNode];
 
 			// Act
-			await leader.RespondToAppendEntriesRPC(leader.NodeId, 2);
+			await leader.RecieveAppendEntriesRPC(leader.NodeId, 2);
 
 			// Assert
 			candidateNode.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
@@ -476,7 +476,7 @@ namespace RaftTests
             leaderNode.BecomeLeader();
 
             // Assert
-            followerNode.Received(1).RespondToAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>());
         }
 
     }
