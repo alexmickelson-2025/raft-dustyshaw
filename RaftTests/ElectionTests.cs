@@ -142,7 +142,7 @@ namespace RaftTests
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
             // Act
             // Leader sends messages to me
-            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
+            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), new List<Entry>());
             Thread.Sleep(100);
 
             // Assert
@@ -455,7 +455,7 @@ namespace RaftTests
             leader.OtherNodes = [candidateNode];
 
 			// Act
-			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex, Arg.Any<List<Entry>>());
+			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex, new List<Entry>());
 
 			// Assert
 			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
