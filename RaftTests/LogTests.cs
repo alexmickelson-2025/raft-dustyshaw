@@ -61,7 +61,7 @@ namespace RaftTests
 
 		// Testing #6
 		[Fact]
-		public void TestCase6_CommittedIndexIsIncludedInAppendEntriesRPC()
+		public void TestCase06_CommittedIndexIsIncludedInAppendEntriesRPC()
 		{
 			// 6. Highest committed index from the leader is included in AppendEntries RPC's
 			// Arrange
@@ -76,8 +76,8 @@ namespace RaftTests
 			leader.SendAppendEntriesRPC();
 
 			// assert
+			// The follower should have recieved the leaders commit index (along with its id and term)
 			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex);
-
 		}
 	}
 }
