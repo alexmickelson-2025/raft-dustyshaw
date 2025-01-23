@@ -45,7 +45,7 @@ namespace RaftTests
 
 
 			Assert.True(n.Entries.Count() > 0);
-			//Assert.Contains(l, n.Entries);
+			Assert.StrictEqual([l], n.Entries);	// node should contain the log
 		}
 
 		// Testing #3
@@ -78,6 +78,20 @@ namespace RaftTests
 			// assert
 			// The follower should have recieved the leaders commit index (along with its id and term)
 			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex);
+		}
+
+		// Testing #10
+		[Fact]
+		public void TestCase10_FollowersAddEntriesToTheirLog()
+		{
+			// 10. given a follower receives an appendentries with log(s) it will add those entries to its personal log
+
+			// arrange
+			
+
+			// act
+
+			//assert
 		}
 	}
 }
