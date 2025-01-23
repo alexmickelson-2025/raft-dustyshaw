@@ -52,13 +52,14 @@ namespace Raft
 		{
 			aTimer.Stop();
 			this.State = Node.NodeState.Leader;
+
 			aTimer = new System.Timers.Timer(HeartbeatTimeout);
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };
 			aTimer.AutoReset = false;
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
-			this.LeaderId = this.NodeId;
 
+			this.LeaderId = this.NodeId;
 			SendAppendEntriesRPC();
 		}
 
@@ -85,6 +86,7 @@ namespace Raft
 
 		public async Task RecieveAppendEntriesRPC(Guid leaderId, int LeadersTermNumber, int LeadersCommitIndex, List<Entry> LeadersLog)
 		{
+			bool response = true;
 			// As a follower, I have heard from the leader
 			if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
 			{
@@ -93,11 +95,7 @@ namespace Raft
 
 			if (LeadersTermNumber < this.TermNumber)
 			{
-				foreach (var n in OtherNodes)
-				{
-					// As a follower, I'm like what the heck? your term number sucks
-					n.RespondBackToLeader(false, this.TermNumber);
-				}
+				response = false;
 			}
 
 			// Looks good, I'll keep you as my leader
@@ -105,16 +103,28 @@ namespace Raft
 			this.LeaderId = leaderId;
 			WhenTimerStarted = DateTime.Now;
 
-			foreach (var l in LeadersLog) {
-				this.Entries.Add(l);
+			if (LeadersLog.Count > 0)
+			{
+				foreach (var l in LeadersLog)
+				{
+					this.Entries.Add(l);
+				}
+			}
+
+			foreach (var n in OtherNodes)
+			{
+				if (n.LeaderId == this.LeaderId)
+				{
+					n.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
+				}
 			}
 		}
 
-		public void RespondBackToLeader(bool response, int myTermNumber)
+		public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
 		{
 			// This is the leader
-			this.TermNumber = myTermNumber;
-			this.State = NodeState.Follower;
+			//this.TermNumber = myTermNumber;
+			//this.State = NodeState.Follower;
 		}
 
 		public void SendVoteRequestRPCsToOtherNodes()

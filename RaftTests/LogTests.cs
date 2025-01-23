@@ -147,6 +147,24 @@ namespace RaftTests
 		}
 
 
+		// Testing #11
+		[Fact]
+		public async Task TestCase11_FollowersSendAResponseToLeaders()
+		{
+			//  a followers response to an appendentries includes the followers term number and log entry index
 
+			// arrange
+			var l = Substitute.For<INode>();
+
+			Node  f = new([], null, null);
+			f.OtherNodes = [l];
+
+			// act
+			await f.RecieveAppendEntriesRPC(l.NodeId, l.TermNumber, l.CommitIndex, new List<Entry>());
+
+			// assert
+			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex);
+
+		}
 	}
 }

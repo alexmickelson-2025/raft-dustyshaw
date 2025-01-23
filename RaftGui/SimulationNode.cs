@@ -29,6 +29,7 @@ public class SimulationNode : INode
 	public int UpperBoundElectionTime { get => ((INode)InnerNode).UpperBoundElectionTime; set => ((INode)InnerNode).UpperBoundElectionTime = value; }
 
 	public int CommitIndex { get => ((INode)InnerNode).CommitIndex; set => ((INode)InnerNode).CommitIndex = value; }
+	public List<Entry> Entries { get => ((INode)InnerNode).Entries; set => ((INode)InnerNode).Entries = value; }
 
 	public void BecomeLeader()
 	{
@@ -56,9 +57,9 @@ public class SimulationNode : INode
 		((INode)InnerNode).RecieveVoteResults(result, termNumber);
 	}
 
-	public void RespondBackToLeader(bool response, int myTermNumber)
+	public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
 	{
-		((INode)InnerNode).RespondBackToLeader(response, myTermNumber);
+		((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex);
 	}
 
 	public Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex, List<Entry> LeadersLog)

@@ -24,6 +24,7 @@ namespace Raft
 
 		int LowerBoundElectionTime { get; set; }
 		int UpperBoundElectionTime { get; set; }
+		public List<Entry> Entries { get; set; } 
 		int CommitIndex { get; set; }
 
 		void BecomeLeader();
@@ -37,6 +38,6 @@ namespace Raft
 		void StartElection();
 		void TimeoutHasPassed();
 		void TimeoutHasPassedForLeaders();
-		void RespondBackToLeader(bool response, int myTermNumber);
+		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex);
 	}
 }

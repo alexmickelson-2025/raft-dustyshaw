@@ -458,8 +458,8 @@ namespace RaftTests
 			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex, new List<Entry>());
 
 			// Assert
-			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>());
-			leader.Received(1).RespondBackToLeader(false, 100);
+			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>());
+			leader.Received(1).RespondBackToLeader(false, 100, Arg.Any<int>());
 
 		}
 
