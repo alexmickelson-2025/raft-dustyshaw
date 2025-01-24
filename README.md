@@ -1,20 +1,20 @@
 ﻿# raft-dustyshaw
 
 ### Log replication  
-- [ ] 1. when a leader receives a client command the leader sends the log entry in the next appendentries RPC to all nodes
-- [ ] 2. when a leader receives a command from the client, it is appended to its log
+- [x] 1. when a leader receives a client command the leader sends the log entry in the next appendentries RPC to all nodes
+- [x] 2. when a leader receives a command from the client, it is appended to its log
 - [x] 3. when a node is new, its log is empty
 - [ ] 4. when a leader wins an election, it initializes the nextIndex for each follower to the index just after the last one it its log
-- [ ] 5. leaders maintain an "nextIndex" for each follower that is the index of the next log entry the leader will send to that follower
+- [x] 5. leaders maintain an "nextIndex" for each follower that is the index of the next log entry the leader will send to that follower
 - [x] 6. Highest committed index from the leader is included in AppendEntries RPC's
 - [ ] 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine
 - [ ] 8. when the leader has received a majority confirmation of a log, it commits it
-- [ ] 9. the leader commits logs by incrementing its committed log index
-- [ ] 10. given a follower receives an appendentries with log(s) it will add those entries to its personal log
-- [ ] 11. a followers response to an appendentries includes the followers term number and log entry index
+- [x] 9. the leader commits logs by incrementing its committed log index
+- [x] 10. given a follower receives an appendentries with log(s) it will add those entries to its personal log
+- [x] 11. a followers response to an appendentries includes the followers term number and log entry index
 - [ ] 12. when a leader receives a majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client
 - [ ] 13. given a leader node, when a log is committed, it applies it to its internal state machine
-- [ ] 14. when a follower receives a heartbeat, it increases its commitIndex to match the commit index of the heartbeat
+- [x] 14. when a follower receives a heartbeat, it increases its commitIndex to match the commit index of the heartbeat
 - [ ] 15. When sending an AppendEntries RPC, the leader includes the index and term of the entry in its log that immediately precedes the new entries
     - [ ]   If the follower does not find an entry in its log with the same index and term, then it refuses the new entries
         - [ ]   term must be same or newer
