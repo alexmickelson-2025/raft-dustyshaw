@@ -11,7 +11,7 @@ namespace RaftTests
 {
 	public class LogTests
 	{
-		// Testing #1
+		// Testing Logs #1
 		[Fact]
 		public void TestCase01_LeadersSendRPCToFollowersWhenRecieveAnEntry()
 		{
@@ -35,7 +35,7 @@ namespace RaftTests
 		}
 
 
-		// Testing #2
+		// Testing Logs #2
 		[Fact]
 		public void TestCase02_NodesRecieveCommands()
 		{
@@ -49,7 +49,7 @@ namespace RaftTests
 			//Assert.StrictEqual([l], n.Entries);	// node should contain the log
 		}
 
-		// Testing #3
+		// Testing Logs #3
 		[Fact]
 		public void TestCase03_NodesStartWithNoLogs()
 		{
@@ -60,7 +60,7 @@ namespace RaftTests
 			Assert.True(n.Entries.Count() == 0);
 		}
 
-		// Testing #5
+		// Testing Logs #5
 		[Fact]
 		public void TestCase05_LeadersInitializeNextIndexForOtherNodes()
 		{
@@ -85,7 +85,7 @@ namespace RaftTests
 			Assert.True(result2);
 		}
 
-		// Testing #5 (part 2)
+		// Testing Logs #5 (part 2)
 		[Fact]
 		public void TestCase05_LeadersInitializeNextIndexForOtherNodesOneGreaterThanLastLogIndex()
 		{
@@ -105,7 +105,7 @@ namespace RaftTests
 			Assert.True(result);
 		}
 
-		// Testing #6
+		// Testing Logs #6
 		[Fact]
 		public void TestCase06_CommittedIndexIsIncludedInAppendEntriesRPC()
 		{
@@ -126,7 +126,7 @@ namespace RaftTests
 			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex, Arg.Any<List<Entry>>());
 		}
 
-		// Testing #9
+		// Testing Logs #9
 		[Fact]
 		public void TestCase09_LeadersCommitEntriesByIncreasingTheirIndex()
 		{
@@ -143,7 +143,7 @@ namespace RaftTests
 			Assert.True(leader.CommitIndex - 1 == indexBefore);
 		}
 
-		// Testing #10
+		// Testing Logs #10
 		[Fact]
 		public async Task TestCase10_FollowersAddOneEntryToTheirLog()
 		{
@@ -163,7 +163,7 @@ namespace RaftTests
 			Assert.Contains(e, entries);
 		}
 
-		// Testing #10
+		// Testing Logs #10
 		[Fact]
 		public async Task TestCase10_FollowersAddMultipleEntriesToTheirLogInOrder()
 		{
@@ -192,7 +192,7 @@ namespace RaftTests
 		}
 
 
-		// Testing #11
+		// Testing Logs #11
 		[Fact]
 		public async Task TestCase11_FollowersSendAResponseToLeaders()
 		{
@@ -212,7 +212,7 @@ namespace RaftTests
 
 		}
 
-		// Testing #13
+		// Testing Logs #13
 		[Fact]
 		public void TestCase13_CommittingALogIncrementsCommitIndex()
 		{
@@ -224,7 +224,7 @@ namespace RaftTests
 			Assert.Equal(l.CommitIndex - 1, indexBefore);	
 		}
 
-		// Testing #14
+		// Testing Logs #14
 		[Fact]
 		public async Task TestCase14_()
 		{
