@@ -260,22 +260,20 @@ namespace RaftTests
 			// you should reject the appendentries
 
 			// arrange
-			Node f1 = new([], null, null);
-			//Node f = new([f1], null, null);
+			var f1 = new Node([], null, null);
+            f1.Entries = new List<Entry> { new Entry("set a") };
 
-            f1.Entries = new List<Entry> { new Entry("set a"), new Entry("set b") };
-
-
-			List<Entry> leadersEntries = new List<Entry> { new Entry("set a"), new Entry("set b"), new Entry("set c"), new Entry("set d") };
-
-			//Assert.True(l.NextIndexes.ContainsKey(f.NodeId));
-			//Assert.True(l.NextIndexes.ContainsValue(2));
-
+			var l = Substitute.For<INode>();
+			List<Entry> leadersEntries = new List<Entry> { new Entry("set a"), new Entry("set b"), new Entry("set c") };
+			l.Entries = leadersEntries;
+			f1.OtherNodes = [l];
 
 			// act
-			await f1.RecieveAppendEntriesRPC(1, Guid.NewGuid(), 1, leadersEntries, 1);
+			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, l.CommitIndex);
 
-
+			// assert
+			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
+			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
         }
     }
 }

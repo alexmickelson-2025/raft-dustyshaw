@@ -137,12 +137,19 @@ namespace Raft
 
 			this.CommitIndex = leaderCommit;
 
-			if (LeadersLog.Count > 0)
+			if (prevLogIndex - (this.Entries.Count - 1) <= 1)  // make sure leaders logs aren't too far ahead in the future
 			{
-				foreach (var l in LeadersLog)
+				if (LeadersLog.Count > 0)
 				{
-					this.Entries.Add(l);
+					foreach (var l in LeadersLog)
+					{
+						this.Entries.Add(l);
+					}
 				}
+			}
+			else
+			{
+				response = false;
 			}
 
 			foreach (var n in OtherNodes)
@@ -152,6 +159,11 @@ namespace Raft
 					n.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
 				}
 			}
+		}
+
+		public void AppendEntries()
+		{
+
 		}
 
 		public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
