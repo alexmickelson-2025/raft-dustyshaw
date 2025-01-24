@@ -212,6 +212,18 @@ namespace RaftTests
 
 		}
 
+		// Testing #13
+		[Fact]
+		public void TestCase13_CommittingALogIncrementsCommitIndex()
+		{
+			Node l = new([], null, null);
+			int indexBefore = l.CommitIndex;
+
+			l.CommitEntry();
+
+			Assert.Equal(l.CommitIndex - 1, indexBefore);	
+		}
+
 		// Testing #14
 		[Fact]
 		public async Task TestCase14_()
