@@ -457,7 +457,7 @@ namespace RaftTests
             leader.OtherNodes = [candidateNode];
 
 			// Act
-			await candidateNode.RecieveAppendEntriesRPC(Arg.Any<int>(), leader.NodeId, 2, new List<Entry>(), leader.CommitIndex);
+			await candidateNode.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, 2, new List<Entry>(), leader.CommitIndex);
 
 			// Assert
 			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>());

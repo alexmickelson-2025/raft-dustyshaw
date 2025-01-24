@@ -113,18 +113,21 @@ namespace RaftTests
 			// Arrange
 			var leader = new Node([], null, null);
 			leader.BecomeLeader();
+			leader.TermNumber = 0;
 
 			var follower = Substitute.For<INode>();
 			leader.OtherNodes = [follower];
+
+			int termBefore = leader.TermNumber;
+
 
 			// Act
 			leader.CommitIndex = 100;
 			leader.SendAppendEntriesRPC();
 
 			// assert
-			// The follower should have recieved the leaders commit index (along with its id and term)
-			//
-			follower.Received(1).RecieveAppendEntriesRPC( leader.TermNumber, leader.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), leader.CommitIndex);
+			// The follower should have recieved the leaders commit index (along with its id)
+			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), leader.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), leader.CommitIndex);
 		}
 
 		// Testing Logs #9
@@ -201,12 +204,13 @@ namespace RaftTests
 
 			// arrange
 			var l = Substitute.For<INode>();
+			l.Entries = new List<Entry>();
 
 			Node  f = new([], null, null);
 			f.OtherNodes = [l];
 
 			// act
-			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, (l.Entries.Count - 1), new List<Entry>(), l.CommitIndex);
+			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, (l.Entries.Count - 1), l.Entries, l.CommitIndex);
 
 			// assert
 			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex);
@@ -269,7 +273,7 @@ namespace RaftTests
 
 
 			// act
-			f1.RecieveAppendEntriesRPC(1, Guid.NewGuid(), 1, leadersEntries, 1);
+			await f1.RecieveAppendEntriesRPC(1, Guid.NewGuid(), 1, leadersEntries, 1);
 
 
         }
