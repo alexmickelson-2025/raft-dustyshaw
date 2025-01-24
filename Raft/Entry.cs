@@ -15,4 +15,10 @@ public class Entry
     {
         this.Command = Command;
     }
+
+	public Entry(string Command, int TermReceived)
+	{
+		this.Command = Command;
+        this.TermReceived = TermReceived;
+	}
 }

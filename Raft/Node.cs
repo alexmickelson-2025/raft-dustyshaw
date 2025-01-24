@@ -112,17 +112,22 @@ namespace Raft
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
-				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), this.Entries, this.CommitIndex);
+				int nodesPrevLogIndex = NextIndexes[node.NodeId];
+				var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex;
+				List<Entry> entriesToSend = new List<Entry>();
+				entriesToSend = this.Entries.TakeLast(differenceInLogs).ToList();
+				
+				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex);
 			}
 		}
 
-		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit)
+		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
 		{
 			bool response = true;
 			// As a follower, I have heard from the leader
 			if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
 			{
-				this.State = Node.NodeState.Follower; // I heard from someone with greater term #
+				this.State = Node.NodeState.Follower; // I'm a candidate, but I heard from someone with greater term #
 			}
 
 			if (LeadersTermNumber < this.TermNumber)
@@ -137,14 +142,17 @@ namespace Raft
 
 			this.CommitIndex = leaderCommit;
 
+
+			// Replicating Logs
 			if (prevLogIndex - (this.Entries.Count - 1) <= 1)  // make sure leaders logs aren't too far ahead in the future
 			{
-				if (LeadersLog.Count > 0)
+				if (entries.Count > 0)
 				{
-					foreach (var l in LeadersLog)
+					foreach (var l in entries)
 					{
 						this.Entries.Add(l);
 					}
+					response = true; // I have successfully replicated the logs given to me
 				}
 			}
 			else
@@ -152,6 +160,8 @@ namespace Raft
 				response = false;
 			}
 
+
+			// Respond back to leader with my response
 			foreach (var n in OtherNodes)
 			{
 				if (n.LeaderId == this.LeaderId)
@@ -159,11 +169,6 @@ namespace Raft
 					n.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
 				}
 			}
-		}
-
-		public void AppendEntries()
-		{
-
 		}
 
 		public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)

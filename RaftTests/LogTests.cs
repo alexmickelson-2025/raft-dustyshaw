@@ -275,5 +275,31 @@ namespace RaftTests
 			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
 			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
         }
-    }
+
+
+		// Testing 15
+		[Fact]
+		public async Task TestCase15_NodesRejectRequestsIfTermsDiffer()
+		{
+			// If the follower does not find an entry in its log with the same index and term,
+			// then it refuses the new entries.
+
+			// arrange
+			var f1 = new Node([], null, null);
+			f1.Entries = new List<Entry> { new Entry("set a", 1) };
+
+			var l = Substitute.For<INode>();
+			List<Entry> leadersEntries = new List<Entry> { new Entry("set a", 2)};
+
+			l.Entries = leadersEntries;
+			f1.OtherNodes = [l];
+
+			// act
+			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, l.CommitIndex);
+
+			// assert
+			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
+			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
+		}
+	}
 }
