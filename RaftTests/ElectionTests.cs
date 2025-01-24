@@ -142,7 +142,7 @@ namespace RaftTests
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
             // Act
             // Leader sends messages to me
-            await followerNode.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), new List<Entry>());
+            await followerNode.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), new List<Entry>(), Arg.Any<int>());
             Thread.Sleep(100);
 
             // Assert
@@ -437,7 +437,7 @@ namespace RaftTests
             leaderNode.SendAppendEntriesRPC(); // Send heartbeat
 
             // Assert
-            followerNode.Received(1).RecieveAppendEntriesRPC(leaderNode.NodeId, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), leaderNode.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
         }
 
         // Testing #18
@@ -457,7 +457,7 @@ namespace RaftTests
             leader.OtherNodes = [candidateNode];
 
 			// Act
-			await candidateNode.RecieveAppendEntriesRPC(leader.NodeId, 2, leader.CommitIndex, new List<Entry>());
+			await candidateNode.RecieveAppendEntriesRPC(Arg.Any<int>(), leader.NodeId, 2, new List<Entry>(), leader.CommitIndex);
 
 			// Assert
 			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>());
@@ -478,7 +478,7 @@ namespace RaftTests
             leaderNode.BecomeLeader();
 
             // Assert
-            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
+            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
         }
 
     }

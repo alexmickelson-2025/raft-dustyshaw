@@ -31,7 +31,7 @@ namespace Raft
 		public List<Entry> Entries { get; set; } = new();
 		public int CommitIndex { get; set; } = 0;
 		public int nextIndex { get; set; }
-		public Dictionary<Guid, int > nextIndexes = new();
+		public Dictionary<Guid, int > NextIndexes = new();
 
 		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{
@@ -76,9 +76,9 @@ namespace Raft
 		{
 			foreach (INode node in OtherNodes)
 			{
-				if (!nextIndexes.ContainsKey(node.NodeId))
+				if (!NextIndexes.ContainsKey(node.NodeId))
 				{
-					nextIndexes.Add(node.NodeId, Entries.Count);
+					NextIndexes.Add(node.NodeId, Entries.Count);
 				}
 			}
 		}
@@ -112,11 +112,11 @@ namespace Raft
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
-				node.RecieveAppendEntriesRPC(this.NodeId, this.TermNumber, this.CommitIndex, this.Entries);
+				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), this.Entries, this.CommitIndex);
 			}
 		}
 
-		public async Task RecieveAppendEntriesRPC(Guid leaderId, int LeadersTermNumber, int LeadersCommitIndex, List<Entry> LeadersLog)
+		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit)
 		{
 			bool response = true;
 			// As a follower, I have heard from the leader
@@ -135,7 +135,7 @@ namespace Raft
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			WhenTimerStarted = DateTime.Now;
 
-			this.CommitIndex = LeadersCommitIndex;
+			this.CommitIndex = leaderCommit;
 
 			if (LeadersLog.Count > 0)
 			{

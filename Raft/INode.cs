@@ -1,10 +1,4 @@
-﻿
-
-
-
-
-
-namespace Raft
+﻿namespace Raft
 {
 	public interface INode
 	{
@@ -31,7 +25,7 @@ namespace Raft
 		void DetermineElectionResults();
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
 		void RecieveVoteResults(bool result, int termNumber);
-		Task RecieveAppendEntriesRPC(Guid leaderId, int TermNumber, int CommitIndex, List<Entry> LeadersLog);
+		Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit);
 		void SendAppendEntriesRPC();
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
 		void SendVoteRequestRPCsToOtherNodes();

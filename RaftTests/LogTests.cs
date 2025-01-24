@@ -31,7 +31,7 @@ namespace RaftTests
 			n.RecieveClientCommand(l.Command);
 
 			// Assert
-			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<Entry>>());
+			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
 		}
 
 
@@ -77,8 +77,8 @@ namespace RaftTests
 			n.BecomeLeader();
 
 			// act
-			var result1 = n.nextIndexes.ContainsKey(f1.NodeId);
-			var result2 = n.nextIndexes.ContainsKey(f2.NodeId);
+			var result1 = n.NextIndexes.ContainsKey(f1.NodeId);
+			var result2 = n.NextIndexes.ContainsKey(f2.NodeId);
 
 			//assert
 			Assert.True(result1);
@@ -99,7 +99,7 @@ namespace RaftTests
 			n.BecomeLeader();
 
 			// act
-			var result = n.nextIndexes.ContainsValue(2);	
+			var result = n.NextIndexes.ContainsValue(2);	
 
 			//assert
 			Assert.True(result);
@@ -123,7 +123,8 @@ namespace RaftTests
 
 			// assert
 			// The follower should have recieved the leaders commit index (along with its id and term)
-			follower.Received(1).RecieveAppendEntriesRPC(leader.NodeId, leader.TermNumber, leader.CommitIndex, Arg.Any<List<Entry>>());
+			//
+			follower.Received(1).RecieveAppendEntriesRPC( leader.TermNumber, leader.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), leader.CommitIndex);
 		}
 
 		// Testing Logs #9
@@ -156,7 +157,7 @@ namespace RaftTests
 			entries.Add(e);
 
 			// act
-			await f.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), entries);
+			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), entries, Arg.Any<int>());
 
 			//assert
 			Assert.True(f.Entries.Count() > 0);
@@ -181,7 +182,7 @@ namespace RaftTests
 
 
 			// act
-			await f.RecieveAppendEntriesRPC(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), entriesFromLeader);
+			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), entriesFromLeader, Arg.Any<int>());
 
 			//assert
 			// Check the order
@@ -205,7 +206,7 @@ namespace RaftTests
 			f.OtherNodes = [l];
 
 			// act
-			await f.RecieveAppendEntriesRPC(l.NodeId, l.TermNumber, l.CommitIndex, new List<Entry>());
+			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, (l.Entries.Count - 1), new List<Entry>(), l.CommitIndex);
 
 			// assert
 			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex);
@@ -241,10 +242,36 @@ namespace RaftTests
 
 			// act
 			// follower recieves an empty heartbeat
-			await f.RecieveAppendEntriesRPC(l.NodeId, l.TermNumber, l.CommitIndex, new List<Entry>());
+			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, Arg.Any<int>(),  new List<Entry>(), l.CommitIndex);
 
 			// assert
 			Assert.True(f.CommitIndex == 100);	
 		}
-	}
+
+		// Testing #19 
+		[Fact]
+		public async Task TestCase19_NodesRejectFutureTerms()
+		{
+            // 19. if a node receives an appendentries with a logs that are too far in the future from your local state,
+			// you should reject the appendentries
+
+			// arrange
+			Node f1 = new([], null, null);
+			//Node f = new([f1], null, null);
+
+            f1.Entries = new List<Entry> { new Entry("set a"), new Entry("set b") };
+
+
+			List<Entry> leadersEntries = new List<Entry> { new Entry("set a"), new Entry("set b"), new Entry("set c"), new Entry("set d") };
+
+			//Assert.True(l.NextIndexes.ContainsKey(f.NodeId));
+			//Assert.True(l.NextIndexes.ContainsValue(2));
+
+
+			// act
+			f1.RecieveAppendEntriesRPC(1, Guid.NewGuid(), 1, leadersEntries, 1);
+
+
+        }
+    }
 }
