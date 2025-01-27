@@ -175,11 +175,11 @@ namespace RaftTests
 
 			// arrange
 			var f = new Node([], null, null);
-			f.Entries = new List<Entry> { new Entry("set a") };
+			f.Entries = new List<Entry> { new Entry("set a", 1) };
 
 			List<Entry> entriesFromLeader = new List<Entry>();
-			Entry e1 = new("set a");
-			Entry e2 = new("set b");
+			Entry e1 = new("set a", 1);
+			Entry e2 = new("set b", 2);
 			entriesFromLeader.Add(e1);
 			entriesFromLeader.Add(e2);
 
@@ -289,7 +289,7 @@ namespace RaftTests
 			f1.Entries = new List<Entry> { new Entry("set a", 1) };
 
 			var l = Substitute.For<INode>();
-			List<Entry> leadersEntries = new List<Entry> { new Entry("set a", 2)};
+			List<Entry> leadersEntries = new List<Entry> { new Entry("set a", 2), new Entry("set b", 2) };	// same command, but different term
 
 			l.Entries = leadersEntries;
 			f1.OtherNodes = [l];
@@ -298,8 +298,63 @@ namespace RaftTests
 			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, l.CommitIndex);
 
 			// assert
-			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
+			// Because the term the leader is trying to send 
 			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
 		}
+
+		// Testing 15
+		[Fact]
+		public void TestCase15_FollowersRecieveALog()
+		{
+			// Followers recieve a log
+
+			// arrange
+			var f1 = Substitute.For<INode>();
+			f1.Entries = new List<Entry> { new Entry("set a", 1) };
+
+			var l = new Node([], null, null);
+			l.Entries = new List<Entry> { new Entry("set a", 1) };  // same command, but different term
+			f1.OtherNodes = [l];
+			l.OtherNodes = [f1];
+			l.BecomeLeader();
+
+
+			l.RecieveClientCommand("set b");
+			List<Entry> logsToSend = l.CalculateEntriesToSend(f1); // Should be the last one ("send b") one
+
+
+			// act
+			l.SendAppendEntriesRPC();
+
+			// assert
+			Assert.True(f1.Entries.Count == 1);
+
+
+		}
+
+
+		//[Fact]
+		//public void TestCase15_LeadersSendTheLastNumEntriesToAFollower()
+		//{
+		//	// Leaders keep a list of node ID's and the associated nodes prevLogIndex. 
+		//	// When a followers prevLogIndex is 1 less than the leaders prevLogIndex, 
+		//	// then the leader sends 1 entry
+
+		//	// arrange
+		//	var f1 = new Node([], null, null);
+		//	f1.Entries = new List<Entry> { new Entry("set a", 1) };
+
+		//	var l = new Node([f1], null, null);
+		//	l.Entries = new List<Entry> { new Entry("set a", 1), new Entry("set b", 2) };
+		//	l.BecomeLeader();
+
+		//	var entriesToSend = l.CalculateEntriesToSend(f1);
+
+
+		//	// act
+
+		//	// assert
+		//	Assert.True(entriesToSend.Count == 1);
+		//}
 	}
 }

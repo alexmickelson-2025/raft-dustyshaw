@@ -27,11 +27,13 @@
 		void RecieveVoteResults(bool result, int termNumber);
 		Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit);
 		void SendAppendEntriesRPC();
+		List<Entry> CalculateEntriesToSend(INode node);
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
 		void SendVoteRequestRPCsToOtherNodes();
 		void StartElection();
 		void TimeoutHasPassed();
 		void TimeoutHasPassedForLeaders();
 		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex);
+
 	}
 }

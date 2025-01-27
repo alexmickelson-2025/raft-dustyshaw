@@ -107,4 +107,9 @@ public class SimulationNode : INode
 	{
 		((INode)InnerNode).TimeoutHasPassedForLeaders();
 	}
+
+	public List<Entry> CalculateEntriesToSend(INode node)
+	{
+		return ((INode)InnerNode).CalculateEntriesToSend(node);
+	}
 }

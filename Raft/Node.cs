@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Timers;
+using System.Xml.Linq;
 using Xunit.Sdk;
 
 namespace Raft
@@ -112,13 +113,24 @@ namespace Raft
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
-				int nodesPrevLogIndex = NextIndexes[node.NodeId];
-				var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex;
-				List<Entry> entriesToSend = new List<Entry>();
-				entriesToSend = this.Entries.TakeLast(differenceInLogs).ToList();
+				List<Entry> entriesToSend = CalculateEntriesToSend(node);
 				
 				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex);
 			}
+		}
+
+		public List<Entry> CalculateEntriesToSend(INode node)
+		{
+			List<Entry> entriesToSend = new();
+			if (NextIndexes.Count > 0)
+			{
+				int nodesPrevLogIndex = NextIndexes[node.NodeId];
+				var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex;
+				entriesToSend = new List<Entry>();
+				entriesToSend = this.Entries.TakeLast(differenceInLogs + 1).ToList();
+			}
+
+			return entriesToSend;
 		}
 
 		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
@@ -148,11 +160,33 @@ namespace Raft
 			{
 				if (entries.Count > 0)
 				{
-					foreach (var l in entries)
+					foreach (var l in entries.AsEnumerable().Reverse())
 					{
-						this.Entries.Add(l);
+						
+						foreach (var myLog in this.Entries.AsEnumerable().Reverse())
+						{
+							if (myLog != l && (l == entries.Last()))
+							{
+								response = false;
+							}
+							else if (myLog == l && (l == entries.Last()))
+							{
+								foreach (var lToAdd in entries.AsEnumerable().Reverse())
+								{
+									this.Entries.Add(lToAdd);
+								}
+								response = true;	// I have successfully replicated the logs
+							}
+						}
+						if (this.Entries.Count == 0)
+						{
+							foreach (var lToAdd in entries.AsEnumerable().Reverse())
+							{
+								this.Entries.Add(lToAdd);
+							}
+							response = true;
+						}
 					}
-					response = true; // I have successfully replicated the logs given to me
 				}
 			}
 			else
