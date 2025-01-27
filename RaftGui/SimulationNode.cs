@@ -30,20 +30,33 @@ public class SimulationNode : INode
 
 	public int CommitIndex { get => ((INode)InnerNode).CommitIndex; set => ((INode)InnerNode).CommitIndex = value; }
 	public List<Entry> Entries { get => ((INode)InnerNode).Entries; set => ((INode)InnerNode).Entries = value; }
+    public bool IsRunning { get => ((INode)InnerNode).IsRunning; set => ((INode)InnerNode).IsRunning = value; }
 
-	public void BecomeLeader()
+    public void BecomeLeader()
 	{
+		if (!IsRunning)
+		{
+			return;
+		}
 		((INode)InnerNode).BecomeLeader();
 	}
 
 	public void DetermineElectionResults()
 	{
-		((INode)InnerNode).DetermineElectionResults();
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).DetermineElectionResults();
 	}
 
 	public Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
 	{
-		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+        if (!IsRunning)
+        {
+            return Task.CompletedTask;
+        }
+        Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
 			await InnerNode.RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
 		});
@@ -54,17 +67,29 @@ public class SimulationNode : INode
 
 	public void RecieveVoteResults(bool result, int termNumber)
 	{
-		((INode)InnerNode).RecieveVoteResults(result, termNumber);
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).RecieveVoteResults(result, termNumber);
 	}
 
 	public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
 	{
-		((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex);
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex);
 	}
 
 	public Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit)
 	{
-		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+        if (!IsRunning)
+        {
+            return Task.CompletedTask;
+        }
+        Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
 			await InnerNode.RecieveAppendEntriesRPC(LeadersTermNumber, leaderId, prevLogIndex, LeadersLog, leaderCommit);
 		});
@@ -75,12 +100,20 @@ public class SimulationNode : INode
 
 	public void SendAppendEntriesRPC()
 	{
-		((INode)InnerNode).SendAppendEntriesRPC();
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).SendAppendEntriesRPC();
 	}
 
 	public Task SendMyVoteToCandidate(Guid candidateId, bool result)
 	{
-		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+        if (!IsRunning)
+        {
+            return Task.CompletedTask;
+        }
+        Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
 			await InnerNode.SendMyVoteToCandidate(candidateId, result);
 		});
@@ -90,17 +123,29 @@ public class SimulationNode : INode
 
 	public void SendVoteRequestRPCsToOtherNodes()
 	{
-		((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
 	}
 
 	public void StartElection()
 	{
-		((INode)InnerNode).StartElection();
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).StartElection();
 	}
 
 	public void TimeoutHasPassed()
 	{
-		((INode)InnerNode).TimeoutHasPassed();
+        if (!IsRunning)
+        {
+            return;
+        }
+        ((INode)InnerNode).TimeoutHasPassed();
 	}
 
 	public void TimeoutHasPassedForLeaders()
@@ -110,6 +155,20 @@ public class SimulationNode : INode
 
 	public List<Entry> CalculateEntriesToSend(INode node)
 	{
-		return ((INode)InnerNode).CalculateEntriesToSend(node);
+        if (!IsRunning)
+        {
+            return new List<Entry>();
+        }
+        return ((INode)InnerNode).CalculateEntriesToSend(node);
 	}
+
+    public void PauseNode()
+    {
+        ((INode)InnerNode).PauseNode();
+    }
+
+    public void UnpauseNode()
+    {
+        ((INode)InnerNode).UnpauseNode();
+    }
 }

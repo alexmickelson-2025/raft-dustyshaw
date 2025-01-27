@@ -34,7 +34,10 @@ namespace Raft
 		public int nextIndex { get; set; }
 		public Dictionary<Guid, int> NextIndexes = new();
 
-		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
+		// Simulation Stuff
+		public bool IsRunning { get; set; } = true;
+
+        public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{
 			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
 			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
@@ -357,5 +360,28 @@ namespace Raft
 		{
 			this.CommitIndex++;
 		}
+
+		public void PauseNode()
+		{
+			IsRunning = false;
+			aTimer.Stop();
+			aTimer.Dispose();
+		}
+
+		public void UnpauseNode()
+		{
+			IsRunning = true;
+			if (this.State == NodeState.Leader)
+			{
+				StartLeaderTimer();
+				SendAppendEntriesRPC();
+			}
+			else
+			{
+				StartElectionTimer();
+			}
+		}
+
+
 	}
 }

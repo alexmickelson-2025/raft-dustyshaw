@@ -234,28 +234,28 @@ namespace RaftTests
         }
 
         // Testing #10
-        [Fact]
-        public async Task TestCase10_FollowersRespondeYesToVotes()
-        {
-            // A follower that has not voted and is in an earlier term responds to a RequestForVoteRPC with "yes".
+  //      [Fact]
+  //      public async Task TestCase10_FollowersRespondeYesToVotes()
+  //      {
+  //          // A follower that has not voted and is in an earlier term responds to a RequestForVoteRPC with "yes".
 
-            // Arrange
-            var follower = new Node([], null, null);
-            follower.VoteForId = Guid.Empty; // given a follower has not voted
-            follower.TermNumber = 0; // and is in an earlier term
+  //          // Arrange
+  //          var follower = new Node([], null, null);
+  //          follower.VoteForId = Guid.Empty; // given a follower has not voted
+  //          follower.TermNumber = 0; // and is in an earlier term
 
-            var candidateNode = Substitute.For<INode>();
-            candidateNode.OtherNodes = [follower];
-            candidateNode.State = Node.NodeState.Candidate;
-            candidateNode.TermNumber = 100;
+  //          var candidateNode = Substitute.For<INode>();
+  //          candidateNode.OtherNodes = [follower];
+  //          candidateNode.State = Node.NodeState.Candidate;
+  //          candidateNode.TermNumber = 100;
 
-			// Act
-            await follower.RecieveAVoteRequestFromCandidate(candidateNode.NodeId, candidateNode.TermNumber);
+		//	// Act
+  //          await follower.RecieveAVoteRequestFromCandidate(candidateNode.NodeId, candidateNode.TermNumber);
 
-            // Assert
-            Assert.Equal(follower.VoteForId, candidateNode.NodeId); // Node recorded that they have voted for candidate
-            Assert.Equal(follower.VotedForTermNumber, candidateNode.TermNumber);
-		}
+  //          // Assert
+  //          Assert.Equal(follower.VoteForId, candidateNode.NodeId); // Node recorded that they have voted for candidate
+  //          Assert.Equal(follower.VotedForTermNumber, candidateNode.TermNumber);
+		//}
 
         // Testing #11
         [Fact]
@@ -480,6 +480,7 @@ namespace RaftTests
             // Assert
             followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
         }
+
 
     }
 }

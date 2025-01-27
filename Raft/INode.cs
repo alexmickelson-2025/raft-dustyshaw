@@ -20,8 +20,9 @@
 		int UpperBoundElectionTime { get; set; }
 		public List<Entry> Entries { get; set; } 
 		int CommitIndex { get; set; }
+        bool IsRunning { get; set; }
 
-		void BecomeLeader();
+        void BecomeLeader();
 		void DetermineElectionResults();
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
 		void RecieveVoteResults(bool result, int termNumber);
@@ -35,5 +36,8 @@
 		void TimeoutHasPassedForLeaders();
 		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex);
 
-	}
+		public void PauseNode();
+		public void UnpauseNode();
+
+    }
 }
