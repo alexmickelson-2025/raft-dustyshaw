@@ -107,4 +107,34 @@ public class PauseTests
         // assert
         Assert.Equal(Node.NodeState.Candidate, candidateNode.State);
     }
+
+	[Fact]
+	public void PauseAFollowerThenUnpauseAFollower()
+	{
+        // arrange
+		var followerNode = new Node([], null, null);
+		followerNode.State = Node.NodeState.Follower;
+
+		var leaderNode = new Node([], null, null);
+		leaderNode.BecomeLeader();
+
+		leaderNode.OtherNodes = [followerNode];
+		followerNode.OtherNodes = [leaderNode];
+
+		// act
+		followerNode.PauseNode();
+		Thread.Sleep(400);
+
+        // assert
+        //followerNode.Received(0).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
+        Assert.True(followerNode.State == Node.NodeState.Follower);
+
+        followerNode.UnpauseNode();
+
+        Thread.Sleep(300);
+
+        Assert.True(followerNode.State == Node.NodeState.Follower);
+
+
+	}
 }

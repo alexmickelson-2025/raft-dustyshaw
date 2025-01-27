@@ -7,11 +7,11 @@
 
 <div>
 	<label for="speed">
-		Election timeout between @(150 * this.IntervalScalar) and @(300 *
-		this.IntervalScalar) ms.
+		Election timeout between @(150 * Node.IntervalScalar) and @(300 *
+		Node.IntervalScalar) ms.
 		<br>
 		<input type="range" id="speed" name="speed" min="1" max="100" @bind:event="oninput"
-			   @bind=this.IntervalScalar @onchange=UpdateTimer /> @this.IntervalScalar
+			   @bind=Node.IntervalScalar @onchange=UpdateTimer /> @Node.IntervalScalar
 	</label>
 </div>
 
@@ -30,9 +30,9 @@
 <div class="row">
 	@foreach (var node in nodes)
 	{
-		var timeoutRemaining = Math.Abs((DateTime.Now - node.InnerNode.WhenTimerStarted).TotalMilliseconds);
-		var maxIntervalSeconds = 300 * this.IntervalScalar * 100; // converting to milliseconds
-		var percentageRemaining = (int)(100 * (timeoutRemaining / maxIntervalSeconds));
+		var timeoutRemaining = ((node.InnerNode.WhenTimerStarted + TimeSpan.FromMilliseconds(node.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
+		var maxIntervalSeconds = 300 * Node.IntervalScalar; 
+		var percentageRemaining = (100 * (timeoutRemaining / (double)maxIntervalSeconds));
 
 
 		<div class="p-3 col-4">
@@ -43,16 +43,20 @@
 					<p>Election Timeout: @(@node.InnerNode.ElectionTimeout) ms.</p>
 					<h2>Term #@node.TermNumber</h2>
 					<p>Leader Id: @(FormatId(node.LeaderId))</p>
-					<div class="progress" role="progressbar" aria-label="Basic example"
-						 aria-valuenow=@(Math.Abs(timeoutRemaining) * this.IntervalScalar ) aria-valuemin="0"
+					<div class="progress" role="progressbar" 
+						 aria-label="Basic example"
+						 aria-valuenow=@(Math.Abs(timeoutRemaining) ) 
+						 aria-valuemin="0"
 						 aria-valuemax="@(maxIntervalSeconds)">
-						<div class="progress-bar bg-dark-subtle" style="width: @(10000 * timeoutRemaining / maxIntervalSeconds)%;"></div>
+						<div class="progress-bar bg-dark-subtle" style="width: @(percentageRemaining)%;"></div>
 					</div>
+					<div class="mt-3">
 					@if( node.IsRunning)
 					{ <button @onclick="() => pauseNode(node.NodeId)" class="btn btn-outline-primary">|| Pause Node</button>
 					} else {
 						<button @onclick="() => unpauseNode(node.NodeId)" class="btn btn-outline-success"> |> Play Node</button>
 					}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -65,15 +69,15 @@
 	private Timer? timer;
 	bool isRunning = false;
 
-	public int IntervalScalar = 2;
+	//public int IntervalScalar = 1;
 
 	public int NetworkRequestDelay = 0;
 
 	void startSimulation()
 	{
-		var node1 = new Node([], IntervalScalar, NetworkRequestDelay);
-		var node2 = new Node([], IntervalScalar, NetworkRequestDelay);
-		var node3 = new Node([], IntervalScalar, NetworkRequestDelay);
+		var node1 = new Node([], NetworkRequestDelay);
+		var node2 = new Node([], NetworkRequestDelay);
+		var node3 = new Node([], NetworkRequestDelay);
 
 
 		var simulation1 = new SimulationNode(node1);
@@ -97,15 +101,15 @@
 	{
 		foreach (var node in nodes)
 		{
-			node.InnerNode.LowerBoundElectionTime = 150 * IntervalScalar;
-			node.InnerNode.UpperBoundElectionTime = 300 * IntervalScalar;
+			node.InnerNode.LowerBoundElectionTime = 150 * Node.IntervalScalar;
+			node.InnerNode.UpperBoundElectionTime = 300 * Node.IntervalScalar;
 		}
 
 		timer?.Dispose();
 		timer = new Timer(_ =>
 		{
 			InvokeAsync(StateHasChanged);
-		}, null, 0, 100 * (int)this.IntervalScalar);
+		}, null, 0, 100 * (int)Node.IntervalScalar);
 
 	}
 

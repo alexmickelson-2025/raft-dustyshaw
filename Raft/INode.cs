@@ -1,4 +1,6 @@
-﻿namespace Raft
+﻿using System.Timers;
+
+namespace Raft
 {
 	public interface INode
 	{
@@ -30,9 +32,9 @@
 		void SendAppendEntriesRPC();
 		List<Entry> CalculateEntriesToSend(INode node);
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
+		void TimeoutHasPassed();
 		void SendVoteRequestRPCsToOtherNodes();
 		void StartElection();
-		void TimeoutHasPassed();
 		void TimeoutHasPassedForLeaders();
 		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex);
 

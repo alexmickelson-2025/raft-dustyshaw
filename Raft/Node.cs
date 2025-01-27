@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Timers;
 using System.Xml.Linq;
 using Xunit.Sdk;
@@ -15,7 +16,7 @@ namespace Raft
 		public int ElectionTimeout { get; set; } // in ms
 		public System.Timers.Timer aTimer { get; set; }
 		public DateTime WhenTimerStarted { get; set; }
-		public int HeartbeatTimeout { get; } = 50; // in ms
+		public int HeartbeatTimeout { get; set; } = 50; // in ms
 
 		public int TermNumber { get; set; } = 0;
 		public INode[] OtherNodes { get; set; }
@@ -37,11 +38,11 @@ namespace Raft
 		// Simulation Stuff
 		public bool IsRunning { get; set; } = true;
 
-        public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
+		public static int IntervalScalar { get; set; } = 1;
+
+        public Node(Node[] OtherNodes, int? NetworkDelayInMs)
 		{
-			LowerBoundElectionTime = IntervalScalar.HasValue ? LowerBoundElectionTime * IntervalScalar.Value : LowerBoundElectionTime;
-			UpperBoundElectionTime = IntervalScalar.HasValue ? UpperBoundElectionTime * IntervalScalar.Value : UpperBoundElectionTime;
-			HeartbeatTimeout = IntervalScalar.HasValue ? HeartbeatTimeout * IntervalScalar.Value : HeartbeatTimeout;
+			HeartbeatTimeout =  50 * Node.IntervalScalar;
 			NetworkRequestDelay = NetworkDelayInMs ?? 0;
 
 			StartElectionTimer();
@@ -51,10 +52,17 @@ namespace Raft
 
 		public void StartElectionTimer()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			if (aTimer is not null)
 			{
 				aTimer.Stop();
 			}
+
+			LowerBoundElectionTime = 150 * Node.IntervalScalar;
+			UpperBoundElectionTime = 300 * Node.IntervalScalar;
 			int randomMs = new Random().Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.ElectionTimeout = randomMs;
 			aTimer = new System.Timers.Timer(ElectionTimeout);
@@ -66,6 +74,11 @@ namespace Raft
 
 		public void BecomeLeader()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
+
 			this.State = Node.NodeState.Leader;
 			this.LeaderId = this.NodeId;
 
@@ -78,6 +91,10 @@ namespace Raft
 
 		public void CalculateNextIndecesList()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			foreach (INode node in OtherNodes)
 			{
 				if (!NextIndexes.ContainsKey(node.NodeId))
@@ -89,7 +106,15 @@ namespace Raft
 
 		public void StartLeaderTimer()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
+
 			aTimer.Stop();
+
+			HeartbeatTimeout = 50 * Node.IntervalScalar;
+			ElectionTimeout = HeartbeatTimeout;
 			aTimer = new System.Timers.Timer(HeartbeatTimeout);
 			aTimer.Elapsed += (s, e) => { TimeoutHasPassedForLeaders(); };
 			aTimer.AutoReset = false;
@@ -99,6 +124,10 @@ namespace Raft
 
 		public void TimeoutHasPassed()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			StartElection();
 
 			//StartElectionTimer();
@@ -106,6 +135,10 @@ namespace Raft
 
 		public void TimeoutHasPassedForLeaders()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			SendAppendEntriesRPC();
 
 			StartLeaderTimer();
@@ -113,6 +146,10 @@ namespace Raft
 
 		public void SendAppendEntriesRPC()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
@@ -138,6 +175,12 @@ namespace Raft
 
 		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
 		{
+
+
+			if (!IsRunning)
+			{
+				await Task.CompletedTask;
+			}
 			bool response = true;
 
 			// Update state if a higher term number is received
@@ -146,13 +189,16 @@ namespace Raft
 				this.State = Node.NodeState.Follower;
 			}
 
-			// Reject if leader's term is outdated
-			if (LeadersTermNumber < this.TermNumber)
+			if (this.State == Node.NodeState.Leader && LeadersTermNumber > this.TermNumber)
 			{
-				response = false;
+				this.State = Node.NodeState.Follower;
 			}
 
-			// Update leader and reset election timeout
+			if (LeadersTermNumber < this.TermNumber)
+			{
+				response = false;	// I have heard from a leader whos term is less than mine
+			}
+
 			this.LeaderId = leaderId;
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.WhenTimerStarted = DateTime.Now;
@@ -163,7 +209,6 @@ namespace Raft
 			{
 				if (entries.Count > 0)
 				{
-					// Check and add new entries
 					int matchIndex = this.Entries.FindLastIndex(e =>
 						e.TermReceived == entries.First().TermReceived &&
 						e.Command == entries.First().Command);
@@ -278,6 +323,10 @@ namespace Raft
 
 		public void SendVoteRequestRPCsToOtherNodes()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			// as the candidate, I am asking for votes from other nodes
 			foreach (var node in OtherNodes)
 			{
@@ -287,6 +336,10 @@ namespace Raft
 
 		public void RecieveVoteResults(bool result, int termNumber)
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			// As a candidate, I am recieving votes from my followers
 			votesRecieved.Add(result);
 
@@ -295,6 +348,10 @@ namespace Raft
 
 		public void DetermineElectionResults()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			if (votesRecieved.Count(x => x) > OtherNodes.Count() / 2)
 			{
 				BecomeLeader();
@@ -303,6 +360,10 @@ namespace Raft
 
 		public async Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
 		{
+			if (!IsRunning)
+			{
+				await Task.CompletedTask;
+			}
 			// as a server, I recieve a vote request from a candidate
 			bool result = true;
 			if (lastLogTerm < this.TermNumber || lastLogTerm == this.VotedForTermNumber)
@@ -317,6 +378,10 @@ namespace Raft
 
 		public async Task SendMyVoteToCandidate(Guid candidateId, bool result)
 		{
+			if (!IsRunning)
+			{
+				await Task.CompletedTask;
+			}
 			// as a follower, I am sending a candidate my vote
 			foreach (var node in OtherNodes)
 			{
@@ -329,6 +394,10 @@ namespace Raft
 
 		public void StartElection()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			this.State = NodeState.Candidate;
 			this.VoteForId = this.NodeId;
 			this.TermNumber = this.TermNumber + 1;
@@ -342,12 +411,18 @@ namespace Raft
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
 
+			//StartElectionTimer();
+
 			// Send vote requests
 			SendVoteRequestRPCsToOtherNodes();
 		}
 
 		public void RecieveClientCommand(string command)
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			Entry l = new Entry(command);
 			l.TermReceived = this.TermNumber;
 
@@ -358,6 +433,10 @@ namespace Raft
 
 		public void CommitEntry()
 		{
+			if (!IsRunning)
+			{
+				return;
+			}
 			this.CommitIndex++;
 		}
 
@@ -381,7 +460,5 @@ namespace Raft
 				StartElectionTimer();
 			}
 		}
-
-
 	}
 }

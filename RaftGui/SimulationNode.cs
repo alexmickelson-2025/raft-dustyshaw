@@ -1,4 +1,5 @@
 ﻿using Raft;
+using System.Timers;
 
 namespace RaftGui;
 
@@ -171,4 +172,5 @@ public class SimulationNode : INode
     {
         ((INode)InnerNode).UnpauseNode();
     }
+
 }
