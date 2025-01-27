@@ -32,7 +32,7 @@ namespace Raft
 		public List<Entry> Entries { get; set; } = new();
 		public int CommitIndex { get; set; } = 0;
 		public int nextIndex { get; set; }
-		public Dictionary<Guid, int > NextIndexes = new();
+		public Dictionary<Guid, int> NextIndexes = new();
 
 		public Node(Node[] OtherNodes, int? IntervalScalar, int? NetworkDelayInMs)
 		{
@@ -114,7 +114,7 @@ namespace Raft
 			foreach (var node in OtherNodes)
 			{
 				List<Entry> entriesToSend = CalculateEntriesToSend(node);
-				
+
 				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex);
 			}
 		}
@@ -136,56 +136,46 @@ namespace Raft
 		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
 		{
 			bool response = true;
-			// As a follower, I have heard from the leader
+
+			// Update state if a higher term number is received
 			if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
 			{
-				this.State = Node.NodeState.Follower; // I'm a candidate, but I heard from someone with greater term #
+				this.State = Node.NodeState.Follower;
 			}
 
+			// Reject if leader's term is outdated
 			if (LeadersTermNumber < this.TermNumber)
 			{
 				response = false;
 			}
 
-			// Looks good, I'll keep you as my leader
+			// Update leader and reset election timeout
 			this.LeaderId = leaderId;
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
-			WhenTimerStarted = DateTime.Now;
-
+			this.WhenTimerStarted = DateTime.Now;
 			this.CommitIndex = leaderCommit;
 
-
-			// Replicating Logs
-			if (prevLogIndex - (this.Entries.Count - 1) <= 1)  // make sure leaders logs aren't too far ahead in the future
+			// Log replication
+			if (prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
 			{
 				if (entries.Count > 0)
 				{
-					foreach (var l in entries.AsEnumerable().Reverse())
+					// Check and add new entries
+					int matchIndex = this.Entries.FindLastIndex(e =>
+						e.TermReceived == entries.First().TermReceived &&
+						e.Command == entries.First().Command);
+
+					if (matchIndex != -1)
 					{
-						
-						foreach (var myLog in this.Entries.AsEnumerable().Reverse())
-						{
-							if (myLog != l && (l == entries.Last()))
-							{
-								response = false;
-							}
-							else if (myLog.TermReceived == l.TermReceived && myLog.Command == l.Command /* && (l == entries.First())*/)
-							{
-								foreach (var lToAdd in entries.Skip(1)) // skip the matching one
-								{
-									this.Entries.Add(lToAdd);
-								}
-								response = true;	// I have successfully replicated the logs
-							}
-						}
-						if (this.Entries.Count == 0)
-						{
-							foreach (var lToAdd in entries.AsEnumerable().Reverse())
-							{
-								this.Entries.Add(lToAdd);
-							}
-							response = true;
-						}
+						this.Entries.AddRange(entries.Skip(matchIndex + 1));
+					}
+					else if (this.Entries.Count == 0)
+					{
+						this.Entries.AddRange(entries);
+					}
+					else
+					{
+						response = false;
 					}
 				}
 			}
@@ -194,16 +184,87 @@ namespace Raft
 				response = false;
 			}
 
-
-			// Respond back to leader with my response
-			foreach (var n in OtherNodes)
+			// Respond to leader
+			foreach (var node in OtherNodes)
 			{
-				if (n.LeaderId == this.LeaderId)
+				if (node.LeaderId == this.LeaderId)
 				{
-					n.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
+					node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
 				}
 			}
 		}
+
+		//public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
+		//{
+		//	bool response = true;
+		//	// As a follower, I have heard from the leader
+		//	if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
+		//	{
+		//		this.State = Node.NodeState.Follower; // I'm a candidate, but I heard from someone with greater term #
+		//	}
+
+		//	if (LeadersTermNumber < this.TermNumber)
+		//	{
+		//		response = false;
+		//	}
+
+		//	// Looks good, I'll keep you as my leader
+		//	this.LeaderId = leaderId;
+		//	this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
+		//	WhenTimerStarted = DateTime.Now;
+
+		//	this.CommitIndex = leaderCommit;
+
+
+		//	// Replicating Logs
+		//	if (prevLogIndex - (this.Entries.Count - 1) <= 1)  // make sure leaders logs aren't too far ahead in the future
+		//	{
+		//		if (entries.Count > 0)
+		//		{
+		//			foreach (var l in entries.AsEnumerable().Reverse())
+		//			{
+
+		//				foreach (var myLog in this.Entries.AsEnumerable().Reverse())
+		//				{
+		//					if (myLog != l && (l == entries.Last()))
+		//					{
+		//						response = false;
+		//					}
+		//					else if (myLog.TermReceived == l.TermReceived && myLog.Command == l.Command /* && (l == entries.First())*/)
+		//					{
+		//						foreach (var lToAdd in entries.Skip(1)) // skip the matching one
+		//						{
+		//							this.Entries.Add(lToAdd);
+		//						}
+		//						response = true;	// I have successfully replicated the logs
+		//					}
+		//				}
+		//				if (this.Entries.Count == 0)
+		//				{
+		//					foreach (var lToAdd in entries.AsEnumerable().Reverse())
+		//					{
+		//						this.Entries.Add(lToAdd);
+		//					}
+		//					response = true;
+		//				}
+		//			}
+		//		}
+		//	}
+		//	else
+		//	{
+		//		response = false;
+		//	}
+
+
+		//	// Respond back to leader with my response
+		//	foreach (var n in OtherNodes)
+		//	{
+		//		if (n.LeaderId == this.LeaderId)
+		//		{
+		//			n.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
+		//		}
+		//	}
+		//}
 
 		public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
 		{
