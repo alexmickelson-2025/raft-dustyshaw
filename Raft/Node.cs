@@ -169,9 +169,9 @@ namespace Raft
 							{
 								response = false;
 							}
-							else if (myLog == l && (l == entries.Last()))
+							else if (myLog.TermReceived == l.TermReceived && myLog.Command == l.Command /* && (l == entries.First())*/)
 							{
-								foreach (var lToAdd in entries.AsEnumerable().Reverse())
+								foreach (var lToAdd in entries.Skip(1)) // skip the matching one
 								{
 									this.Entries.Add(lToAdd);
 								}

@@ -180,19 +180,25 @@ namespace RaftTests
 			List<Entry> entriesFromLeader = new List<Entry>();
 			Entry e1 = new("set a", 1);
 			Entry e2 = new("set b", 2);
+			Entry e3 = new("set c", 2);
+
 			entriesFromLeader.Add(e1);
 			entriesFromLeader.Add(e2);
-
+			entriesFromLeader.Add(e3);
 
 			// act
+			// let's say the leader says to send a, b, and c...
 			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), entriesFromLeader, Arg.Any<int>());
 
 			//assert
 			// Check the order
 			var entriesList = f.Entries.ToList();
-			Assert.Equal(entriesList.Last(), e2);  // Ensure e2 is the last one in the list
-			Assert.Equal(entriesList[entriesList.Count - 2], e1);  // Ensure e is the one before the last one
+			Assert.Equal(entriesList.Last(), e3);  // Ensure e2 is the last one in the list
+			Assert.Equal(entriesList[entriesList.Count - 2], e2);  // Ensure e is the one before the last one
+			Assert.Equal(entriesList[entriesList.Count - 3].TermReceived, e1.TermReceived);  // Ensure e is the one before the last one
+			Assert.Equal(entriesList[entriesList.Count - 3].Command, e1.Command);  // Ensure e is the one before the last one
 
+			Assert.Equal(3, entriesList.Count());
 		}
 
 
