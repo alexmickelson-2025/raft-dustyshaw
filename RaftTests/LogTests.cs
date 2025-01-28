@@ -371,7 +371,7 @@ namespace RaftTests
 			Assert.True(f.CommitIndex == 100);	
 		}
 
-		// Testing #19 
+		// Testing Logs #19 
 		[Fact]
 		public async Task TestCase19_NodesRejectFutureTerms()
 		{
@@ -396,7 +396,7 @@ namespace RaftTests
         }
 
 
-		// Testing #15
+		// Testing Logs #15
 		[Fact]
 		public async Task TestCase15_NodesRejectRequestsIfTermsDiffer()
 		{
@@ -421,7 +421,7 @@ namespace RaftTests
 			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
 		}
 
-		// Testing #15
+		// Testing Logs #15
 		[Fact]
 		public void TestCase15_FollowersRecieveALog()
 		{
@@ -451,6 +451,31 @@ namespace RaftTests
 
 		}
 
+		// Testing Logs #16
+		[Fact]
+		public void Testing16_NonMajorityConfirmationsDontGetCommitted()
+		{
+			// 16. when a leader sends a heartbeat with a log,
+			// but does not receive responses from a majority of nodes,
+			// the entry is uncommitted
+
+
+			var f1 = Substitute.For<INode>();
+			var f2 = Substitute.For<INode>();
+
+			var leader = new Node([], null);
+			leader.LogConfirmationsRecieved = new List<bool> { true };
+			leader.OtherNodes = [f1, f2];
+			int commitIndexBefore = leader.CommitIndex;
+
+			// Act
+			leader.RespondBackToLeader(false, 1, 1);
+
+			// Assert
+			// followers recieve an empty heartbeat with the new commit index
+			Assert.True(commitIndexBefore == leader.CommitIndex);
+
+		}
 
 		//[Fact]
 		//public void TestCase15_LeadersSendTheLastNumEntriesToAFollower()
