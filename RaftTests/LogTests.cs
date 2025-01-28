@@ -176,18 +176,25 @@ namespace RaftTests
 
 		// Testing Logs #7
 		[Fact]
-		public async Task TestCase07_()
+		public async Task TestCase07_FollowersCommitEntriesToLocalStateMachine()
 		{
-			// 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine
-			var f = new Node([], null);
+			// 7. When a follower learns that a log entry is committed,
+			// it applies the entry to its local state machine
 
+			var f = new Node([], null);
+			// follower has recieved 1 and 2, but hasn't committed 2 yet
+			f.Entries = new List<Entry>() { new Entry("1", "set a"), new Entry("2", "set b") };
+			f.CommitIndex = 0;
+
+			// act
+			// leader has committed to index 1
 			int leadersCommitIndex = 1;
-			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), new List<Entry> { new Entry("1", "set a"), new Entry("1", "set b") }, leadersCommitIndex);
+			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), leadersCommitIndex);
 
 			// assert
-			Assert.True(f.StateMachine.Count > 0);
-
-
+			Assert.Equal(2, f.StateMachine.Count);
+			Assert.Equal("set b", f.StateMachine.Last().Command);
+			Assert.Equal("2", f.StateMachine.Last().Key);
 		}
 
 		// Testing Logs #9

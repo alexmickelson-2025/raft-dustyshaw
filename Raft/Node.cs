@@ -207,15 +207,11 @@ namespace Raft
 			this.WhenTimerStarted = DateTime.Now;
 
 			// update my commits to match leaders commits
-			foreach (var n in OtherNodes)
-			{
-				if (n.LeaderId == leaderId)
-				{
-					this.StateMachine.Clear();
+			
 
-					this.StateMachine.AddRange(n.Entries.Take(leaderCommit));
-				}
-			}
+			// add my logs up until the committed index of the leader
+			this.StateMachine.Clear();
+			this.StateMachine.AddRange(this.Entries.Take(leaderCommit + 1));
 			this.CommitIndex = leaderCommit;
 
 			// Log replication
