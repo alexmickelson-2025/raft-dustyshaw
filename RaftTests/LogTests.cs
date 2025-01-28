@@ -230,6 +230,7 @@ namespace RaftTests
 			// arrange
 			Node leader = new Node([], null);
 			int indexBefore = leader.CommitIndex;
+			leader.Entries = new List<Entry> { new Entry("A", "B") };
 
 			// act
 			leader.CommitEntry();
@@ -313,27 +314,50 @@ namespace RaftTests
 			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex);
 		}
 
+		// I honestly don't know what this is testing...
+		//[Fact]
+		//public void IDontKnow_LeadersSendConfirmation()
+		//{
+		//	// 12. when a leader receives a majority responses from the clients after a log replication heartbeat,
+		//	// the leader sends a confirmation
+		//	var f1 = Substitute.For<INode>();
+		//	var f2 = Substitute.For<INode>();
+
+		//	var leader = new Node([], null);
+		//	leader.LogConfirmationsRecieved = new List<bool> { true };
+		//	leader.OtherNodes = [f1, f2];
+
+		//	// Act
+		//	leader.RespondBackToLeader(true, 1, 1);
+
+		//	// Assert
+		//	// followers recieve an empty heartbeat with the new commit index
+		//	List<Entry> emptyList = new List<Entry>();
+		//	f1.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
+		//	f2.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
+		//}
+
 		// Testing Logs #12
 		[Fact]
-		public void TestCase12_LeadersSendConfirmation()
+		public void TestCase12_LeadersSendCLIENTConfirmation()
 		{
 			// 12. when a leader receives a majority responses from the clients after a log replication heartbeat,
 			// the leader sends a confirmation
-			var f1 = Substitute.For<INode>();
-			var f2 = Substitute.For<INode>();
+
+			var Client = Substitute.For<IClient>();
 
 			var leader = new Node([], null);
-			leader.LogConfirmationsRecieved = new List<bool> { true };
-			leader.OtherNodes = [f1, f2];
+			leader.RecieveClientCommand("A", "B");
+			var leadersEntry = leader.Entries.First();
+			leader.Client = Client;
 
 			// Act
-			leader.RespondBackToLeader(true, 1, 1);
+			leader.CommitEntry();
 
 			// Assert
 			// followers recieve an empty heartbeat with the new commit index
 			List<Entry> emptyList = new List<Entry>();
-			f1.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
-			f2.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
+			Client.Received(1).RecieveLogFromLeader(leadersEntry);
 		}
 
 		// Testing Logs #13
@@ -341,6 +365,7 @@ namespace RaftTests
 		public void TestCase13_CommittingALogIncrementsCommitIndex()
 		{
 			Node l = new([], null);
+			l.Entries = new List<Entry>() { new Entry("A", "B") };
 			int indexBefore = l.CommitIndex;
 
 			l.CommitEntry();
@@ -488,6 +513,7 @@ namespace RaftTests
 			var deadFollower = Substitute.For<INode>();
 
 			Node leaderNode = new Node([deadFollower], null);
+			leaderNode.Entries = new List<Entry>() { new Entry("A", "B") };
 			leaderNode.BecomeLeader();
 
 			// act
@@ -495,6 +521,15 @@ namespace RaftTests
 
 			// assert
 			deadFollower.Received(4).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
+		}
+
+
+		[Fact]
+		public void TestCase18_IfLeadersDontCommitEntryThenTheyDontSendResponseToClient()
+		{
+			// 18. if a leader cannot commit an entry, it does not send a response to the client
+			var client = Substitute.For<IClient>();
+
 		}
 
 		//[Fact]

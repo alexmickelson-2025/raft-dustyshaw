@@ -37,16 +37,19 @@ namespace Raft
 		public int nextIndex { get; set; }
 		public Dictionary<Guid, int> NextIndexes = new();
 		public List<bool> LogConfirmationsRecieved { get; set; } = new();
+		public IClient Client { get; set; }
 
 		// Simulation Stuff
 		public bool IsRunning { get; set; } = true;
 
 		public static int IntervalScalar { get; set; } = 1;
 
-        public Node(INode[] OtherNodes, int? NetworkDelayInMs)
+		public Node(INode[] OtherNodes, int? NetworkDelayInMs)
 		{
-			HeartbeatTimeout =  50 * Node.IntervalScalar;
+			HeartbeatTimeout = 50 * Node.IntervalScalar;
 			NetworkRequestDelay = NetworkDelayInMs ?? 0;
+
+			Client = new Client();
 
 			StartElectionTimer();
 
@@ -201,18 +204,16 @@ namespace Raft
 			// Reply false if term < currentTerm
 			if (LeadersTermNumber < this.TermNumber)
 			{
-				response = false;	// I have heard from a leader whos term is less than mine
+				response = false;   // I have heard from a leader whos term is less than mine
 			}
 
 			this.LeaderId = leaderId;
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.WhenTimerStarted = DateTime.Now;
 
-			// update my commits to match leaders commits
-			
 
 			// add my logs up until the committed index of the leader
-			if (entries.Count == 0)
+			if (entries.Count == 0)  // but only do this if this is a heartbeat messsage...
 			{
 				this.StateMachine.Clear();
 				this.StateMachine.AddRange(this.Entries.Take(leaderCommit + 1));
@@ -490,6 +491,11 @@ namespace Raft
 			this.CommitIndex++;
 			this.StateMachine.Clear();
 			this.StateMachine = this.Entries.Take(this.CommitIndex).ToList();
+			if (this.StateMachine is not null)
+			{
+				Entry entryToSend = this.StateMachine.Last();
+				this.Client.RecieveLogFromLeader(entryToSend);
+			}
 		}
 
 		public void PauseNode()
