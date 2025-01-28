@@ -311,7 +311,29 @@ namespace RaftTests
 
 			// assert
 			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex);
+		}
 
+		// Testing Logs #12
+		[Fact]
+		public void TestCase12_LeadersSendConfirmation()
+		{
+			// 12. when a leader receives a majority responses from the clients after a log replication heartbeat,
+			// the leader sends a confirmation
+			var f1 = Substitute.For<INode>();
+			var f2 = Substitute.For<INode>();
+
+			var leader = new Node([], null);
+			leader.LogConfirmationsRecieved = new List<bool> { true };
+			leader.OtherNodes = [f1, f2];
+
+			// Act
+			leader.RespondBackToLeader(true, 1, 1);
+
+			// Assert
+			// followers recieve an empty heartbeat with the new commit index
+			List<Entry> emptyList = new List<Entry>();
+			f1.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
+			f2.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
 		}
 
 		// Testing Logs #13
@@ -328,7 +350,7 @@ namespace RaftTests
 
 		// Testing Logs #14
 		[Fact]
-		public async Task TestCase14_()
+		public async Task TestCase14_FollwerIncreasesCommitIndexFromHeartbeats()
 		{
 			// 14.when a follower receives a heartbeat,
 			// it increases its commitIndex to match the commit index of the heartbeat

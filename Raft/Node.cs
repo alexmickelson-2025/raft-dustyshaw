@@ -212,9 +212,12 @@ namespace Raft
 			
 
 			// add my logs up until the committed index of the leader
-			this.StateMachine.Clear();
-			this.StateMachine.AddRange(this.Entries.Take(leaderCommit + 1));
-			this.CommitIndex = leaderCommit;
+			if (entries.Count == 0)
+			{
+				this.StateMachine.Clear();
+				this.StateMachine.AddRange(this.Entries.Take(leaderCommit + 1));
+				this.CommitIndex = leaderCommit;
+			}
 
 			// Log replication
 			if (prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
@@ -333,12 +336,19 @@ namespace Raft
 			//this.TermNumber = myTermNumber;
 			//this.State = NodeState.Follower;
 
+			// as the leader, I have heard from my followers and I will commit my index
 			LogConfirmationsRecieved.Add(response);
 			bool hasMajority = HasMajority(LogConfirmationsRecieved);
 
 			if (hasMajority)
 			{
 				CommitEntry();
+			}
+
+			// send a confirmation heartbeat to other nodes saying I have committed an entry
+			foreach (var n in this.OtherNodes)
+			{
+				n.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), this.CommitIndex);
 			}
 		}
 
