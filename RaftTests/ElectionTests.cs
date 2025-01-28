@@ -227,7 +227,7 @@ namespace RaftTests
             // Act
             // Say in a 5 system I recieve only 3 votes, and have one server unresponsive
             candidateNode.votesRecieved = [true, true, true];
-            candidateNode.DetermineElectionResults();
+            candidateNode.HasMajority(candidateNode.votesRecieved);
 
             // Assert
             Assert.Equal(Node.NodeState.Leader, candidateNode.State);

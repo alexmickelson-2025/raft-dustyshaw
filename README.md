@@ -7,7 +7,7 @@
 - [x] 4. when a leader wins an election, it initializes the nextIndex for each follower to the index just after the last one it its log
 - [x] 5. leaders maintain an "nextIndex" for each follower that is the index of the next log entry the leader will send to that follower
 - [x] 6. Highest committed index from the leader is included in AppendEntries RPC's
-- [ ] 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine
+- [x] 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine
 - [ ] 8. when the leader has received a majority confirmation of a log, it commits it
 - [x] 9. the leader commits logs by incrementing its committed log index
 - [x] 10. given a follower receives an appendentries with log(s) it will add those entries to its personal log

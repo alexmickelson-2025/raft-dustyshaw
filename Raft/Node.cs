@@ -36,7 +36,7 @@ namespace Raft
 		public int CommitIndex { get; set; } = 0;
 		public int nextIndex { get; set; }
 		public Dictionary<Guid, int> NextIndexes = new();
-
+		public List<bool> LogConfirmationsRecieved { get; set; } = new();
 
 		// Simulation Stuff
 		public bool IsRunning { get; set; } = true;
@@ -84,6 +84,8 @@ namespace Raft
 
 			this.State = Node.NodeState.Leader;
 			this.LeaderId = this.NodeId;
+
+			votesRecieved.Clear();
 
 			CalculateNextIndecesList();
 
@@ -217,7 +219,7 @@ namespace Raft
 			// Log replication
 			if (prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
 			{
-				if (entries.Count > 0)
+				if (entries is not null && entries.Count > 0)
 				{
 					int matchIndex = this.Entries.FindLastIndex(e =>
 						e.TermReceived == entries.First().TermReceived &&
@@ -330,6 +332,14 @@ namespace Raft
 			// This is the leader
 			//this.TermNumber = myTermNumber;
 			//this.State = NodeState.Follower;
+
+			LogConfirmationsRecieved.Add(response);
+			bool hasMajority = HasMajority(LogConfirmationsRecieved);
+
+			if (hasMajority)
+			{
+				CommitEntry();
+			}
 		}
 
 		public void SendVoteRequestRPCsToOtherNodes()
@@ -354,18 +364,34 @@ namespace Raft
 			// As a candidate, I am recieving votes from my followers
 			votesRecieved.Add(result);
 
-			DetermineElectionResults();
+			bool won = HasMajority(votesRecieved);
+
+			if (won)
+			{
+				BecomeLeader();
+			}
+
 		}
 
-		public void DetermineElectionResults()
+		public bool HasMajority(List<bool> List)
+		{
+			if (List.Count(x => x) > OtherNodes.Count() / 2)
+			{
+				return true;
+				//BecomeLeader();
+			}
+			return false;
+		}
+
+		public void HasLogMajority(List<bool> List)
 		{
 			if (!IsRunning)
 			{
 				return;
 			}
-			if (votesRecieved.Count(x => x) > OtherNodes.Count() / 2)
+			if (List.Count(x => x) > OtherNodes.Count() / 2)
 			{
-				BecomeLeader();
+				CommitEntry();
 			}
 		}
 
@@ -409,6 +435,9 @@ namespace Raft
 			{
 				return;
 			}
+
+			votesRecieved.Clear();
+
 			this.State = NodeState.Candidate;
 			this.VoteForId = this.NodeId;
 			this.TermNumber = this.TermNumber + 1;
@@ -449,6 +478,8 @@ namespace Raft
 				return;
 			}
 			this.CommitIndex++;
+			this.StateMachine.Clear();
+			this.StateMachine = this.Entries.Take(this.CommitIndex).ToList();
 		}
 
 		public void PauseNode()

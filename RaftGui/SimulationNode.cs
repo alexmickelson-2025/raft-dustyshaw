@@ -42,13 +42,13 @@ public class SimulationNode : INode
 		((INode)InnerNode).BecomeLeader();
 	}
 
-	public void DetermineElectionResults()
+	public bool HasMajority(List<bool> List)
 	{
-        if (!IsRunning)
-        {
-            return;
-        }
-        ((INode)InnerNode).DetermineElectionResults();
+        //if (!IsRunning)
+        //{
+        //    return;
+        //}
+        return ((INode)InnerNode).HasMajority(List);
 	}
 
 	public Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)

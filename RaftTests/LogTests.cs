@@ -156,7 +156,7 @@ namespace RaftTests
 
 			// Arrange
 			var leader = new Node([], null);
-			leader.BecomeLeader();
+			//leader.BecomeLeader();
 			leader.TermNumber = 0;
 
 			var follower = Substitute.For<INode>();
@@ -168,6 +168,7 @@ namespace RaftTests
 			// Act
 			leader.CommitIndex = 100;
 			leader.SendAppendEntriesRPC();
+
 
 			// assert
 			// The follower should have recieved the leaders commit index (along with its id)
@@ -189,12 +190,35 @@ namespace RaftTests
 			// act
 			// leader has committed to index 1
 			int leadersCommitIndex = 1;
-			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), leadersCommitIndex);
+			List<Entry> leadersEntries = new List<Entry>();
+			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), leadersEntries, leadersCommitIndex);
+			Thread.Sleep(50);
 
 			// assert
 			Assert.Equal(2, f.StateMachine.Count);
 			Assert.Equal("set b", f.StateMachine.Last().Command);
 			Assert.Equal("2", f.StateMachine.Last().Key);
+		}
+
+		// Testing Logs #8
+		[Fact]
+		public void TestCase08_LeadersCommitEntriesWithMajorityConfirmation()
+		{
+			//  8. when the leader has received a majority confirmation of a log, it commits it
+			var f1 = Substitute.For<INode>();
+			var f2 = Substitute.For<INode>();
+
+			Node leader = new Node([f1, f2], null);
+			// leader has recieved
+			leader.RecieveClientCommand("1", "2");
+
+			// act
+			leader.RespondBackToLeader(true, 1, 1);
+			leader.RespondBackToLeader(true, 1, 1);
+
+			// assert
+			// make sure the leader adds the log to the state machine
+			Assert.True(leader.StateMachine.Count() > 0);
 		}
 
 		// Testing Logs #9
@@ -350,7 +374,7 @@ namespace RaftTests
         }
 
 
-		// Testing 15
+		// Testing #15
 		[Fact]
 		public async Task TestCase15_NodesRejectRequestsIfTermsDiffer()
 		{
@@ -375,7 +399,7 @@ namespace RaftTests
 			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
 		}
 
-		// Testing 15
+		// Testing #15
 		[Fact]
 		public void TestCase15_FollowersRecieveALog()
 		{

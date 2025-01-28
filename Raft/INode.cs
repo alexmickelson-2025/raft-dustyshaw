@@ -25,7 +25,7 @@ namespace Raft
         bool IsRunning { get; set; }
 
         void BecomeLeader();
-		void DetermineElectionResults();
+		bool HasMajority(List<bool> Results);
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
 		void RecieveVoteResults(bool result, int termNumber);
 		Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit);
