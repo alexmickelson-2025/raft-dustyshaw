@@ -1,6 +1,6 @@
 ﻿# raft-dustyshaw
 
-### Log replication  
+### Log replication tests 
 - [x] 1. when a leader receives a client command the leader sends the log entry in the next appendentries RPC to all nodes
 - [x] 2. when a leader receives a command from the client, it is appended to its log
 - [x] 3. when a node is new, its log is empty
@@ -28,7 +28,7 @@
 - [ ] 20. if a node receives and appendentries with a term and index that do not match, you will reject the appendentry until you find a matching log 
 
 
-### Test Checklist  
+### Election tests  
 
 
 - [x] 1. When a leader is active, it sends a heartbeat within 50ms.
