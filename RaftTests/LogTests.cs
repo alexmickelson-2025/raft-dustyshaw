@@ -477,6 +477,26 @@ namespace RaftTests
 
 		}
 
+		// Testing Logs #17
+		[Fact]
+		public void Testing17_NoResponseFromFollowersLeaderContinuesToSendLogEntries()
+		{
+			// 17. if a leader does not response from a follower,
+			// the leader continues to send the log entries in subsequent heartbeats
+			
+			// Substituted nodes won't actually send any methods in response, so its a good simulation for a "dead node"
+			var deadFollower = Substitute.For<INode>();
+
+			Node leaderNode = new Node([deadFollower], null);
+			leaderNode.BecomeLeader();
+
+			// act
+			Thread.Sleep(200);
+
+			// assert
+			deadFollower.Received(4).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
+		}
+
 		//[Fact]
 		//public void TestCase15_LeadersSendTheLastNumEntriesToAFollower()
 		//{
