@@ -20,7 +20,7 @@ namespace RaftTests
 
 			// Arrange
 			Node n = new Node([], null);
-			Entry l = new Entry("set a");
+			Entry l = new Entry("1", "set a");
 			n.Entries = [l];
 
 			var follower = Substitute.For<INode>();
@@ -28,7 +28,7 @@ namespace RaftTests
 			n.OtherNodes = [follower];
 
 			// Act
-			n.RecieveClientCommand(l.Command);
+			n.RecieveClientCommand(l.Key, l.Command);
 
 			// Assert
 			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
@@ -40,9 +40,9 @@ namespace RaftTests
 		public void TestCase02_NodesRecieveCommands()
 		{
 			Node n = new Node([], null);
-			Entry l = new Entry("set a", 0);
+			Entry l = new Entry("1", "set a", 0);
 
-			n.RecieveClientCommand(l.Command);
+			n.RecieveClientCommand(l.Key, l.Command);
 
 			Assert.True(n.Entries.Count() > 0);
 			Assert.Contains(l.Command, n.Entries.First().Command);
@@ -72,7 +72,7 @@ namespace RaftTests
 			f2.NodeId = Guid.NewGuid();
 
 			Node n = new Node([f1, f2], null);
-			n.Entries = new List<Entry>() { new Entry("set a")};
+			n.Entries = new List<Entry>() { new Entry("1", "set a")};
 			int nextIndexesCountBeore = n.NextIndexes.Count();
 
 
@@ -120,7 +120,7 @@ namespace RaftTests
 			Node f1 = new Node([], null);
 
 			Node leader = new Node([f1], null);
-			leader.Entries = new List<Entry> { new Entry("set a"), new Entry("set b") };
+			leader.Entries = new List<Entry> { new Entry("1", "set a"), new Entry("1", "set b") };
 			leader.BecomeLeader();
 
 			// act
@@ -171,7 +171,23 @@ namespace RaftTests
 
 			// assert
 			// The follower should have recieved the leaders commit index (along with its id)
-			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), leader.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), leader.CommitIndex);
+			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), leader.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), 100);
+		}
+
+		// Testing Logs #7
+		[Fact]
+		public async Task TestCase07_()
+		{
+			// 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine
+			var f = new Node([], null);
+
+			int leadersCommitIndex = 1;
+			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), new List<Entry> { new Entry("1", "set a"), new Entry("1", "set b") }, leadersCommitIndex);
+
+			// assert
+			Assert.True(f.StateMachine.Count > 0);
+
+
 		}
 
 		// Testing Logs #9
@@ -200,7 +216,7 @@ namespace RaftTests
 			// arrange
 			var f = new Node([], null);
 			List<Entry> entries = new List<Entry>();
-			Entry e = new Entry("set a");
+			Entry e = new Entry("1", "set a");
 			entries.Add(e);
 
 			// act
@@ -219,12 +235,12 @@ namespace RaftTests
 
 			// arrange
 			var f = new Node([], null);
-			f.Entries = new List<Entry> { new Entry("set a", 1) };
+			f.Entries = new List<Entry> { new Entry("1", "set a", 1) };
 
 			List<Entry> entriesFromLeader = new List<Entry>();
-			Entry e1 = new("set a", 1);
-			Entry e2 = new("set b", 2);
-			Entry e3 = new("set c", 2);
+			Entry e1 = new("1", "set a", 1);
+			Entry e2 = new("1", "set b", 2);
+			Entry e3 = new("1", "set c", 2);
 
 			entriesFromLeader.Add(e1);
 			entriesFromLeader.Add(e2);
@@ -311,10 +327,10 @@ namespace RaftTests
 
 			// arrange
 			var f1 = new Node([], null);
-            f1.Entries = new List<Entry> { new Entry("set a") };
+            f1.Entries = new List<Entry> { new Entry("1", "set a") };
 
 			var l = Substitute.For<INode>();
-			List<Entry> leadersEntries = new List<Entry> { new Entry("set a"), new Entry("set b"), new Entry("set c") };
+			List<Entry> leadersEntries = new List<Entry> { new Entry("1", "set a"), new Entry("1", "set b"), new Entry("1", "set c") };
 			l.Entries = leadersEntries;
 			f1.OtherNodes = [l];
 
@@ -336,10 +352,10 @@ namespace RaftTests
 
 			// arrange
 			var f1 = new Node([], null);
-			f1.Entries = new List<Entry> { new Entry("set a", 1) };
+			f1.Entries = new List<Entry> { new Entry("1", "set a", 1) };
 
 			var l = Substitute.For<INode>();
-			List<Entry> leadersEntries = new List<Entry> { new Entry("set a", 2), new Entry("set b", 2) };	// same command, but different term
+			List<Entry> leadersEntries = new List<Entry> { new Entry("1", "set a", 2), new Entry("1", "set b", 2) };	// same command, but different term
 
 			l.Entries = leadersEntries;
 			f1.OtherNodes = [l];
@@ -360,16 +376,16 @@ namespace RaftTests
 
 			// arrange
 			var f1 = Substitute.For<INode>();
-			f1.Entries = new List<Entry> { new Entry("set a", 1) };
+			f1.Entries = new List<Entry> { new Entry("1", "set a", 1) };
 
 			var l = new Node([], null);
-			l.Entries = new List<Entry> { new Entry("set a", 1) };  // same command, but different term
+			l.Entries = new List<Entry> { new Entry("1", "set a", 1) };  // same command, but different term
 			f1.OtherNodes = [l];
 			l.OtherNodes = [f1];
 			l.BecomeLeader();
 
 
-			l.RecieveClientCommand("set b");
+			l.RecieveClientCommand("1", "set b");
 			List<Entry> logsToSend = l.CalculateEntriesToSend(f1); // Should be the last one ("send b") one
 
 

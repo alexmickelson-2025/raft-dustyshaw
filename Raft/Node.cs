@@ -32,9 +32,11 @@ namespace Raft
 
 		// Log Replications
 		public List<Entry> Entries { get; set; } = new();
+		public List<Entry> StateMachine { get; set; } = new();
 		public int CommitIndex { get; set; } = 0;
 		public int nextIndex { get; set; }
 		public Dictionary<Guid, int> NextIndexes = new();
+
 
 		// Simulation Stuff
 		public bool IsRunning { get; set; } = true;
@@ -203,6 +205,17 @@ namespace Raft
 			this.LeaderId = leaderId;
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.WhenTimerStarted = DateTime.Now;
+
+			// update my commits to match leaders commits
+			foreach (var n in OtherNodes)
+			{
+				if (n.LeaderId == leaderId)
+				{
+					this.StateMachine.Clear();
+
+					this.StateMachine.AddRange(n.Entries.Take(leaderCommit));
+				}
+			}
 			this.CommitIndex = leaderCommit;
 
 			// Log replication
@@ -315,6 +328,7 @@ namespace Raft
 		//	}
 		//}
 
+
 		public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
 		{
 			// This is the leader
@@ -418,13 +432,13 @@ namespace Raft
 			SendVoteRequestRPCsToOtherNodes();
 		}
 
-		public void RecieveClientCommand(string command)
+		public void RecieveClientCommand(string key, string command)
 		{
 			if (!IsRunning)
 			{
 				return;
 			}
-			Entry l = new Entry(command);
+			Entry l = new Entry(key, command);
 			l.TermReceived = this.TermNumber;
 
 			this.Entries.Add(l);
