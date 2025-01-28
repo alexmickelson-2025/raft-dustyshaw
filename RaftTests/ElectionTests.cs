@@ -13,7 +13,7 @@ namespace RaftTests
         //public async Task TestCase1_ActiveLeadersSendHeartbeatsWithin50ms()
         //{
         //    // Arrange
-        //    Node leaderNode = new Node([], null, null);
+        //    Node leaderNode = new Node([], null);
         //    leaderNode.BecomeLeader();
 
         //    var followerNode = Substitute.For<INode>();
@@ -33,10 +33,10 @@ namespace RaftTests
         public void TestCase2_LeadersAreRememberedByFollowers()
         {
             // Arrange
-            Node leaderNode = new Node([], null, null);
+            Node leaderNode = new Node([], null);
             leaderNode.BecomeLeader();
 
-            var followerNode = new Node([leaderNode], null, null);
+            var followerNode = new Node([leaderNode], null);
             leaderNode.OtherNodes = [followerNode];
 
             // Act
@@ -51,7 +51,7 @@ namespace RaftTests
         public void TestCase3_NodesStartAsFollowers()
         {
             // Arrange
-            Node newNode = new Node([], null, null);
+            Node newNode = new Node([], null);
 
             // Act
             var currentNodeState = newNode.State;
@@ -65,7 +65,7 @@ namespace RaftTests
         public void TestCase4_IgnoredFollowersStartElectionAfter300ms()
         {
             // Arrange
-            var followerNode = new Node([], null, null);
+            var followerNode = new Node([], null);
 
             // Act
             var BiggestElectionTimoutTime = 600;
@@ -86,7 +86,7 @@ namespace RaftTests
             // Act
             for (int i = 0; i < n; i++)
             {
-                var node = new Node([], null, null);
+                var node = new Node([], null);
                 electionTimeouts.Add(node.ElectionTimeout);
             }
 
@@ -107,7 +107,7 @@ namespace RaftTests
             // Act
             for (int i = 0; i < n; i++)
             {
-                var node = new Node([], null, null);
+                var node = new Node([], null);
                 electionTimeouts.Add(node.ElectionTimeout);
             }
 
@@ -122,7 +122,7 @@ namespace RaftTests
         public void TestCase6_NewElectionBeginsAndTermIsGreater()
         {
             // Arrange
-            Node n = new Node([], null, null);
+            Node n = new Node([], null);
 
             // Act
             Thread.Sleep(600);
@@ -136,7 +136,7 @@ namespace RaftTests
         public async Task TestCase7_WhenLeadersSendMessagesToMeThenIStayFollower()
         {
             // Arrange
-            var followerNode = new Node([], null, null);
+            var followerNode = new Node([], null);
             followerNode.State = Node.NodeState.Follower;
 
             var followerElectionTimeBefore = followerNode.ElectionTimeout;
@@ -163,7 +163,7 @@ namespace RaftTests
 			var followerNode2 = Substitute.For<INode>();
             followerNode2.NodeId = Guid.NewGuid();
 
-			Node candidateNode = new([], null, null);
+			Node candidateNode = new([], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.OtherNodes = [followerNode, followerNode2];
 			followerNode.OtherNodes = [candidateNode, followerNode2];
@@ -187,10 +187,10 @@ namespace RaftTests
 			// it becomes a leader.
 
 			// Arrange
-			Node followerNode = new Node([], null, null);
-			Node followerNode2 = new Node([], null, null);
+			Node followerNode = new Node([], null);
+			Node followerNode2 = new Node([], null);
 
-			Node candidateNode = new([], null, null);
+			Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
 			candidateNode.State = Node.NodeState.Candidate;
 
@@ -211,12 +211,12 @@ namespace RaftTests
 		[Fact]
         public void TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
         {
-            Node followerNode1 = new([], null, null);
-            Node followerNode2 = new([], null, null);
-            Node followerNode3 = new([], null, null);
-            Node followerNode4 = new([], null, null);
+            Node followerNode1 = new([], null);
+            Node followerNode2 = new([], null);
+            Node followerNode3 = new([], null);
+            Node followerNode4 = new([], null);
 
-            Node candidateNode = new([], null, null);
+            Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
             candidateNode.ElectionTimeout = 9999999;
             candidateNode.State = Node.NodeState.Candidate;
@@ -240,7 +240,7 @@ namespace RaftTests
   //          // A follower that has not voted and is in an earlier term responds to a RequestForVoteRPC with "yes".
 
   //          // Arrange
-  //          var follower = new Node([], null, null);
+  //          var follower = new Node([], null);
   //          follower.VoteForId = Guid.Empty; // given a follower has not voted
   //          follower.TermNumber = 0; // and is in an earlier term
 
@@ -262,7 +262,7 @@ namespace RaftTests
         public void TestCase11_NewCandidateNodesVoteForThemselves()
         {
             // Arrange
-            Node n = new Node([], null, null);
+            Node n = new Node([], null);
             Thread.Sleep(100);
             var thisNodesId = n.NodeId;
 
@@ -282,10 +282,10 @@ namespace RaftTests
             // then the candidate loses and becomes a follower.
 
             // Arrange
-            Node node1 = new Node([], null, null);
+            Node node1 = new Node([], null);
             node1.TermNumber = 100;
 
-            Node candidateNode = new Node([node1], null, null);
+            Node candidateNode = new Node([node1], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.TermNumber = 1;
 
@@ -303,10 +303,10 @@ namespace RaftTests
         public void TestCase12_CandidatesStaysCandidateWhenRecieveLesserTermRPC()
         {
             // Arrange
-            Node node1 = new Node([], null, null);
+            Node node1 = new Node([], null);
             node1.TermNumber = 1;
 
-            Node candidateNode = new Node([node1], null, null);
+            Node candidateNode = new Node([node1], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.TermNumber = 100;
 
@@ -324,10 +324,10 @@ namespace RaftTests
         public void TestCase13_CandidatesBecomeFollowersWhenRecieveEqualTermRPC()
         {
             // Arrange
-            Node node1 = new Node([], null, null);
+            Node node1 = new Node([], null);
             node1.TermNumber = 100; 
 
-            Node candidateNode = new Node([node1], null, null);
+            Node candidateNode = new Node([node1], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.TermNumber = 100;  // equal terms
 
@@ -347,7 +347,7 @@ namespace RaftTests
 			// 14. If a node receives a second request for a vote for the same term, it should respond "no". 
 
 			// Arrange
-			Node node = new([], null, null);
+			Node node = new([], null);
 
 			var c1 = Substitute.For<INode>();
             c1.TermNumber = 100;
@@ -375,14 +375,14 @@ namespace RaftTests
         {
             // 15.If a node receives a second request for a vote for a future term, it should vote for that node.
             // Arrange
-            Node node = new Node([], null, null);
+            Node node = new Node([], null);
             node.TermNumber = 1;
 
-            Node candidateNode = new Node([node], null, null);
+            Node candidateNode = new Node([node], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.TermNumber = 50;
 
-            Node candidateNode2 = new Node( [node, candidateNode], null, null);
+            Node candidateNode2 = new Node( [node, candidateNode], null);
             candidateNode2.State = Node.NodeState.Candidate;
             candidateNode2.TermNumber = 100;
 
@@ -406,7 +406,7 @@ namespace RaftTests
         public void TestCase16_ElectionTimersRestartDuringElection()
         {
             // Arrange
-            Node n = new Node([], null, null);
+            Node n = new Node([], null);
             n.State = Node.NodeState.Candidate;
             var termBefore = n.TermNumber;
 
@@ -427,7 +427,7 @@ namespace RaftTests
             var followerNode = Substitute.For<INode>();
             followerNode.State = Node.NodeState.Follower;
 
-            var leaderNode = new Node([], null, null);
+            var leaderNode = new Node([], null);
             leaderNode.BecomeLeader();
 
             leaderNode.OtherNodes = [followerNode];
@@ -450,7 +450,7 @@ namespace RaftTests
 			var leader = Substitute.For<INode>();
 			leader.TermNumber = 2;
 
-			Node candidateNode = new([], null, null);
+			Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
 
             candidateNode.OtherNodes = [leader];
@@ -470,7 +470,7 @@ namespace RaftTests
         public void TestCase19_NewLeadersSendRPC()
         {
             // 19. When a candidate wins an election, it immediately sends a heartbeat.
-            var leaderNode = new Node([], null, null);
+            var leaderNode = new Node([], null);
             var followerNode = Substitute.For<INode>();
             leaderNode.OtherNodes = [followerNode];
 

@@ -19,7 +19,7 @@ namespace RaftTests
 			// log entry in the next appendentries RPC to all nodes
 
 			// Arrange
-			Node n = new Node([], null, null);
+			Node n = new Node([], null);
 			Entry l = new Entry("set a");
 			n.Entries = [l];
 
@@ -39,7 +39,7 @@ namespace RaftTests
 		[Fact]
 		public void TestCase02_NodesRecieveCommands()
 		{
-			Node n = new Node([], null, null);
+			Node n = new Node([], null);
 			Entry l = new Entry("set a");
 
 			n.RecieveClientCommand(l.Command);
@@ -54,7 +54,7 @@ namespace RaftTests
 		public void TestCase03_NodesStartWithNoLogs()
 		{
 			// Arrange and Act
-			Node n = new([], null, null);
+			Node n = new([], null);
 
 			// Assert
 			Assert.True(n.Entries.Count() == 0);
@@ -70,10 +70,10 @@ namespace RaftTests
 			// Leaders initialize their nextIndex[] array to have each node
 
 			// arrange
-			Node f1 = new Node([], null, null);
-			Node f2 = new Node([], null, null);
+			Node f1 = new Node([], null);
+			Node f2 = new Node([], null);
 
-			Node n = new Node([f1, f2], null, null);
+			Node n = new Node([f1, f2], null);
 			n.BecomeLeader();
 
 			// act
@@ -92,9 +92,9 @@ namespace RaftTests
 			// Leaders initialize their nextIndex[] array to have the lastLogTerm + 1 of leader
 
 			// arrange
-			Node f1 = new Node([], null, null);
+			Node f1 = new Node([], null);
 
-			Node n = new Node([f1], null, null);
+			Node n = new Node([f1], null);
 			n.Entries = new List<Entry> { new Entry("set a"), new Entry("set b") };
 			n.BecomeLeader();
 
@@ -111,7 +111,7 @@ namespace RaftTests
 		{
 			// 6. Highest committed index from the leader is included in AppendEntries RPC's
 			// Arrange
-			var leader = new Node([], null, null);
+			var leader = new Node([], null);
 			leader.BecomeLeader();
 			leader.TermNumber = 0;
 
@@ -137,7 +137,7 @@ namespace RaftTests
 			//  the leader commits logs by incrementing its committed log index
 
 			// arrange
-			Node leader = new Node([], null, null);
+			Node leader = new Node([], null);
 			int indexBefore = leader.CommitIndex;
 
 			// act
@@ -154,7 +154,7 @@ namespace RaftTests
 			// 10. given a follower receives an appendentries with log(s) it will add those entries to its personal log
 
 			// arrange
-			var f = new Node([], null, null);
+			var f = new Node([], null);
 			List<Entry> entries = new List<Entry>();
 			Entry e = new Entry("set a");
 			entries.Add(e);
@@ -174,7 +174,7 @@ namespace RaftTests
 			// I want to make sure that the logs are appended in the order the follower recieved them.
 
 			// arrange
-			var f = new Node([], null, null);
+			var f = new Node([], null);
 			f.Entries = new List<Entry> { new Entry("set a", 1) };
 
 			List<Entry> entriesFromLeader = new List<Entry>();
@@ -212,7 +212,7 @@ namespace RaftTests
 			var l = Substitute.For<INode>();
 			l.Entries = new List<Entry>();
 
-			Node  f = new([], null, null);
+			Node  f = new([], null);
 			f.OtherNodes = [l];
 
 			// act
@@ -227,7 +227,7 @@ namespace RaftTests
 		[Fact]
 		public void TestCase13_CommittingALogIncrementsCommitIndex()
 		{
-			Node l = new([], null, null);
+			Node l = new([], null);
 			int indexBefore = l.CommitIndex;
 
 			l.CommitEntry();
@@ -243,9 +243,9 @@ namespace RaftTests
 			// it increases its commitIndex to match the commit index of the heartbeat
 
 			// arrange
-			Node l = new([], null, null);
+			Node l = new([], null);
 			l.CommitIndex = 100;
-			Node f = new([], null, null);
+			Node f = new([], null);
 			l.OtherNodes = [f];
 
 			l.OtherNodes = [f];
@@ -266,7 +266,7 @@ namespace RaftTests
 			// you should reject the appendentries
 
 			// arrange
-			var f1 = new Node([], null, null);
+			var f1 = new Node([], null);
             f1.Entries = new List<Entry> { new Entry("set a") };
 
 			var l = Substitute.For<INode>();
@@ -291,7 +291,7 @@ namespace RaftTests
 			// then it refuses the new entries.
 
 			// arrange
-			var f1 = new Node([], null, null);
+			var f1 = new Node([], null);
 			f1.Entries = new List<Entry> { new Entry("set a", 1) };
 
 			var l = Substitute.For<INode>();
@@ -318,7 +318,7 @@ namespace RaftTests
 			var f1 = Substitute.For<INode>();
 			f1.Entries = new List<Entry> { new Entry("set a", 1) };
 
-			var l = new Node([], null, null);
+			var l = new Node([], null);
 			l.Entries = new List<Entry> { new Entry("set a", 1) };  // same command, but different term
 			f1.OtherNodes = [l];
 			l.OtherNodes = [f1];
@@ -347,7 +347,7 @@ namespace RaftTests
 		//	// then the leader sends 1 entry
 
 		//	// arrange
-		//	var f1 = new Node([], null, null);
+		//	var f1 = new Node([], null);
 		//	f1.Entries = new List<Entry> { new Entry("set a", 1) };
 
 		//	var l = new Node([f1], null, null);

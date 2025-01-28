@@ -18,7 +18,7 @@ public class PauseTests
         var followerNode = Substitute.For<INode>();
         followerNode.State = Node.NodeState.Follower;
 
-        var leaderNode = new Node([], null, null);
+        var leaderNode = new Node([], null);
         leaderNode.BecomeLeader();
 
         leaderNode.OtherNodes = [followerNode];
@@ -37,7 +37,7 @@ public class PauseTests
     public void PausedLeadersStayLeadersForever()
     {
         // when node is a leader with an election loop, then they get paused, other nodes do not get heartbeats for 400 ms
-        var leaderNode = new Node([], null, null);
+        var leaderNode = new Node([], null);
         leaderNode.BecomeLeader();
 
         // act
@@ -56,7 +56,7 @@ public class PauseTests
         var followerNode = Substitute.For<INode>();
         followerNode.State = Node.NodeState.Follower;
 
-        var leaderNode = new Node([], null, null);
+        var leaderNode = new Node([], null);
         leaderNode.BecomeLeader();
 
         leaderNode.OtherNodes = [followerNode];
@@ -78,7 +78,7 @@ public class PauseTests
     [Fact]
     public void PausedFollowersDontBecomeCandidates()
     {
-        var candidateNode = new Node([], null, null);
+        var candidateNode = new Node([], null);
         candidateNode.State = Node.NodeState.Follower;
 
         // act
@@ -94,7 +94,7 @@ public class PauseTests
     public void UnpausedFollowersDontBecomeCandidates()
     {
         // arrange
-        var candidateNode = new Node([], null, null);
+        var candidateNode = new Node([], null);
         candidateNode.State = Node.NodeState.Follower;
 
         // act
@@ -112,10 +112,10 @@ public class PauseTests
 	public void PauseAFollowerThenUnpauseAFollower()
 	{
         // arrange
-		var followerNode = new Node([], null, null);
+		var followerNode = new Node([], null);
 		followerNode.State = Node.NodeState.Follower;
 
-		var leaderNode = new Node([], null, null);
+		var leaderNode = new Node([], null);
 		leaderNode.BecomeLeader();
 
 		leaderNode.OtherNodes = [followerNode];
@@ -126,7 +126,6 @@ public class PauseTests
 		Thread.Sleep(400);
 
         // assert
-        //followerNode.Received(0).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
         Assert.True(followerNode.State == Node.NodeState.Follower);
 
         followerNode.UnpauseNode();
