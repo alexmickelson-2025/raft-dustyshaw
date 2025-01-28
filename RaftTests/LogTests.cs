@@ -40,13 +40,12 @@ namespace RaftTests
 		public void TestCase02_NodesRecieveCommands()
 		{
 			Node n = new Node([], null);
-			Entry l = new Entry("set a");
+			Entry l = new Entry("set a", 0);
 
 			n.RecieveClientCommand(l.Command);
 
 			Assert.True(n.Entries.Count() > 0);
 			Assert.Contains(l.Command, n.Entries.First().Command);
-			//Assert.StrictEqual([l], n.Entries);	// node should contain the log
 		}
 
 		// Testing Logs #3
@@ -60,9 +59,34 @@ namespace RaftTests
 			Assert.True(n.Entries.Count() == 0);
 		}
 
+		// Testing Logs #4
+		[Fact]
+		public void TestCase04_LeaderWinsElectionInitializesNextIndex()
+		{
+			//4. when a leader wins an election,
+			//it initializes the nextIndex for each follower to the index just after the last one it its log
+
+			var f1 = new Node([], null);	// will NOT work if these are substitutes and idk know why
+			f1.NodeId = Guid.NewGuid();
+			var f2 = new Node([], null);
+			f2.NodeId = Guid.NewGuid();
+
+			Node n = new Node([f1, f2], null);
+			n.Entries = new List<Entry>() { new Entry("set a")};
+			int nextIndexesCountBeore = n.NextIndexes.Count();
+
+
+			// Act
+			n.BecomeLeader();
+
+			// Assert
+			Assert.True(n.NextIndexes[f1.NodeId] == 1);
+			Assert.True(n.NextIndexes[f2.NodeId] == 1);
+		}
+
 		// Testing Logs #5
 		[Fact]
-		public void TestCase05_LeadersInitializeNextIndexForOtherNodes()
+		public void TestCase05p1_LeadersInitializeNextIndexForOtherNodes()
 		{
 			// leaders maintain an "nextIndex" for each follower that is the index
 			// of the next log entry the leader will send to that follower
@@ -81,28 +105,47 @@ namespace RaftTests
 			var result2 = n.NextIndexes.ContainsKey(f2.NodeId);
 
 			//assert
+			// Make sure that the nextindexes contains the node ids
 			Assert.True(result1);
 			Assert.True(result2);
 		}
 
 		// Testing Logs #5 (part 2)
 		[Fact]
-		public void TestCase05_LeadersInitializeNextIndexForOtherNodesOneGreaterThanLastLogIndex()
+		public void TestCase05p2_LeadersInitializeNextIndexForOtherNodesOneGreaterThanLastLogIndex()
 		{
 			// Leaders initialize their nextIndex[] array to have the lastLogTerm + 1 of leader
 
 			// arrange
 			Node f1 = new Node([], null);
 
-			Node n = new Node([f1], null);
-			n.Entries = new List<Entry> { new Entry("set a"), new Entry("set b") };
-			n.BecomeLeader();
+			Node leader = new Node([f1], null);
+			leader.Entries = new List<Entry> { new Entry("set a"), new Entry("set b") };
+			leader.BecomeLeader();
 
 			// act
-			var result = n.NextIndexes.ContainsValue(2);	
+			var indexValue = leader.NextIndexes[f1.NodeId];
 
 			//assert
-			Assert.True(result);
+			Assert.Equal(2, indexValue);
+		}
+
+		// Testing Logs #5 (part 3)
+		[Fact]
+		public void TestCase05p3_LeadersInitializeNextIndexWhenLeaderHasNoLogs()
+		{
+			// arrange
+			Node f1 = new Node([], null);
+
+			Node leader = new Node([f1], null);
+			leader.Entries = new List<Entry>();	// no logs yet
+			leader.BecomeLeader();
+
+			// act
+			var indexValue = leader.NextIndexes[f1.NodeId];
+
+			//assert
+			Assert.Equal(0, indexValue);
 		}
 
 		// Testing Logs #6
@@ -110,6 +153,7 @@ namespace RaftTests
 		public void TestCase06_CommittedIndexIsIncludedInAppendEntriesRPC()
 		{
 			// 6. Highest committed index from the leader is included in AppendEntries RPC's
+
 			// Arrange
 			var leader = new Node([], null);
 			leader.BecomeLeader();

@@ -1,5 +1,6 @@
 ﻿using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Timers;
 using System.Xml.Linq;
 using Xunit.Sdk;
@@ -40,7 +41,7 @@ namespace Raft
 
 		public static int IntervalScalar { get; set; } = 1;
 
-        public Node(Node[] OtherNodes, int? NetworkDelayInMs)
+        public Node(INode[] OtherNodes, int? NetworkDelayInMs)
 		{
 			HeartbeatTimeout =  50 * Node.IntervalScalar;
 			NetworkRequestDelay = NetworkDelayInMs ?? 0;
@@ -95,7 +96,7 @@ namespace Raft
 			{
 				return;
 			}
-			foreach (INode node in OtherNodes)
+			foreach (var node in OtherNodes)
 			{
 				if (!NextIndexes.ContainsKey(node.NodeId))
 				{
@@ -176,7 +177,6 @@ namespace Raft
 		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
 		{
 
-
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
@@ -194,6 +194,7 @@ namespace Raft
 				this.State = Node.NodeState.Follower;
 			}
 
+			// Reply false if term < currentTerm
 			if (LeadersTermNumber < this.TermNumber)
 			{
 				response = false;	// I have heard from a leader whos term is less than mine
