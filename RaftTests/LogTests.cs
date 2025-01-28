@@ -523,12 +523,27 @@ namespace RaftTests
 			deadFollower.Received(4).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<int>());
 		}
 
-
+		// Testing Logs #18
 		[Fact]
 		public void TestCase18_IfLeadersDontCommitEntryThenTheyDontSendResponseToClient()
 		{
 			// 18. if a leader cannot commit an entry, it does not send a response to the client
-			var client = Substitute.For<IClient>();
+			var Client = Substitute.For<IClient>();
+
+			var leader = new Node([], null);
+			leader.RecieveClientCommand("A", "B");
+			var leadersEntry = leader.Entries.First();
+			leader.Client = Client;
+
+			// Act
+			// leader can't commit entry if followers respond false
+			leader.RespondBackToLeader(false, 0, 0);
+
+			// Assert
+			// followers recieve an empty heartbeat with the new commit index
+			List<Entry> emptyList = new List<Entry>();
+			Client.Received(0).RecieveLogFromLeader(leadersEntry);
+
 
 		}
 

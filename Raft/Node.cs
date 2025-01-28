@@ -491,11 +491,8 @@ namespace Raft
 			this.CommitIndex++;
 			this.StateMachine.Clear();
 			this.StateMachine = this.Entries.Take(this.CommitIndex).ToList();
-			if (this.StateMachine is not null)
-			{
-				Entry entryToSend = this.StateMachine.Last();
-				this.Client.RecieveLogFromLeader(entryToSend);
-			}
+			Entry entryToSend = this.StateMachine.Last();
+			this.Client.RecieveLogFromLeader(entryToSend);
 		}
 
 		public void PauseNode()
