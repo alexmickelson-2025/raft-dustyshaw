@@ -543,8 +543,28 @@ namespace RaftTests
 			// followers recieve an empty heartbeat with the new commit index
 			List<Entry> emptyList = new List<Entry>();
 			Client.Received(0).RecieveLogFromLeader(leadersEntry);
+		}
 
+		[Fact]
+		public async Task TestCase19_LogsRejectAppendEntriesIfEntriesAreTooFarInFuture()
+		{
+			//19. if a node receives an appendentries
+			// with a logs that are too far in the future from your local state,
+			// you should reject the appendentries
 
+			var f1 = new Node([], null);
+
+			var leader = Substitute.For<INode>();
+			leader.Entries = new List<Entry>() { new Entry("A", "B"), new Entry("C", "D") };
+
+			f1.OtherNodes = [leader];
+
+			// act
+			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, new List<Entry>() { leader.Entries.Last() }, leader.CommitIndex);
+
+			// assert
+			// as a follower with no entries yet, sending in two should be rejected?
+			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>());
 		}
 
 		//[Fact]
