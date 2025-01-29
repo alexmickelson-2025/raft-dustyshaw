@@ -1,0 +1,14 @@
+services:
+    node1:
+        build:
+            context: .
+            dockerfile: dev.Dockerfile
+        working_dir: /app
+        volumes:
+            - ./:/app
+        environment:
+            - OTHER_NODES=http://node2:8080;http://node3:8080
+            - NETWORK_DELAY=50
+        command: dotnet watch --project RaftApi
+        
+               
