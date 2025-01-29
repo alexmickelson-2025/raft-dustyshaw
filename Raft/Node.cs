@@ -347,6 +347,7 @@ namespace Raft
 
 		public bool HasMajority(List<bool> List)
 		{
+			int count = List.Count(x => x);
 			if (List.Count(x => x) > OtherNodes.Count() / 2)
 			{
 				return true;

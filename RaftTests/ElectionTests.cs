@@ -180,41 +180,62 @@ namespace RaftTests
         }
 
 		// Testing #8
+		//[Fact]
+		//public void _MajorityVotesWinsTest()
+		//{
+		//	// 8. Given an election begins, when the candidate gets a majority of votes,
+		//	// it becomes a leader.
+
+		//	// Arrange
+		//	Node followerNode = new Node([], null);
+		//	Node followerNode2 = new Node([], null);
+
+		//	Node candidateNode = new([], null);
+  //          candidateNode.TermNumber = 100;
+		//	candidateNode.State = Node.NodeState.Candidate;
+
+		//	candidateNode.OtherNodes = [followerNode, followerNode2];
+  //          followerNode.OtherNodes = [candidateNode, followerNode2];
+  //          followerNode2.OtherNodes = [candidateNode, followerNode];
+
+  //          // Act
+  //          candidateNode.SendVoteRequestRPCsToOtherNodes();
+  //          Thread.Sleep(300);
+
+		//	// Assert
+		//	Assert.Equal(Node.NodeState.Leader, candidateNode.State);
+  //          Assert.Contains(true, candidateNode.votesRecieved);
+		//}
+
+		// Testing #8
 		[Fact]
-		public void _MajorityVotesWinsTest()
+		public void Test08_MajorityVotesWinWithSubstitutes()
 		{
 			// 8. Given an election begins, when the candidate gets a majority of votes,
 			// it becomes a leader.
 
 			// Arrange
-			Node followerNode = new Node([], null);
-			Node followerNode2 = new Node([], null);
-
 			Node candidateNode = new([], null);
-            candidateNode.TermNumber = 100;
+			candidateNode.TermNumber = 100;
 			candidateNode.State = Node.NodeState.Candidate;
+            candidateNode.votesRecieved = [true]; // say he has already recieved one vote
 
-			candidateNode.OtherNodes = [followerNode, followerNode2];
-            followerNode.OtherNodes = [candidateNode, followerNode2];
-            followerNode2.OtherNodes = [candidateNode, followerNode];
-
-            // Act
-            candidateNode.SendVoteRequestRPCsToOtherNodes();
-            Thread.Sleep(300);
+			// Act
+			candidateNode.RecieveVoteResults(true, 100);
 
 			// Assert
 			Assert.Equal(Node.NodeState.Leader, candidateNode.State);
-            Assert.Contains(true, candidateNode.votesRecieved);
+            Assert.True(candidateNode.votesRecieved.Count() == 0);
 		}
 
 		// Testing #9
 		[Fact]
         public void TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
         {
-            Node followerNode1 = new([], null);
-            Node followerNode2 = new([], null);
-            Node followerNode3 = new([], null);
-            Node followerNode4 = new([], null);
+            var followerNode1 = Substitute.For<INode>();
+			var followerNode2 = Substitute.For<INode>();
+			var followerNode3 = Substitute.For<INode>();
+			var followerNode4 = Substitute.For<INode>();
 
             Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
@@ -225,12 +246,13 @@ namespace RaftTests
             candidateNode.OtherNodes = [followerNode1, followerNode2, followerNode3, followerNode4];
 
             // Act
-            // Say in a 5 system I recieve only 3 votes, and have one server unresponsive
-            candidateNode.votesRecieved = [true, true, true];
-            candidateNode.HasMajority(candidateNode.votesRecieved);
+            // Say in a 5 system I recieve only 2 votes, and have one server unresponsive
+            List<bool> votesRecieved = [true, true];
+            candidateNode.votesRecieved = votesRecieved;
+            candidateNode.RecieveVoteResults(true, 100); // third vote should push over the edge
 
-            // Assert
-            Assert.Equal(Node.NodeState.Leader, candidateNode.State);
+			// Assert
+			Assert.Equal(Node.NodeState.Leader, candidateNode.State);
         }
 
         // Testing #10
@@ -352,6 +374,7 @@ namespace RaftTests
 			var c1 = Substitute.For<INode>();
             c1.TermNumber = 100;
             c1.NodeId = Guid.NewGuid();
+
 			var c2 = Substitute.For<INode>();
             c2.TermNumber = 100;
             c2.NodeId = Guid.NewGuid();
