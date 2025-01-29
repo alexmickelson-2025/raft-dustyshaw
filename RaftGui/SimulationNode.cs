@@ -84,7 +84,7 @@ public class SimulationNode : INode
         ((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex, fNodeId);
 	}
 
-	public Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit)
+	public Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit, AppendEntriesRPC rpc)
 	{
         if (!IsRunning)
         {
@@ -92,7 +92,7 @@ public class SimulationNode : INode
         }
         Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
-			await InnerNode.RecieveAppendEntriesRPC(LeadersTermNumber, leaderId, prevLogIndex, LeadersLog, leaderCommit);
+			await InnerNode.RecieveAppendEntriesRPC(LeadersTermNumber, leaderId, prevLogIndex, LeadersLog, leaderCommit, rpc);
 		});
 		return Task.CompletedTask;
 
@@ -172,5 +172,4 @@ public class SimulationNode : INode
     {
         ((INode)InnerNode).UnpauseNode();
     }
-
 }

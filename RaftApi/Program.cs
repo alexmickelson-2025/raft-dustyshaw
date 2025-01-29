@@ -27,7 +27,11 @@ app.MapPost("/request/SendAppendEntriesRPC", (int term, int prevLogIndex, List<E
 	n.SendAppendEntriesRPC();
 });
 
-app.MapPost("/receive/RecieveAppendEntries", ())
+app.MapPost("/receive/RecieveAppendEntries", (AppendEntriesRPC rpc) =>
+{
+	//n.RecieveAppendEntriesRPC(rpc);
+});
+
 
 
 app.Run();

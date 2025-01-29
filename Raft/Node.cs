@@ -164,8 +164,8 @@ namespace Raft
 			foreach (var node in OtherNodes)
 			{
 				List<Entry> entriesToSend = CalculateEntriesToSend(node);
-
-				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex);
+				AppendEntriesRPC rpc = new(this);
+				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex, rpc);
 			}
 		}
 
@@ -193,7 +193,7 @@ namespace Raft
 			return entriesToSend;
 		}
 
-		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
+		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit, AppendEntriesRPC rpc)
 		{
 
 			if (!IsRunning)
@@ -203,23 +203,23 @@ namespace Raft
 			bool response = true;
 
 			// Update state if a higher term number is received
-			if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
+			if (this.State == Node.NodeState.Candidate && rpc.term >= this.TermNumber)
 			{
 				this.State = Node.NodeState.Follower;
 			}
 
-			if (this.State == Node.NodeState.Leader && LeadersTermNumber > this.TermNumber)
+			if (this.State == Node.NodeState.Leader && rpc.term > this.TermNumber)
 			{
 				this.State = Node.NodeState.Follower;
 			}
 
 			// Reply false if term < currentTerm
-			if (LeadersTermNumber < this.TermNumber)
+			if (rpc.term < this.TermNumber)
 			{
 				response = false;   // I have heard from a leader whos term is less than mine
 			}
 
-			this.LeaderId = leaderId;
+			this.LeaderId = rpc.leaderId;
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
 			this.WhenTimerStarted = DateTime.Now;
 
@@ -228,8 +228,8 @@ namespace Raft
 			if (entries.Count == 0)  // but only do this if this is a heartbeat messsage...
 			{
 				this.StateMachine.Clear();
-				this.StateMachine.AddRange(this.Entries.Take(leaderCommit + 1));
-				this.CommitIndex = leaderCommit;
+				this.StateMachine.AddRange(this.Entries.Take(rpc.leaderCommit + 1));
+				this.CommitIndex = rpc.leaderCommit;
 			}
 
 			// Log replication
@@ -241,7 +241,7 @@ namespace Raft
 				followersEntriesWithIndexes.Add(entry);
 				index++;
 			}
-			if (prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
+			if (rpc.prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
 			{
 				if (entries is not null && entries.Count > 0)
 				{
@@ -310,7 +310,9 @@ namespace Raft
 			// send a confirmation heartbeat to other nodes saying I have committed an entry
 			foreach (var n in this.OtherNodes)
 			{
-				n.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), this.CommitIndex);
+				AppendEntriesRPC rpc = new(this);
+				rpc.entries = new List<Entry>();
+				n.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), this.CommitIndex, rpc);
 			}
 		}
 

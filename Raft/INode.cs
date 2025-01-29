@@ -28,7 +28,7 @@ namespace Raft
 		bool HasMajority(List<bool> Results);
 		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
 		void RecieveVoteResults(bool result, int termNumber);
-		Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit);
+		Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit, AppendEntriesRPC rpc);
 		void SendAppendEntriesRPC();
 		List<Entry> CalculateEntriesToSend(INode node);
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
