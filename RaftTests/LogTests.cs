@@ -213,8 +213,8 @@ namespace RaftTests
 			leader.RecieveClientCommand("1", "2");
 
 			// act
-			leader.RespondBackToLeader(true, 1, 1);
-			leader.RespondBackToLeader(true, 1, 1);
+			leader.RespondBackToLeader(true, 1, 1, f1.NodeId);
+			leader.RespondBackToLeader(true, 1, 1, f2.NodeId);
 
 			// assert
 			// make sure the leader adds the log to the state machine
@@ -311,31 +311,8 @@ namespace RaftTests
 			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, (l.Entries.Count - 1), l.Entries, l.CommitIndex);
 
 			// assert
-			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex);
+			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex, f.NodeId);
 		}
-
-		// I honestly don't know what this is testing...
-		//[Fact]
-		//public void IDontKnow_LeadersSendConfirmation()
-		//{
-		//	// 12. when a leader receives a majority responses from the clients after a log replication heartbeat,
-		//	// the leader sends a confirmation
-		//	var f1 = Substitute.For<INode>();
-		//	var f2 = Substitute.For<INode>();
-
-		//	var leader = new Node([], null);
-		//	leader.LogConfirmationsRecieved = new List<bool> { true };
-		//	leader.OtherNodes = [f1, f2];
-
-		//	// Act
-		//	leader.RespondBackToLeader(true, 1, 1);
-
-		//	// Assert
-		//	// followers recieve an empty heartbeat with the new commit index
-		//	List<Entry> emptyList = new List<Entry>();
-		//	f1.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
-		//	f2.Received(1).RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, -1, Arg.Any<List<Entry>>(), 1);
-		//}
 
 		// Testing Logs #12
 		[Fact]
@@ -417,7 +394,7 @@ namespace RaftTests
 
 			// assert
 			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
-			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
+			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex, f1.NodeId);
         }
 
 
@@ -443,7 +420,7 @@ namespace RaftTests
 
 			// assert
 			// Because the term the leader is trying to send 
-			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex);
+			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex, f1.NodeId);
 		}
 
 		// Testing Logs #15
@@ -494,7 +471,7 @@ namespace RaftTests
 			int commitIndexBefore = leader.CommitIndex;
 
 			// Act
-			leader.RespondBackToLeader(false, 1, 1);
+			leader.RespondBackToLeader(false, 1, 1, f1.NodeId);
 
 			// Assert
 			// followers recieve an empty heartbeat with the new commit index
@@ -537,7 +514,7 @@ namespace RaftTests
 
 			// Act
 			// leader can't commit entry if followers respond false
-			leader.RespondBackToLeader(false, 0, 0);
+			leader.RespondBackToLeader(false, 0, 0, Guid.NewGuid());
 
 			// Assert
 			// followers recieve an empty heartbeat with the new commit index
@@ -545,6 +522,7 @@ namespace RaftTests
 			Client.Received(0).RecieveLogFromLeader(leadersEntry);
 		}
 
+		// Testing Logs #19
 		[Fact]
 		public async Task TestCase19_LogsRejectAppendEntriesIfEntriesAreTooFarInFuture()
 		{
@@ -563,32 +541,88 @@ namespace RaftTests
 			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, new List<Entry>() { leader.Entries.Last() }, leader.CommitIndex);
 
 			// assert
-			// as a follower with no entries yet, sending in two should be rejected?
-			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>());
+			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
 		}
 
+		// Testing Logs #19 - Same thing just opposite. Making sure they respond back with true
+		[Fact]
+		public async Task TestCase19_OppositeOf19()
+		{
+			//19. if a node receives an appendentries
+			// with a logs that are NOT too far in the future from your local state,
+			// you should ACCEPT the appendentries
+
+			var f1 = new Node([], null);
+			f1.TermNumber = 1;
+
+			var leader = Substitute.For<INode>();
+			leader.Entries = new List<Entry>() { new Entry("A", "B") }; // One log ahead is ok.
+			leader.TermNumber = 1;
+			
+			f1.OtherNodes = [leader];
+			f1.State = Node.NodeState.Follower;
+
+			// act
+			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, new List<Entry>() { leader.Entries.Last() }, leader.CommitIndex);
+
+			// assert
+			leader.Received(1).RespondBackToLeader(true, Arg.Any<int>(), Arg.Any<int>(), f1.NodeId);
+		}
+
+
+		// Testing Logs #20
 		//[Fact]
-		//public void TestCase15_LeadersSendTheLastNumEntriesToAFollower()
+		//public async Task TestCase20_NonMatchingTermsAndIndexGetRejected()
 		//{
-		//	// Leaders keep a list of node ID's and the associated nodes prevLogIndex. 
-		//	// When a followers prevLogIndex is 1 less than the leaders prevLogIndex, 
-		//	// then the leader sends 1 entry
+		//	// 20. if a node receives and appendentries with a term and index that do not match,
+		//	// you will reject the appendentry until you find a matching log
 
-		//	// arrange
-		//	var f1 = new Node([], null);
-		//	f1.Entries = new List<Entry> { new Entry("set a", 1) };
+		//	var leader = Substitute.For<INode>();
+		//	leader.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "1", 2), new Entry("set", "3", 2) };
+		//	leader.BecomeLeader();
+		//	leader.TermNumber = 2;
 
-		//	var l = new Node([f1], null, null);
-		//	l.Entries = new List<Entry> { new Entry("set a", 1), new Entry("set b", 2) };
-		//	l.BecomeLeader();
-
-		//	var entriesToSend = l.CalculateEntriesToSend(f1);
-
+		//	var f1 = new Node([], null);		// matching log				// this node has incorrect term
+		//	f1.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "incorrect", 1) };
+		//	f1.OtherNodes = [leader];
+		//	f1.TermNumber = 2;
+		//	f1.State = Node.NodeState.Follower;
 
 		//	// act
+		//	//await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, , leader.CommitIndex);
 
 		//	// assert
-		//	Assert.True(entriesToSend.Count == 1);
+		//	// as a follower with no entries yet, sending in two should be rejected?
+		//	leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
 		//}
+
+
+		// Testing logs #20 but using bad testing practices because I am evil >:)
+		//[Fact]
+		//public async Task TestCase20Evil_NonMatchingTermsAndIndexGetRejectedBadTestPractices()
+		//{
+		//	var leader = new Node([], null);
+		//	leader.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "1", 2), new Entry("set", "3", 2) };
+		//	leader.BecomeLeader();
+		//	leader.TermNumber = 2;
+
+		//	var f1 = new Node([], null);        // matching log				// this node has incorrect term
+		//	f1.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "incorrect", 1) };
+		//	f1.OtherNodes = [leader];
+		//	f1.TermNumber = 2;
+		//	f1.State = Node.NodeState.Follower;
+
+		//	leader.OtherNodes = [f1];
+
+		//	// act
+		//	leader.SendAppendEntriesRPC();
+
+
+
+		//	// assert
+		//	// as a follower with no entries yet, sending in two should be rejected?
+		//	//leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>());
+		//}
+
 	}
 }

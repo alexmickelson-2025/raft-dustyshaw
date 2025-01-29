@@ -75,13 +75,13 @@ public class SimulationNode : INode
         ((INode)InnerNode).RecieveVoteResults(result, termNumber);
 	}
 
-	public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
+	public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId)
 	{
         if (!IsRunning)
         {
             return;
         }
-        ((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex);
+        ((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex, fNodeId);
 	}
 
 	public Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, int leaderCommit)

@@ -11,6 +11,7 @@ public class Entry
     public string Key { get; set; } 
     public string Command { get; set; }
     public int TermReceived { get; set; }
+    public int Index { get; set; }
 
     public Entry(string Key, string Command)
     {
@@ -23,5 +24,12 @@ public class Entry
 		this.Key = Key;
 		this.Command = Command;
         this.TermReceived = TermReceived;
+	}
+
+	public Entry(string Key, string Command, int TermReceived, int Index)
+	{
+		this.Key = Key;
+		this.Command = Command;
+		this.TermReceived = TermReceived;
 	}
 }

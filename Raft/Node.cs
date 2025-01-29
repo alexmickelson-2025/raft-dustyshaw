@@ -33,7 +33,7 @@ namespace Raft
 		// Log Replications
 		public List<Entry> Entries { get; set; } = new();
 		public List<Entry> StateMachine { get; set; } = new();
-		public int CommitIndex { get; set; } = 0;
+		public int CommitIndex { get; set; } = -1;
 		public int nextIndex { get; set; }
 		public Dictionary<Guid, int> NextIndexes = new();
 		public List<bool> LogConfirmationsRecieved { get; set; } = new();
@@ -50,6 +50,7 @@ namespace Raft
 			NetworkRequestDelay = NetworkDelayInMs ?? 0;
 
 			Client = new Client();
+			Entries = new();
 
 			StartElectionTimer();
 
@@ -169,13 +170,23 @@ namespace Raft
 
 		public List<Entry> CalculateEntriesToSend(INode node)
 		{
+			List<Entry> entriesWithIndexes = new();
 			List<Entry> entriesToSend = new();
+
+			// assign their indexes
+			int index = 0;
+			foreach (var entry in this.Entries)
+			{
+				entry.Index = index;
+				entriesWithIndexes.Add(entry);
+				index++;
+			}
+
 			if (NextIndexes.Count > 0)
 			{
 				int nodesPrevLogIndex = NextIndexes[node.NodeId];
 				var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex;
-				entriesToSend = new List<Entry>();
-				entriesToSend = this.Entries.TakeLast(differenceInLogs + 1).ToList();
+				entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
 			}
 
 			return entriesToSend;
@@ -225,6 +236,7 @@ namespace Raft
 			{
 				if (entries is not null && entries.Count > 0)
 				{
+					// Finding the last matching log entry (-1 for no match found)
 					int matchIndex = this.Entries.FindLastIndex(e =>
 						e.TermReceived == entries.First().TermReceived &&
 						e.Command == entries.First().Command);
@@ -232,10 +244,12 @@ namespace Raft
 					if (matchIndex != -1)
 					{
 						this.Entries.AddRange(entries.Skip(matchIndex + 1));
+						response = true;
 					}
 					else if (this.Entries.Count == 0)
 					{
 						this.Entries.AddRange(entries);
+						response = true;
 					}
 					else
 					{
@@ -248,14 +262,18 @@ namespace Raft
 				response = false;
 			}
 
-			// Respond to leader
-			foreach (var node in OtherNodes)
-			{
-				if (node.LeaderId == this.LeaderId)
-				{
-					node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
-				}
-			}
+			// Respond to leader with my response
+			//foreach (var node in OtherNodes)
+			//{
+			//	if (node.LeaderId == this.LeaderId)
+			//	{
+			//		node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
+			//	}
+			//}
+			OtherNodes
+				.Where(node => node.LeaderId == this.LeaderId)
+				.ToList()
+				.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex, this.NodeId));
 		}
 
 		//public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
@@ -331,11 +349,18 @@ namespace Raft
 		//}
 
 
-		public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex)
+		public void RespondBackToLeader(bool response, int fTermNumber, int fCommitIndex, Guid fNodeId)
 		{
 			// This is the leader
-			//this.TermNumber = myTermNumber;
-			//this.State = NodeState.Follower;
+
+			if (!response)
+			{
+				// wuh oh. Let me decriment your prevLogIndex little guy
+				if (NextIndexes.ContainsKey(fNodeId))
+				{
+					NextIndexes[fNodeId]--; // Decrement the value by 1
+				}
+			}
 
 			// as the leader, I have heard from my followers and I will commit my index
 			LogConfirmationsRecieved.Add(response);
@@ -490,7 +515,7 @@ namespace Raft
 			}
 			this.CommitIndex++;
 			this.StateMachine.Clear();
-			this.StateMachine = this.Entries.Take(this.CommitIndex).ToList();
+			this.StateMachine = this.Entries.Take(this.CommitIndex + 1).ToList();
 			Entry entryToSend = this.StateMachine.Last();
 			this.Client.RecieveLogFromLeader(entryToSend);
 		}

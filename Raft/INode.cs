@@ -36,7 +36,7 @@ namespace Raft
 		void SendVoteRequestRPCsToOtherNodes();
 		void StartElection();
 		void TimeoutHasPassedForLeaders();
-		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex);
+		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId);
 
 		public void PauseNode();
 		public void UnpauseNode();
