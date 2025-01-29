@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Raft;
 
-public class AppendEntriesRPC
+public record AppendEntriesRPC
 {
     public int term { get; set; } // leaders term
     public Guid leaderId { get; set; } // leaders GUID
@@ -21,6 +21,16 @@ public class AppendEntriesRPC
         prevLogIndex = node.Entries.Count - 1;
         entries = node.Entries;     // TODO: change this in the future to maybe calculate the actual entries to send
         leaderCommit = node.CommitIndex;
+    }
+
+    //public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit, AppendEntriesRPC rpc)
+    public AppendEntriesRPC(int term, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
+    {
+        this.term = term;
+        this.leaderId = leaderId;
+        this.prevLogIndex = prevLogIndex;
+        this.entries = entries;
+        this.leaderCommit = leaderCommit;
     }
 
     // For testing purposes

@@ -165,7 +165,7 @@ namespace Raft
 			{
 				List<Entry> entriesToSend = CalculateEntriesToSend(node);
 				AppendEntriesRPC rpc = new(this);
-				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex, rpc);
+				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, rpc);
 			}
 		}
 
@@ -193,7 +193,7 @@ namespace Raft
 			return entriesToSend;
 		}
 
-		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit, AppendEntriesRPC rpc)
+		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, AppendEntriesRPC rpc)
 		{
 
 			if (!IsRunning)
@@ -312,8 +312,11 @@ namespace Raft
 			{
 				AppendEntriesRPC rpc = new(this);
 				rpc.entries = new List<Entry>();
-				n.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), this.CommitIndex, rpc);
+				n.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), rpc);
 			}
+
+			// and finally, as the leader I need to respond to the client.
+
 		}
 
 		public void SendVoteRequestRPCsToOtherNodes()
