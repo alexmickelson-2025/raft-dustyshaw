@@ -373,30 +373,6 @@ namespace RaftTests
 			Assert.True(f.CommitIndex == 100);	
 		}
 
-		// Testing Logs #19 
-		[Fact]
-		public async Task TestCase19_NodesRejectFutureTerms()
-		{
-            // 19. if a node receives an appendentries with a logs that are too far in the future from your local state,
-			// you should reject the appendentries
-
-			// arrange
-			var f1 = new Node([], null);
-            f1.Entries = new List<Entry> { new Entry("1", "set a") };
-
-			var l = Substitute.For<INode>();
-			List<Entry> leadersEntries = new List<Entry> { new Entry("1", "set a"), new Entry("1", "set b"), new Entry("1", "set c") };
-			l.Entries = leadersEntries;
-			f1.OtherNodes = [l];
-
-			// act
-			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, l.CommitIndex);
-
-			// assert
-			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
-			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex, f1.NodeId);
-        }
-
 
 		// Testing Logs #15
 		[Fact]
@@ -427,7 +403,7 @@ namespace RaftTests
 		[Fact]
 		public void TestCase15_FollowersRecieveALog()
 		{
-			// Followers recieve a log
+			// Followers recieve a log successfully
 
 			// arrange
 			var f1 = Substitute.For<INode>();
@@ -449,8 +425,6 @@ namespace RaftTests
 
 			// assert
 			Assert.True(f1.Entries.Count == 1);
-
-
 		}
 
 		// Testing Logs #16
@@ -542,6 +516,30 @@ namespace RaftTests
 
 			// assert
 			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
+		}
+
+		// Testing Logs #19 
+		[Fact]
+		public async Task TestCase19_NodesRejectFutureTerms()
+		{
+			// 19. if a node receives an appendentries with a logs that are too far in the future from your local state,
+			// you should reject the appendentries
+
+			// arrange
+			var f1 = new Node([], null);
+			f1.Entries = new List<Entry> { new Entry("1", "set a") };
+
+			var l = Substitute.For<INode>();
+			List<Entry> leadersEntries = new List<Entry> { new Entry("1", "set a"), new Entry("1", "set b"), new Entry("1", "set c") };
+			l.Entries = leadersEntries;
+			f1.OtherNodes = [l];
+
+			// act
+			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, l.CommitIndex);
+
+			// assert
+			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
+			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex, f1.NodeId);
 		}
 
 		// Testing Logs #19 - Same thing just opposite. Making sure they respond back with true
