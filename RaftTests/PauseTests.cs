@@ -132,7 +132,7 @@ public class PauseTests
 
         Thread.Sleep(300);
 
-        Assert.True(followerNode.State == Node.NodeState.Follower);
+        Assert.True(followerNode.State == Node.NodeState.Follower); // is a leader for some reason 
 
 
 	}

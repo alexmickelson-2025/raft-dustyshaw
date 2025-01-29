@@ -56,3 +56,74 @@
 - [x] 17. When a follower node receives an AppendEntries request, it sends a response.
 - [x] 18. Given a candidate receives an AppendEntries from a previous term, then it rejects.
 - [x] 19. When a candidate wins an election, it immediately sends a heartbeat.
+
+
+
+# Endpoints  
+/request/appendEntries [Post]
+/request/vote   []
+/response/appendEntries
+/response/vote
+/
+
+--------------------------
+```
+var n = new Node()
+n.OtherNodes = [
+    new Proxy("http://node2:8080")
+] // fix later
+n.StartTimers();
+
+
+app.MapPost("/request/appendEntries", (int term, in prevLogIndex, int logs, etc...) => {
+    n.AppendEntriesRPC();
+});
+
+app.Map
+
+record RPCData
+{
+    int term,
+    int index, 
+    etc...
+}
+```
+
+```
+
+urls from node1 to others 
+// http:node2:8080/request/appendEntrites 
+
+
+```
+
+### Httpproxynode    
+There is two proxy thingies per node. Node1 has a proxy for Node2 and Node3. 
+
+- Implements INode
+- 
+
+``` 
+ 
+ public ##() : INode
+ {
+    public readonly Url = url;
+    ctor (string url)
+
+    public async Task RequestAppendEntreis(data)
+    {
+        // this part sends the http request
+        HttpRPCProxyNodeImplementation.postAsJson(url, path, dto)
+    }
+ }
+
+```
+
+
+### Docker stuff  
+
+- each node is on the service level
+- each node pulls from the microsoft.com image
+- command watches the project
+    - dotnet watch has a volume of our own implemntation of the code.
+- environment variables are the other nodes (their urls) and things like interval scalars. 
