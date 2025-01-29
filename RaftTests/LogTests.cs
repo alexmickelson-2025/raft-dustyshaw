@@ -571,30 +571,33 @@ namespace RaftTests
 
 
 		// Testing Logs #20
-		//[Fact]
-		//public async Task TestCase20_NonMatchingTermsAndIndexGetRejected()
-		//{
-		//	// 20. if a node receives and appendentries with a term and index that do not match,
-		//	// you will reject the appendentry until you find a matching log
+		[Fact]
+		public async Task TestCase20_NonMatchingTermsAndIndexGetRejected()
+		{
+			// 20. if a node receives and appendentries with a term and index that do not match,
+			// you will reject the appendentry until you find a matching log
 
-		//	var leader = Substitute.For<INode>();
-		//	leader.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "1", 2), new Entry("set", "3", 2) };
-		//	leader.BecomeLeader();
-		//	leader.TermNumber = 2;
+			var leader = Substitute.For<INode>();
+			List<Entry> leadersLogs = new List<Entry>() { new Entry("set", "1", 1, 0), new Entry("set", "1", 2, 1), new Entry("set", "3", 2, 2) };
+			leader.Entries = leadersLogs;
+			leader.BecomeLeader();
+			leader.TermNumber = 100;
 
-		//	var f1 = new Node([], null);		// matching log				// this node has incorrect term
-		//	f1.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "incorrect", 1) };
-		//	f1.OtherNodes = [leader];
-		//	f1.TermNumber = 2;
-		//	f1.State = Node.NodeState.Follower;
 
-		//	// act
-		//	//await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, , leader.CommitIndex);
+			var f1 = new Node([], null);        // matching log				// this node has incorrect term
+			f1.Entries = new List<Entry>() { new Entry("set", "1", 1, 0), new Entry("set", "incorrect", 1, 1) };
+			f1.OtherNodes = [leader];
+			f1.TermNumber = 2;
+			f1.State = Node.NodeState.Follower;
 
-		//	// assert
-		//	// as a follower with no entries yet, sending in two should be rejected?
-		//	leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
-		//}
+			// act
+			var logsToSend = leadersLogs.TakeLast(2).ToList(); // let's say the leader is sending the last 2. The 
+			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, logsToSend, leader.CommitIndex);
+
+			// assert
+			// leader should say 
+			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
+		}
 
 
 		// Testing logs #20 but using bad testing practices because I am evil >:)

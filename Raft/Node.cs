@@ -1,4 +1,5 @@
-﻿using System.Reflection.Metadata;
+﻿using System;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Timers;
@@ -232,18 +233,34 @@ namespace Raft
 			}
 
 			// Log replication
+			List<Entry> followersEntriesWithIndexes = new();
+			int index = 0;
+			foreach (var entry in this.Entries)
+			{
+				entry.Index = index;
+				followersEntriesWithIndexes.Add(entry);
+				index++;
+			}
 			if (prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
 			{
 				if (entries is not null && entries.Count > 0)
 				{
-					// Finding the last matching log entry (-1 for no match found)
-					int matchIndex = this.Entries.FindLastIndex(e =>
-						e.TermReceived == entries.First().TermReceived &&
-						e.Command == entries.First().Command);
-
-					if (matchIndex != -1)
+					bool matchFound = false;
+					int matchIndex = -1;
+					foreach (var leaderLog in entries.AsEnumerable().Reverse())
 					{
-						this.Entries.AddRange(entries.Skip(matchIndex + 1));
+						foreach(var followerLog in followersEntriesWithIndexes.AsEnumerable().Reverse())
+						{
+							if (followerLog.Index == leaderLog.Index && leaderLog.TermReceived == followerLog.TermReceived)
+							{
+								matchFound = true;
+							}
+						}
+					}
+
+					if (matchFound)
+					{
+						this.Entries.AddRange(entries.Skip(1));
 						response = true;
 					}
 					else if (this.Entries.Count == 0)
@@ -262,92 +279,11 @@ namespace Raft
 				response = false;
 			}
 
-			// Respond to leader with my response
-			//foreach (var node in OtherNodes)
-			//{
-			//	if (node.LeaderId == this.LeaderId)
-			//	{
-			//		node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
-			//	}
-			//}
 			OtherNodes
 				.Where(node => node.LeaderId == this.LeaderId)
 				.ToList()
 				.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex, this.NodeId));
 		}
-
-		//public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, int leaderCommit)
-		//{
-		//	bool response = true;
-		//	// As a follower, I have heard from the leader
-		//	if (this.State == Node.NodeState.Candidate && LeadersTermNumber >= this.TermNumber)
-		//	{
-		//		this.State = Node.NodeState.Follower; // I'm a candidate, but I heard from someone with greater term #
-		//	}
-
-		//	if (LeadersTermNumber < this.TermNumber)
-		//	{
-		//		response = false;
-		//	}
-
-		//	// Looks good, I'll keep you as my leader
-		//	this.LeaderId = leaderId;
-		//	this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
-		//	WhenTimerStarted = DateTime.Now;
-
-		//	this.CommitIndex = leaderCommit;
-
-
-		//	// Replicating Logs
-		//	if (prevLogIndex - (this.Entries.Count - 1) <= 1)  // make sure leaders logs aren't too far ahead in the future
-		//	{
-		//		if (entries.Count > 0)
-		//		{
-		//			foreach (var l in entries.AsEnumerable().Reverse())
-		//			{
-
-		//				foreach (var myLog in this.Entries.AsEnumerable().Reverse())
-		//				{
-		//					if (myLog != l && (l == entries.Last()))
-		//					{
-		//						response = false;
-		//					}
-		//					else if (myLog.TermReceived == l.TermReceived && myLog.Command == l.Command /* && (l == entries.First())*/)
-		//					{
-		//						foreach (var lToAdd in entries.Skip(1)) // skip the matching one
-		//						{
-		//							this.Entries.Add(lToAdd);
-		//						}
-		//						response = true;	// I have successfully replicated the logs
-		//					}
-		//				}
-		//				if (this.Entries.Count == 0)
-		//				{
-		//					foreach (var lToAdd in entries.AsEnumerable().Reverse())
-		//					{
-		//						this.Entries.Add(lToAdd);
-		//					}
-		//					response = true;
-		//				}
-		//			}
-		//		}
-		//	}
-		//	else
-		//	{
-		//		response = false;
-		//	}
-
-
-		//	// Respond back to leader with my response
-		//	foreach (var n in OtherNodes)
-		//	{
-		//		if (n.LeaderId == this.LeaderId)
-		//		{
-		//			n.RespondBackToLeader(response, this.TermNumber, this.CommitIndex);
-		//		}
-		//	}
-		//}
-
 
 		public void RespondBackToLeader(bool response, int fTermNumber, int fCommitIndex, Guid fNodeId)
 		{

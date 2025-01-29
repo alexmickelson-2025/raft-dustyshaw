@@ -31,5 +31,6 @@ public class Entry
 		this.Key = Key;
 		this.Command = Command;
 		this.TermReceived = TermReceived;
+		this.Index = Index;
 	}
 }
