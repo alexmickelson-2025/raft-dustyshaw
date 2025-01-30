@@ -27,6 +27,13 @@
 
 <button @onclick="startSimulation">Start (click me twice pls!!)</button>
 
+<div>
+	@foreach( var node in nodes)
+	{
+		<button class="btn btn-primary" @onclick="() => SendLog(node.NodeId)">Send To @(FormatId(node.InnerNode.NodeId))</button>
+	}
+</div>
+
 <div class="row">
 	@foreach (var node in nodes)
 	{
@@ -51,6 +58,12 @@
 						<div class="progress-bar bg-dark-subtle" style="width: @(percentageRemaining)%;"></div>
 					</div>
 					<div class="mt-3">
+						<div>
+							@foreach(var l in node.Entries)
+							{
+								<p>" @l.Command - @l.Key " : @l.TermReceived</p>
+							}
+						</div>
 					@if( node.IsRunning)
 					{ <button @onclick="() => pauseNode(node.NodeId)" class="btn btn-outline-primary">|| Pause Node</button>
 					} else {
@@ -158,6 +171,21 @@
 			if (n.NodeId == NodeId)
 			{
 				n.UnpauseNode();
+			}
+		}
+	}
+
+	void SendLog(Guid NodeId)
+	{
+		foreach (var n in nodes)
+		{
+			if (n.NodeId == NodeId)
+			{
+				Random random = new Random();
+				char randomChar1 = (char)random.Next('a', 'z' + 1);
+				char randomChar2 = (char)random.Next('a', 'z' + 1);
+
+				n.InnerNode.RecieveClientCommand(randomChar1.ToString(), randomChar2.ToString());
 			}
 		}
 	}

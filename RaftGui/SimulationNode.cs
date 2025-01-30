@@ -84,7 +84,7 @@ public class SimulationNode : INode
         ((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex, fNodeId);
 	}
 
-	public Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> LeadersLog, AppendEntriesRPC rpc)
+	public Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
 	{
         if (!IsRunning)
         {
@@ -92,7 +92,7 @@ public class SimulationNode : INode
         }
         Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
-			await InnerNode.RecieveAppendEntriesRPC(LeadersTermNumber, leaderId, prevLogIndex, LeadersLog, rpc);
+			await InnerNode.RecieveAppendEntriesRPC(rpc);
 		});
 		return Task.CompletedTask;
 
@@ -154,14 +154,14 @@ public class SimulationNode : INode
 		((INode)InnerNode).TimeoutHasPassedForLeaders();
 	}
 
-	public List<Entry> CalculateEntriesToSend(INode node)
-	{
-        if (!IsRunning)
-        {
-            return new List<Entry>();
-        }
-        return ((INode)InnerNode).CalculateEntriesToSend(node);
-	}
+	//public List<Entry> CalculateEntriesToSend(INode node)
+	//{
+ //       if (!IsRunning)
+ //       {
+ //           return new List<Entry>();
+ //       }
+ //       return ((INode)InnerNode).CalculateEntriesToSend(node);
+	//}
 
     public void PauseNode()
     {

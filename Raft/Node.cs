@@ -163,13 +163,13 @@ namespace Raft
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
-				List<Entry> entriesToSend = CalculateEntriesToSend(node);
-				AppendEntriesRPC rpc = new(this);
-				node.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, rpc);
+				List<Entry> entriesToSend = CalculateEntriesToSend(node.NodeId);
+
+				node.RecieveAppendEntriesRPC(new AppendEntriesRPC(this.TermNumber, this.NodeId, (this.Entries.Count - 1), entriesToSend, this.CommitIndex));
 			}
 		}
 
-		public List<Entry> CalculateEntriesToSend(INode node)
+		public List<Entry> CalculateEntriesToSend(Guid nodeId)
 		{
 			List<Entry> entriesWithIndexes = new();
 			List<Entry> entriesToSend = new();
@@ -183,9 +183,10 @@ namespace Raft
 				index++;
 			}
 
+			// if I have a list of next indexes...
 			if (NextIndexes.Count > 0)
 			{
-				int nodesPrevLogIndex = NextIndexes[node.NodeId];
+				int nodesPrevLogIndex = NextIndexes[nodeId];
 				var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex;
 				entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
 			}
@@ -193,7 +194,7 @@ namespace Raft
 			return entriesToSend;
 		}
 
-		public async Task RecieveAppendEntriesRPC(int LeadersTermNumber, Guid leaderId, int prevLogIndex, List<Entry> entries, AppendEntriesRPC rpc)
+		public async Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
 		{
 
 			if (!IsRunning)
@@ -225,7 +226,7 @@ namespace Raft
 
 
 			// add my logs up until the committed index of the leader
-			if (entries.Count == 0)  // but only do this if this is a heartbeat messsage...
+			if (rpc.entries.Count == 0)  // but only do this if this is a heartbeat messsage...
 			{
 				this.StateMachine.Clear();
 				this.StateMachine.AddRange(this.Entries.Take(rpc.leaderCommit + 1));
@@ -241,13 +242,14 @@ namespace Raft
 				followersEntriesWithIndexes.Add(entry);
 				index++;
 			}
+
 			if (rpc.prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
 			{
-				if (entries is not null && entries.Count > 0)
+				if (rpc.entries is not null && rpc.entries.Count > 0)
 				{
 					bool matchFound = false;
 					int matchIndex = -1;
-					foreach (var leaderLog in entries.AsEnumerable().Reverse())
+					foreach (var leaderLog in rpc.entries.AsEnumerable().Reverse())
 					{
 						foreach(var followerLog in followersEntriesWithIndexes.AsEnumerable().Reverse())
 						{
@@ -260,12 +262,12 @@ namespace Raft
 
 					if (matchFound)
 					{
-						this.Entries.AddRange(entries.Skip(1));
-						response = true;
+						this.Entries.AddRange(rpc.entries.Skip(1));
+						response = true;	// I have replicated the logs up to the entries you have sent me
 					}
 					else if (this.Entries.Count == 0)
 					{
-						this.Entries.AddRange(entries);
+						this.Entries.AddRange(rpc.entries);
 						response = true;
 					}
 					else
@@ -289,14 +291,20 @@ namespace Raft
 		{
 			// This is the leader
 
-			if (!response)
-			{
+
 				// wuh oh. Let me decriment your prevLogIndex little guy
 				if (NextIndexes.ContainsKey(fNodeId))
 				{
-					NextIndexes[fNodeId]--; // Decrement the value by 1
+					if (!response)
+					{
+						NextIndexes[fNodeId]--; 
+					}
+					else
+					{
+						NextIndexes[fNodeId] = this.Entries.Count();	// not sure if this is correct, follower has replicated entries up to my prev log index?.
+					}
 				}
-			}
+
 
 			// as the leader, I have heard from my followers and I will commit my index
 			LogConfirmationsRecieved.Add(response);
@@ -312,7 +320,7 @@ namespace Raft
 			{
 				AppendEntriesRPC rpc = new(this);
 				rpc.entries = new List<Entry>();
-				n.RecieveAppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), rpc);
+				n.RecieveAppendEntriesRPC(new AppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), this.CommitIndex));
 			}
 
 			// and finally, as the leader I need to respond to the client.
@@ -356,7 +364,6 @@ namespace Raft
 			if (List.Count(x => x) > OtherNodes.Count() / 2)
 			{
 				return true;
-				//BecomeLeader();
 			}
 			return false;
 		}

@@ -2,6 +2,7 @@
 using Raft;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -31,12 +32,7 @@ namespace RaftTests
 			n.RecieveClientCommand(l.Key, l.Command);
 
 			// Assert
-			follower.Received(1).RecieveAppendEntriesRPC(
-				Arg.Any<int>(), 
-				Arg.Any<Guid>(), 
-				Arg.Any<int>(), 
-				Arg.Any<List<Entry>>(), 
-				new AppendEntriesRPC(n));
+			follower.Received(1).RecieveAppendEntriesRPC(new AppendEntriesRPC(n));
 		}
 
 
@@ -178,7 +174,7 @@ namespace RaftTests
 			// assert
 			// The follower should have recieved the leaders commit index (along with its id)
 			AppendEntriesRPC rpc = new();
-			follower.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), leader.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), new AppendEntriesRPC(leader));
+			follower.Received(1).RecieveAppendEntriesRPC(new AppendEntriesRPC(leader));
 		}
 
 		// Testing Logs #7
@@ -200,7 +196,7 @@ namespace RaftTests
 			AppendEntriesRPC rpc = new();
 			rpc.entries = leadersEntries;
 			rpc.leaderCommit = leadersCommitIndex;
-			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), leadersEntries, rpc);
+			await f.RecieveAppendEntriesRPC(rpc);
 			Thread.Sleep(50);
 
 			// assert
@@ -263,7 +259,7 @@ namespace RaftTests
 			// act
 			AppendEntriesRPC rpc = new();
 			rpc.entries = entries;
-			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), entries, rpc);
+			await f.RecieveAppendEntriesRPC(rpc);
 
 			//assert
 			Assert.True(f.Entries.Count() > 0);
@@ -293,7 +289,7 @@ namespace RaftTests
 			// let's say the leader says to send a, b, and c...
 			AppendEntriesRPC rpc = new();
 			rpc.entries = entriesFromLeader;
-			await f.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), entriesFromLeader, rpc);
+			await f.RecieveAppendEntriesRPC(rpc);
 
 			//assert
 			// Check the order
@@ -322,7 +318,7 @@ namespace RaftTests
 
 			// act
 			AppendEntriesRPC rpc = new(l);
-			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, (l.Entries.Count - 1), l.Entries, rpc);
+			await f.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), f.TermNumber, f.CommitIndex, f.NodeId);
@@ -385,12 +381,65 @@ namespace RaftTests
 			rpc.term = l.TermNumber;
 			rpc.leaderId = l.NodeId;
 			rpc.leaderCommit = l.CommitIndex;
-			await f.RecieveAppendEntriesRPC(l.TermNumber, l.NodeId, Arg.Any<int>(),  new List<Entry>(), rpc);
+			await f.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			Assert.True(f.CommitIndex == 100);	
 		}
 
+		// Testing Logs #15
+		[Fact]
+		public async Task TestCase15_LeadersIncludeTheirIndexAndPrevLogIndexWithNoEntries()
+		{
+			//  15. When sending an AppendEntries RPC,
+			//  the leader includes the index
+			//  and term of the entry in its log that immediately precedes the new entries
+			var f1 = Substitute.For<INode>();
+
+
+			var l = new Node([f1], null);
+			// no logs 
+
+			// act
+			l.SendAppendEntriesRPC();
+
+			// assert
+			int term = 0;
+			int prevLogIndex = -1;
+			int commitIndex = -1;
+			AppendEntriesRPC rpc = new(term, l.NodeId, prevLogIndex, new List<Entry>(), commitIndex);
+			await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term && actual.prevLogIndex == rpc.prevLogIndex && actual.leaderCommit == rpc.leaderCommit));
+		}
+
+		// Testing Logs #15
+		[Fact]
+		public async Task TestCase15_LeadersIncludeTheirIndexAndPrevLogIndexWithOneUncommittedEntry()
+		{
+			//  Same as test above, but including one uncommitted entry.
+
+			// arrange
+			var f1 = Substitute.For<INode>();
+			f1.NodeId = Guid.NewGuid();
+
+			var l = new Node([f1], null);
+			var entries = new List<Entry>() { new Entry("a", "b", 0, 0) };
+			l.Entries = entries;
+			l.NextIndexes[f1.NodeId] = -1;  // and the leader needs to send a log to this behind follower
+			l.ElectionTimeout = 100000; // this is just so it doesn't accidentally timeout
+
+			// act
+			l.SendAppendEntriesRPC();
+
+			// assert
+			int term = 0;
+			int prevLogIndex = 0;	// prev log index is now the first one
+			int commitIndex = -1;
+			AppendEntriesRPC rpc = new(term, l.NodeId, prevLogIndex, entries, commitIndex);
+			await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term 
+				&& actual.prevLogIndex == rpc.prevLogIndex 
+				&& actual.leaderCommit == rpc.leaderCommit 
+				&& actual.entries.Contains(entries.First())) );
+		}
 
 		// Testing Logs #15
 		[Fact]
@@ -412,11 +461,27 @@ namespace RaftTests
 			// act
 			AppendEntriesRPC rpc = new(l);
 			rpc.term = l.TermNumber;
-			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, rpc);
+			await f1.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			// Because the term the leader is trying to send 
 			l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex, f1.NodeId);
+		}
+
+		[Fact]
+		public void TestCase15_LeadersDecrimentNextIndexForThatFollowerAfterFalseResponse()
+		{
+			// if a follower rejects the AppendEntries RPC, the leader decrements nextIndex and retries the AppendEntries RPC
+			Guid followersId = Guid.NewGuid();
+
+			var leader = new Node([], null);
+			leader.NextIndexes[followersId] = 1;
+
+			// act
+			leader.RespondBackToLeader(false, 1, 1, followersId);
+
+			// assert
+			leader.NextIndexes[followersId] = 0;
 		}
 
 		// Testing Logs #15
@@ -437,7 +502,7 @@ namespace RaftTests
 
 
 			l.RecieveClientCommand("1", "set b");
-			List<Entry> logsToSend = l.CalculateEntriesToSend(f1); // Should be the last one ("send b") one
+			List<Entry> logsToSend = l.CalculateEntriesToSend(f1.NodeId); // Should be the last one ("send b") one
 
 
 			// act
@@ -493,7 +558,7 @@ namespace RaftTests
 			// assert
 			AppendEntriesRPC rpc = new AppendEntriesRPC(leaderNode);
 			
-			deadFollower.Received(4).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), rpc);
+			deadFollower.Received(4).RecieveAppendEntriesRPC(rpc);
 		}
 
 		// Testing Logs #18
@@ -536,7 +601,7 @@ namespace RaftTests
 			// act
 			AppendEntriesRPC rpc = new(leader);
 			rpc.entries = new List<Entry>() { leader.Entries.Last() };
-			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, new List<Entry>() { leader.Entries.Last() }, rpc);
+			await f1.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
@@ -561,7 +626,7 @@ namespace RaftTests
 			// act
 			AppendEntriesRPC rpc = new(l);
 			rpc.term = 1;
-			await f1.RecieveAppendEntriesRPC(1, l.NodeId, (l.Entries.Count - 1), leadersEntries, rpc);
+			await f1.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			// Because f prevLogIndex is at 1, and l prevLogIndex is at 3, then 3 - 1 > 1, so we reject
@@ -589,7 +654,7 @@ namespace RaftTests
 			// act
 			AppendEntriesRPC rpc = new(leader);
 			rpc.entries = new List<Entry>() { leader.Entries.Last() };
-			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, new List<Entry>() { leader.Entries.Last() }, rpc);
+			await f1.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			leader.Received(1).RespondBackToLeader(true, Arg.Any<int>(), Arg.Any<int>(), f1.NodeId);
@@ -620,7 +685,7 @@ namespace RaftTests
 			AppendEntriesRPC rpc = new(leader);
 			rpc.entries = leadersLogs.TakeLast(2).ToList();
 			var logsToSend = leadersLogs.TakeLast(2).ToList(); // let's say the leader is sending the last 2. The 
-			await f1.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, leader.Entries.Count - 1, logsToSend, rpc);
+			await f1.RecieveAppendEntriesRPC(rpc);
 
 			// assert
 			// leader should say 

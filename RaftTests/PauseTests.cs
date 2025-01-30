@@ -30,7 +30,7 @@ public class PauseTests
         Thread.Sleep(400);
 
         // assert
-        followerNode.Received(0).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<AppendEntriesRPC>());
+        followerNode.Received(0).RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class PauseTests
         Thread.Sleep(35);
 
         // assert
-        followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), Arg.Any<AppendEntriesRPC>());
+        followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
 
     }
 

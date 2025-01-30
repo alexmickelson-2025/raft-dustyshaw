@@ -143,7 +143,7 @@ namespace RaftTests
             // Act
             // Leader sends messages to me
             AppendEntriesRPC rpc = new();
-            await followerNode.RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), new List<Entry>(), rpc);
+            await followerNode.RecieveAppendEntriesRPC(rpc);
             Thread.Sleep(100);
 
             // Assert
@@ -463,7 +463,7 @@ namespace RaftTests
             // Assert
             AppendEntriesRPC rpc = new AppendEntriesRPC();
             rpc.leaderId = leaderNode.NodeId;
-            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), leaderNode.NodeId, Arg.Any<int>(), Arg.Any<List<Entry>>(), rpc);
+            followerNode.Received(1).RecieveAppendEntriesRPC(rpc);
         }
 
         // Testing #18
@@ -484,7 +484,8 @@ namespace RaftTests
 
             // Act
             AppendEntriesRPC rpc = new(leader);
-			await candidateNode.RecieveAppendEntriesRPC(leader.TermNumber, leader.NodeId, 2, new List<Entry>(), rpc);
+            rpc.prevLogIndex = 2;
+			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
 			// Assert
 			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
@@ -506,7 +507,7 @@ namespace RaftTests
 
             // Assert
             AppendEntriesRPC rpc = new();
-            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<List<Entry>>(), rpc);
+            followerNode.Received(1).RecieveAppendEntriesRPC(rpc);
         }
 
 
