@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Timers;
 using System.Xml.Linq;
@@ -37,6 +38,7 @@ namespace Raft
 		public int CommitIndex { get; set; } = -1;
 		public int nextIndex { get; set; }
 		public Dictionary<Guid, int> NextIndexes = new();
+		public Dictionary<Guid, int> MatchIndexes = new();
 		public List<bool> LogConfirmationsRecieved { get; set; } = new();
 		public IClient Client { get; set; }
 
@@ -199,7 +201,7 @@ namespace Raft
 
 		public async Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
 		{
-
+			
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
@@ -289,15 +291,44 @@ namespace Raft
 				response = false;
 			}
 
+
+			foreach (var n in this.OtherNodes)
+			{
+				if (n.LeaderId == rpc.leaderId)
+				{
+					n.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId);
+				}
+			}
+
 			OtherNodes
-				.Where(node => node.LeaderId == this.LeaderId)
+				.Where(node => node.NodeId == this.LeaderId)
 				.ToList()
-				.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.CommitIndex, this.NodeId));
+				.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
+
+			//OtherNodes
+			//	.Where(node => node.LeaderId == this.LeaderId)
+			//	.ToList()
+			//	.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
+
+			//OtherNodes
+			//	.Where(node => node.LeaderId == this.LeaderId)
+			//	.ToList()
+			//	.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
 		}
 
-		public void RespondBackToLeader(bool response, int fTermNumber, int fCommitIndex, Guid fNodeId)
+		public void RespondBackToLeader(bool response, int fTermNumber, int fPrevLogIndex, Guid fNodeId)
 		{
-			// This is the leader
+			// As the leader, I have heard from the response as a follower
+			if (!IsRunning)
+			{
+				return;
+			}
+
+			if (this.State != Node.NodeState.Leader)
+			{
+				return; // this method is only for leaders
+			}
+			
 			if (NextIndexes.ContainsKey(fNodeId))
 			{
 				if (!response)
@@ -306,18 +337,20 @@ namespace Raft
 				}
 				else
 				{
-					NextIndexes[fNodeId] = this.Entries.Count() - 1;	// not sure if this is correct, follower has replicated entries up to my prev log index?.
+					NextIndexes[fNodeId] = fPrevLogIndex;
 				}
 			}
 
+
 			// as the leader, I have heard from my followers and I will commit my index
-			LogConfirmationsRecieved.Add(response);
-			bool hasMajority = HasMajority(LogConfirmationsRecieved);
+			bool hasMajority = HasMajorityLogConfirmations();
 
 			if (hasMajority)
 			{
 				CommitEntry();
 			}
+			return;
+
 
 			// send a confirmation heartbeat to other nodes saying I have committed an entry
 			foreach (var n in this.OtherNodes)
@@ -329,6 +362,31 @@ namespace Raft
 
 			// and finally, as the leader I need to respond to the client.
 
+		}
+
+		public bool HasMajorityLogConfirmations()
+		{
+			if (this.Entries.Count <= 0)
+			{
+				return false; // no logs at all
+			}
+
+			int potentialCommitIndex = this.CommitIndex + 1;
+			List<bool> logConfirmations = new List<bool>();
+
+			foreach(var ni in this.NextIndexes)
+			{
+				if (ni.Value == potentialCommitIndex)
+				{
+					logConfirmations.Add(true);
+				}
+				else
+				{
+					logConfirmations.Add(false);
+				}
+			}
+
+			return HasMajority(logConfirmations);
 		}
 
 		public void SendVoteRequestRPCsToOtherNodes()
@@ -372,17 +430,17 @@ namespace Raft
 			return false;
 		}
 
-		public void HasLogMajority(List<bool> List)
-		{
-			if (!IsRunning)
-			{
-				return;
-			}
-			if (List.Count(x => x) > OtherNodes.Count() / 2)
-			{
-				CommitEntry();
-			}
-		}
+		//public void HasLogMajority(List<bool> List)
+		//{
+		//	if (!IsRunning)
+		//	{
+		//		return;
+		//	}
+		//	if (List.Count(x => x) > OtherNodes.Count() / 2)
+		//	{
+		//		CommitEntry();
+		//	}
+		//}
 
 		public async Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
 		{
@@ -472,6 +530,7 @@ namespace Raft
 			this.StateMachine = this.Entries.Take(this.CommitIndex + 1).ToList();
 			Entry entryToSend = this.StateMachine.Last();
 			this.Client.RecieveLogFromLeader(entryToSend);
+			
 		}
 
 		public void PauseNode()

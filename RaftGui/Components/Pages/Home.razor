@@ -57,11 +57,21 @@
 						 aria-valuemax="@(maxIntervalSeconds)">
 						<div class="progress-bar bg-dark-subtle" style="width: @(percentageRemaining)%;"></div>
 					</div>
+					<hr />
+					<p>Commit Index: @node.CommitIndex</p>
+					<p>Count of Logs: @node.Entries.Count()</p>
 					<div class="mt-3">
 						<div>
 							@foreach(var l in node.Entries)
 							{
-								<p>" @l.Command - @l.Key " : @l.TermReceived</p>
+								@if(l.Index <= node.CommitIndex)
+								{
+									<p>" @l.Command - @l.Key " : @l.TermReceived - uncommitted</p>
+								}
+								else
+								{
+									<p>" @l.Command - @l.Key " : @l.TermReceived - committed</p>
+								}
 							}
 						</div>
 					@if( node.IsRunning)
