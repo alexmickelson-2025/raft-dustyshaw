@@ -248,7 +248,6 @@ namespace Raft
 				if (rpc.entries is not null && rpc.entries.Count > 0)
 				{
 					bool matchFound = false;
-					int matchIndex = -1;
 					foreach (var leaderLog in rpc.entries.AsEnumerable().Reverse())
 					{
 						foreach(var followerLog in followersEntriesWithIndexes.AsEnumerable().Reverse())
@@ -262,7 +261,19 @@ namespace Raft
 
 					if (matchFound)
 					{
+						int i = 1; // The index after which you want to truncate and append new items
+
+						if (i < this.Entries.Count)
+						{
+							// Remove all elements after the specified index
+							this.Entries.RemoveRange(i, this.Entries.Count - i);
+						}
+
+						// Append new elements from rpc.entries after the index
 						this.Entries.AddRange(rpc.entries.Skip(1));
+
+						//this.Entries.RemoveRange(rpc.entries.Skip(1));
+						//this.Entries.AddRange(rpc.entries.Skip(1)); // WRONGGGGGGG
 						response = true;	// I have replicated the logs up to the entries you have sent me
 					}
 					else if (this.Entries.Count == 0)
@@ -290,21 +301,17 @@ namespace Raft
 		public void RespondBackToLeader(bool response, int fTermNumber, int fCommitIndex, Guid fNodeId)
 		{
 			// This is the leader
-
-
-				// wuh oh. Let me decriment your prevLogIndex little guy
-				if (NextIndexes.ContainsKey(fNodeId))
+			if (NextIndexes.ContainsKey(fNodeId))
+			{
+				if (!response)
 				{
-					if (!response)
-					{
-						NextIndexes[fNodeId]--; 
-					}
-					else
-					{
-						NextIndexes[fNodeId] = this.Entries.Count();	// not sure if this is correct, follower has replicated entries up to my prev log index?.
-					}
+					NextIndexes[fNodeId]--; 
 				}
-
+				else
+				{
+					NextIndexes[fNodeId] = this.Entries.Count();	// not sure if this is correct, follower has replicated entries up to my prev log index?.
+				}
+			}
 
 			// as the leader, I have heard from my followers and I will commit my index
 			LogConfirmationsRecieved.Add(response);

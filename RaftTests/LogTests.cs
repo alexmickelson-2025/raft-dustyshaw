@@ -669,14 +669,14 @@ namespace RaftTests
 			// you will reject the appendentry until you find a matching log
 
 			var leader = Substitute.For<INode>();
-			List<Entry> leadersLogs = new List<Entry>() { new Entry("set", "1", 1, 0), new Entry("set", "1", 2, 1), new Entry("set", "3", 2, 2) };
+			List<Entry> leadersLogs = new List<Entry>() { new Entry("set", "first", 1, 0), new Entry("set", "second", 2, 1), new Entry("set", "third", 2, 2) };
 			leader.Entries = leadersLogs;
 			leader.BecomeLeader();
 			leader.TermNumber = 100;
 
 
 			var f1 = new Node([], null);        // matching log				// this node has incorrect term
-			f1.Entries = new List<Entry>() { new Entry("set", "1", 1, 0), new Entry("set", "incorrect", 1, 1) };
+			f1.Entries = new List<Entry>() { new Entry("set", "first", 1, 0), new Entry("set", "incorrect", 1, 1) };
 			f1.OtherNodes = [leader];
 			f1.TermNumber = 2;
 			f1.State = Node.NodeState.Follower;
@@ -690,8 +690,6 @@ namespace RaftTests
 			// follower responds false to leader because it hasn't found a term or index that matches.
 			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
 
-
-
 			// act again 
 			rpc = new(leader.TermNumber, leader.NodeId, leader.Entries.Count() - 1, leadersLogs.TakeLast(3).ToList(), leader.CommitIndex);
 			logsToSend = leadersLogs.TakeLast(2).ToList(); // let's say the leader is sending the last 2. The 
@@ -700,7 +698,11 @@ namespace RaftTests
 
 			// assert again 
 			leader.Received(1).RespondBackToLeader(true, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
-		}
 
+
+			// assert that the follower actually got the correct logs
+			Assert.True(f1.Entries.First() == leadersLogs.First());
+			Assert.True(f1.Entries.Last() == leadersLogs.Last());
+		}
 	}
 }
