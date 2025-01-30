@@ -682,43 +682,25 @@ namespace RaftTests
 			f1.State = Node.NodeState.Follower;
 
 			// act
-			AppendEntriesRPC rpc = new(leader);
-			rpc.entries = leadersLogs.TakeLast(2).ToList();
+			AppendEntriesRPC rpc = new(leader.TermNumber, leader.NodeId, leader.Entries.Count() - 1, leadersLogs.TakeLast(2).ToList(), leader.CommitIndex);
 			var logsToSend = leadersLogs.TakeLast(2).ToList(); // let's say the leader is sending the last 2. The 
 			await f1.RecieveAppendEntriesRPC(rpc);
 
 			// assert
-			// leader should say 
+			// follower responds false to leader because it hasn't found a term or index that matches.
 			leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
+
+
+
+			// act again 
+			rpc = new(leader.TermNumber, leader.NodeId, leader.Entries.Count() - 1, leadersLogs.TakeLast(3).ToList(), leader.CommitIndex);
+			logsToSend = leadersLogs.TakeLast(2).ToList(); // let's say the leader is sending the last 2. The 
+			await f1.RecieveAppendEntriesRPC(rpc);
+
+
+			// assert again 
+			leader.Received(1).RespondBackToLeader(true, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
 		}
-
-
-		// Testing logs #20 but using bad testing practices because I am evil >:)
-		//[Fact]
-		//public async Task TestCase20Evil_NonMatchingTermsAndIndexGetRejectedBadTestPractices()
-		//{
-		//	var leader = new Node([], null);
-		//	leader.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "1", 2), new Entry("set", "3", 2) };
-		//	leader.BecomeLeader();
-		//	leader.TermNumber = 2;
-
-		//	var f1 = new Node([], null);        // matching log				// this node has incorrect term
-		//	f1.Entries = new List<Entry>() { new Entry("set", "1", 1), new Entry("set", "incorrect", 1) };
-		//	f1.OtherNodes = [leader];
-		//	f1.TermNumber = 2;
-		//	f1.State = Node.NodeState.Follower;
-
-		//	leader.OtherNodes = [f1];
-
-		//	// act
-		//	leader.SendAppendEntriesRPC();
-
-
-
-		//	// assert
-		//	// as a follower with no entries yet, sending in two should be rejected?
-		//	//leader.Received(1).RespondBackToLeader(false, Arg.Any<int>(), Arg.Any<int>());
-		//}
 
 	}
 }
