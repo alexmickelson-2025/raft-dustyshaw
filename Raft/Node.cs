@@ -183,13 +183,16 @@ namespace Raft
 				index++;
 			}
 
-			// if I have a list of next indexes...
-			if (NextIndexes.Count > 0)
+			// if I havent gotten the other indexes yet have a list of next indexes...
+			if (NextIndexes.Count <= 0)
 			{
-				int nodesPrevLogIndex = NextIndexes[nodeId];
-				var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex;
-				entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
+				CalculateNextIndecesList();
 			}
+			
+			int nodesPrevLogIndex = NextIndexes[nodeId];
+			var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
+			entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
+			
 
 			return entriesToSend;
 		}
@@ -261,19 +264,13 @@ namespace Raft
 
 					if (matchFound)
 					{
-						int i = 1; // The index after which you want to truncate and append new items
+						int i = 1;
 
 						if (i < this.Entries.Count)
 						{
-							// Remove all elements after the specified index
 							this.Entries.RemoveRange(i, this.Entries.Count - i);
 						}
-
-						// Append new elements from rpc.entries after the index
 						this.Entries.AddRange(rpc.entries.Skip(1));
-
-						//this.Entries.RemoveRange(rpc.entries.Skip(1));
-						//this.Entries.AddRange(rpc.entries.Skip(1)); // WRONGGGGGGG
 						response = true;	// I have replicated the logs up to the entries you have sent me
 					}
 					else if (this.Entries.Count == 0)
@@ -309,7 +306,7 @@ namespace Raft
 				}
 				else
 				{
-					NextIndexes[fNodeId] = this.Entries.Count();	// not sure if this is correct, follower has replicated entries up to my prev log index?.
+					NextIndexes[fNodeId] = this.Entries.Count() - 1;	// not sure if this is correct, follower has replicated entries up to my prev log index?.
 				}
 			}
 
@@ -455,6 +452,7 @@ namespace Raft
 			{
 				return;
 			}
+
 			Entry l = new Entry(key, command);
 			l.TermReceived = this.TermNumber;
 

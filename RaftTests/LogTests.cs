@@ -704,5 +704,37 @@ namespace RaftTests
 			Assert.True(f1.Entries.First() == leadersLogs.First());
 			Assert.True(f1.Entries.Last() == leadersLogs.Last());
 		}
+
+
+		[Fact]
+		public async Task OtherTest()
+		{
+			var f1 = Substitute.For<INode>();
+			f1.NodeId = Guid.NewGuid();
+			var f2 = Substitute.For<INode>();
+			f2.NodeId = Guid.NewGuid();
+
+			var leader = new Node([f1, f2], null);
+
+			leader.SendAppendEntriesRPC();
+
+			AppendEntriesRPC rpc = new(0, leader.NodeId, -1, new List<Entry>(), -1);
+			await f1.Received(1).RecieveAppendEntriesRPC(
+				Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term 
+					&& actual.prevLogIndex == rpc.prevLogIndex 
+					&& actual.leaderCommit == rpc.leaderCommit));
+
+
+			// After a leader recieves a command, it will send that new command to the followers
+			leader.RecieveClientCommand("a", "b");
+			List<Entry> leadersEntries = leader.Entries.ToList();
+
+			rpc = new(0, leader.NodeId, -1, new List<Entry>() { new Entry("a", "b")}, -1);
+			await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term
+				&& actual.prevLogIndex == rpc.prevLogIndex
+				&& actual.leaderCommit == rpc.leaderCommit
+				&& actual.entries.Contains(leadersEntries.First())));
+
+		}
 	}
 }
