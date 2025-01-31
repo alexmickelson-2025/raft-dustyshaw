@@ -1,7 +1,8 @@
+using Raft;
 using Raft.DTOs;
 using System.Net.Http.Json;
 
-public class HttpRpcNode
+public class HttpRpcNode : INode
 {
 	public Guid NodeId { get; set; }
 	public string Url { get; }
@@ -24,11 +25,53 @@ public class HttpRpcNode
 		try
 		{
 			Console.WriteLine("Calling Stuff from the NOde!");
-			await client.PostAsJsonAsync(Url + "/request/SendAppendEntriesRPC", rpc);
+			await client.PostAsJsonAsync(Url + "/RequestAppendEntries", rpc);
 		}
 		catch 
 		{
 			Console.WriteLine($"node {Url} is down");
 		}
 	}
+
+    public async Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc)
+    {
+       try
+		{
+			Console.WriteLine($"Calling  RecieveAVoteRequestFromCandidate({rpc})");
+			await client.PostAsJsonAsync(Url + "/RecieveAVoteRequestFromCandidate", rpc);
+		}
+		catch 
+		{
+			Console.WriteLine($"node {Url} is down");
+		}
+    }
+
+    public void RecieveVoteResults(bool result, int termNumber)
+    {
+        try
+		{
+			Console.WriteLine($"Calling  RecieveVoteResults({result}, {termNumber})");
+			client.PostAsJsonAsync(Url + "/RecieveVoteResults", result);
+		}
+		catch 
+		{
+			Console.WriteLine($"node {Url} is down");
+		}
+    }
+
+    public Task SendMyVoteToCandidate(Guid candidateId, bool result)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId)
+    {
+        throw new NotImplementedException();
+    }
+
 }
