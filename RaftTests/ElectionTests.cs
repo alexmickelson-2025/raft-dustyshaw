@@ -297,32 +297,29 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Candidate, n.State);   // And it is a candidate now
         }
 
-        // Testing #12
-        [Fact]
-        public void TestCase12_CandidatesBecomeFollowersWhenRecieveLaterTermRPC()
-        {
-            // 12.Given a candidate, when it receives an AppendEntries message from a node with a later term,
-            // then the candidate loses and becomes a follower.
+		// Testing #12 better
+		[Fact]
+		public async Task TestCase12_CandidatesBecomeFollowersWhenRecieveLaterTermRPC()
+		{
+			// 12.Given a candidate, when it receives an AppendEntries message from a node with a later term,
+			// then the candidate loses and becomes a follower.
 
-            // Arrange
-            Node node1 = new Node([], null);
-            node1.TermNumber = 100;
+			Node candidateNode = new Node([], null);
+			candidateNode.State = Node.NodeState.Candidate;
+			candidateNode.TermNumber = 1;
 
-            Node candidateNode = new Node([node1], null);
-            candidateNode.State = Node.NodeState.Candidate;
-            candidateNode.TermNumber = 1;
-
-            node1.OtherNodes = [candidateNode];
 
             // Act
-            node1.SendAppendEntriesRPC();
+            int LeaderTermNumber = 100;
+            AppendEntriesRPC rpc = new(LeaderTermNumber, Guid.NewGuid(), 0, new List<Entry>(), -1);
+            await candidateNode.RecieveAppendEntriesRPC(rpc);
 
-            // Assert
-            Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
-        }
+			// Assert
+			Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
+		}
 
-        // Testing #12 (but opposite)
-        [Fact]
+		// Testing #12 (but opposite)
+		[Fact]
         public void TestCase12_CandidatesStaysCandidateWhenRecieveLesserTermRPC()
         {
             // Arrange
@@ -344,20 +341,17 @@ namespace RaftTests
 
         // Testing #13
         [Fact]
-        public void TestCase13_CandidatesBecomeFollowersWhenRecieveEqualTermRPC()
+        public async Task TestCase13_CandidatesBecomeFollowersWhenRecieveEqualTermRPC()
         {
             // Arrange
-            Node node1 = new Node([], null);
-            node1.TermNumber = 100; 
-
-            Node candidateNode = new Node([node1], null);
+            Node candidateNode = new Node([], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.TermNumber = 100;  // equal terms
+			int LeaderTermNumber = 100; // equal terms
 
-            node1.OtherNodes = [candidateNode];
-
-            // Act
-            node1.SendAppendEntriesRPC();
+			// Act
+			AppendEntriesRPC rpc = new(LeaderTermNumber, Guid.NewGuid(), 0, new List<Entry>(), -1);
+			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
             // Assert
             Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
@@ -443,31 +437,26 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Candidate, n.State);
         }
 
-        // Testing #17
-        [Fact]
-        public void TestCase17_FollowersSendResponses()
-        {
+		// Testing #17
+		[Fact]
+		public async Task TestCase17_FollowersSendResponses()
+		{
+            // 17. When a follower node receives an AppendEntries request, it sends a response.
+
             // Arrange
-            var followerNode = Substitute.For<INode>();
-            followerNode.State = Node.NodeState.Follower;
+            var leader = Substitute.For<INode>();
+			var follower = new Node([leader], null);
 
-            var leaderNode = new Node([], null);
-            leaderNode.BecomeLeader();
-
-            leaderNode.OtherNodes = [followerNode];
-            followerNode.OtherNodes = [leaderNode];
-
-            // Act
-            leaderNode.SendAppendEntriesRPC(); // Send heartbeat
+			// Act
+			AppendEntriesRPC rpc = new AppendEntriesRPC();
+			await follower.RecieveAppendEntriesRPC(rpc); // Send heartbeat
 
             // Assert
-            AppendEntriesRPC rpc = new AppendEntriesRPC();
-            rpc.leaderId = leaderNode.NodeId;
-            followerNode.Received(1).RecieveAppendEntriesRPC(rpc);
-        }
+            leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
+		}
 
-        // Testing #18
-        [Fact]
+		// Testing #18
+		[Fact]
         public async Task TestCase18_AppendEntriesFromPreviousTermsAreRejected()
         {
 			// Given a candidate receives an AppendEntries from a previous term, then it rejects.
