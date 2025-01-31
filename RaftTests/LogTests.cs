@@ -736,5 +736,52 @@ namespace RaftTests
 				&& actual.entries.Contains(leadersEntries.First())));
 
 		}
+
+		[Fact]
+		public async Task _BugFix()
+		{
+			var f1 = new Node([], null);
+			//f1.ElectionTimeout = 999999999;
+			var f2 = new Node([], null);
+			//f1.ElectionTimeout = 999999999;
+
+			var leader = new Node([f1, f2], null);
+			leader.BecomeLeader();
+
+			leader.BecomeLeader();
+
+			leader.SendAppendEntriesRPC();
+
+			Assert.True(f1.Entries.Count() == 0);
+
+			leader.RecieveClientCommand("1", "a");
+
+			Thread.Sleep(55);
+
+			Assert.True(f1.Entries.Count() == 1);
+
+			Thread.Sleep(55);
+
+			Assert.True(f1.Entries.Count() == 1);
+
+			// Now the leader gets a new thing
+			leader.RecieveClientCommand("a", "b");
+
+			Thread.Sleep(55);
+
+			Assert.True(f1.Entries.Count() == 2);	// fails
+
+			Thread.Sleep(55);
+
+			Assert.True(f1.Entries.Count() == 2);
+
+			Thread.Sleep(25);
+			Assert.True(f1.Entries.Count() == 2);
+
+			Thread.Sleep(25);
+			Assert.True(f1.Entries.Count() == 2);
+
+		}
+
 	}
 }

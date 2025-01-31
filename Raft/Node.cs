@@ -192,7 +192,9 @@ namespace Raft
 			}
 			
 			int nodesPrevLogIndex = NextIndexes[nodeId];
-			var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
+			var differenceInLogs = (this.Entries.Count) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
+
+			//var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
 			entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
 			
 
@@ -238,6 +240,7 @@ namespace Raft
 				this.CommitIndex = rpc.leaderCommit;
 			}
 
+
 			// Log replication
 			List<Entry> followersEntriesWithIndexes = new();
 			int index = 0;
@@ -248,11 +251,15 @@ namespace Raft
 				index++;
 			}
 
-			if (rpc.prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead
+
+
+
+			if (rpc.prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead...
 			{
-				if (rpc.entries is not null && rpc.entries.Count > 0)
+				if (rpc.entries is not null && rpc.entries.Count > 0)	// and if there are even logs to replicate...
 				{
 					bool matchFound = false;
+					int matchIndex = -1;
 					foreach (var leaderLog in rpc.entries.AsEnumerable().Reverse())
 					{
 						foreach(var followerLog in followersEntriesWithIndexes.AsEnumerable().Reverse())
@@ -260,18 +267,19 @@ namespace Raft
 							if (followerLog.Index == leaderLog.Index && leaderLog.TermReceived == followerLog.TermReceived)
 							{
 								matchFound = true;
+								matchIndex = followerLog.Index;
 							}
 						}
 					}
 
 					if (matchFound)
 					{
-						int i = 1;
+						//int i = 1;
 
-						if (i < this.Entries.Count)
-						{
-							this.Entries.RemoveRange(i, this.Entries.Count - i);
-						}
+						//if (i < this.Entries.Count)
+						//{
+						//	this.Entries.RemoveRange(i, this.Entries.Count - i);
+						//}
 						this.Entries.AddRange(rpc.entries.Skip(1));
 						response = true;	// I have replicated the logs up to the entries you have sent me
 					}
@@ -290,6 +298,8 @@ namespace Raft
 			{
 				response = false;
 			}
+
+			this.CommitIndex = rpc.leaderCommit;
 
 
 			foreach (var n in this.OtherNodes)
@@ -349,19 +359,12 @@ namespace Raft
 			{
 				CommitEntry();
 			}
-			return;
 
-
-			// send a confirmation heartbeat to other nodes saying I have committed an entry
-			foreach (var n in this.OtherNodes)
-			{
-				AppendEntriesRPC rpc = new(this);
-				rpc.entries = new List<Entry>();
-				n.RecieveAppendEntriesRPC(new AppendEntriesRPC(this.TermNumber, this.NodeId, this.Entries.Count - 1, new List<Entry>(), this.CommitIndex));
-			}
 
 			// and finally, as the leader I need to respond to the client.
+			Client.RecieveLogFromLeader(this.Entries.Last());
 
+			return;
 		}
 
 		public bool HasMajorityLogConfirmations()
@@ -509,6 +512,11 @@ namespace Raft
 			if (!IsRunning)
 			{
 				return;
+			}
+
+			if (this.State != NodeState.Leader)
+			{
+				return; 
 			}
 
 			Entry l = new Entry(key, command);
