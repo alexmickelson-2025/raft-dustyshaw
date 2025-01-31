@@ -33,7 +33,7 @@ public class SimulationNode : INode
 	public List<Entry> Entries { get => ((INode)InnerNode).Entries; set => ((INode)InnerNode).Entries = value; }
     public bool IsRunning { get => ((INode)InnerNode).IsRunning; set => ((INode)InnerNode).IsRunning = value; }
 
-    public void BecomeLeader()
+	public void BecomeLeader()
 	{
 		if (!IsRunning)
 		{

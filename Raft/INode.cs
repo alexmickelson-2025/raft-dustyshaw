@@ -20,7 +20,7 @@ namespace Raft
 
 		int LowerBoundElectionTime { get; set; }
 		int UpperBoundElectionTime { get; set; }
-		public List<Entry> Entries { get; set; } 
+		public List<Entry> Entries { get; set; }
 		int CommitIndex { get; set; }
         bool IsRunning { get; set; }
 

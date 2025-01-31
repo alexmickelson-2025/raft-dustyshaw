@@ -197,7 +197,6 @@ namespace Raft
 			//var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
 			entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
 			
-
 			return entriesToSend;
 		}
 
@@ -209,6 +208,7 @@ namespace Raft
 				await Task.CompletedTask;
 			}
 			bool response = true;
+
 
 			// Update state if a higher term number is received
 			if (this.State == Node.NodeState.Candidate && rpc.term >= this.TermNumber)
@@ -240,7 +240,6 @@ namespace Raft
 				this.CommitIndex = rpc.leaderCommit;
 			}
 
-
 			// Log replication
 			List<Entry> followersEntriesWithIndexes = new();
 			int index = 0;
@@ -250,8 +249,6 @@ namespace Raft
 				followersEntriesWithIndexes.Add(entry);
 				index++;
 			}
-
-
 
 
 			if (rpc.prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead...
@@ -280,6 +277,7 @@ namespace Raft
 						//{
 						//	this.Entries.RemoveRange(i, this.Entries.Count - i);
 						//}
+
 						this.Entries.AddRange(rpc.entries.Skip(1));
 						response = true;	// I have replicated the logs up to the entries you have sent me
 					}
