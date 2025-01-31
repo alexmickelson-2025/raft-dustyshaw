@@ -40,6 +40,9 @@
 	@if (!ClientSentLogSuccessfully)
 	{
 		<div class="alert alert-danger">Warning: Your command was sent to a follower node. Command was not applied.</div>
+	} else
+	{
+		<p>Command applied successfully</p>
 	}
 </div>
 
