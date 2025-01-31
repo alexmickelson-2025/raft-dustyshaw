@@ -5,7 +5,7 @@ namespace Raft
 	public interface INode
 	{
 		System.Timers.Timer aTimer { get; set; }
-		int ElectionTimeout { get; set; }
+		// int ElectionTimeout { get; set; }
 		int HeartbeatTimeout { get; }
 		Guid LeaderId { get; set; }
 		int NetworkRequestDelay { get; set; }

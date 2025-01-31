@@ -12,7 +12,7 @@ public class SimulationNode : INode
     }
 
 	public System.Timers.Timer aTimer { get => ((INode)InnerNode).aTimer; set => ((INode)InnerNode).aTimer = value; }
-	public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
+	//public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
 
 	public int HeartbeatTimeout => ((INode)InnerNode).HeartbeatTimeout;
 

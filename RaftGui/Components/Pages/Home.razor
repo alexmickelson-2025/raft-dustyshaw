@@ -49,7 +49,7 @@
 <div class="row">
 	@foreach (var node in nodes)
 	{
-		var timeoutRemaining = ((node.InnerNode.WhenTimerStarted + TimeSpan.FromMilliseconds(node.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
+		var timeoutRemaining = ((node.InnerNode.WhenTimerStarted + TimeSpan.FromMilliseconds(node.InnerNode.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
 		var maxIntervalSeconds = 300 * Node.IntervalScalar; 
 		var percentageRemaining = (100 * (timeoutRemaining / (double)maxIntervalSeconds));
 
