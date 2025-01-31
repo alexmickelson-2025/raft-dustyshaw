@@ -30,8 +30,8 @@
 <div class="border border-1 shadow my-5 col-md-4 p-4 rounded">
 	<h3>Send a Log</h3>
 	<div class="d-flex flex-row">
-	<input @bind="UserCommand" placeholder="Enter Command" class="input-group-text m-2" />
-	<input @bind="UserKey" placeholder="Enter Key" class="input-group-text m-2" />
+		<input @bind="UserCommand" placeholder="Enter Command" class="input-group-text m-2" />
+		<input @bind="UserKey" placeholder="Enter Key" class="input-group-text m-2" />
 	</div>
 	@foreach( var node in nodes)
 	{
@@ -64,13 +64,13 @@
 					</div>
 					<hr />
 					<p>Commit Index: @node.CommitIndex</p>
-					<p>Count of Logs: @node.Entries.Count()</p>
-					<div class="border-1 border-light m-2 p-2 d-none">
+					<div class="border-1 border-light m-2 p-2">
 						<strong>State Machine</strong>
 						@foreach(var commitedEntry in node.InnerNode.StateMachine) {
 							<p>@commitedEntry.Index, @commitedEntry.Command, @commitedEntry.Key, @commitedEntry.TermReceived</p>
 						}
 					</div>
+					<h4 />
 					<div class="mt-3">
 						<div>
 							@foreach (var l in node.Entries)
@@ -84,17 +84,6 @@
                                     <p class="text-danger">&#10005; index @l.Index <i>"@l.Command @l.Key"</i> in term @l.TermReceived</p>
 								}
 							}
-							@* @foreach(var l in node.Entries)
-							{
-								@if(l.Index <= node.CommitIndex)
-								{
-									<p>" @l.Command - @l.Key " : @l.TermReceived - uncommitted</p>
-								}
-								else
-								{
-									<p>" @l.Command - @l.Key " : @l.TermReceived - committed</p>
-								}
-							} *@
 						</div>
 					@if( node.IsRunning)
 					{ <button @onclick="() => pauseNode(node.NodeId)" class="btn btn-outline-primary">|| Pause Node</button>

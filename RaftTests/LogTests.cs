@@ -783,5 +783,25 @@ namespace RaftTests
 
 		}
 
+
+		[Fact]
+		public void __TestingCalculating()
+		{
+			var f1 = new Node([], null);
+
+			var leader = new Node([], null);
+			leader.OtherNodes = [f1];
+			leader.BecomeLeader();
+
+			leader.RecieveClientCommand("set", "a");
+
+			var leadersEntries = leader.Entries;
+
+
+			var entriesToSend = leader.CalculateEntriesToSend(leader.NodeId);
+
+			Assert.Single(leader.Entries);
+		}
+
 	}
 }
