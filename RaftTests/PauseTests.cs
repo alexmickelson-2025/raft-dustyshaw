@@ -16,13 +16,13 @@ public class PauseTests
     {
         // when node is a leader with an election loop, then they get paused, other nodes do not get heartbeats for 400 ms
         var followerNode = Substitute.For<INode>();
-        followerNode.State = Node.NodeState.Follower;
+        //followerNode.State = Node.NodeState.Follower; #
 
         var leaderNode = new Node([], null);
         leaderNode.BecomeLeader();
 
         leaderNode.OtherNodes = [followerNode];
-        followerNode.OtherNodes = [leaderNode];
+        //followerNode.OtherNodes = [leaderNode]; #
 
         // act
         leaderNode.PauseNode();
@@ -54,13 +54,13 @@ public class PauseTests
     {
         // when node is a leader with an election loop, then they get paused, other nodes do not get heartbeats for 400 ms
         var followerNode = Substitute.For<INode>();
-        followerNode.State = Node.NodeState.Follower;
+        //followerNode.State = Node.NodeState.Follower; #
 
         var leaderNode = new Node([], null);
         leaderNode.BecomeLeader();
 
         leaderNode.OtherNodes = [followerNode];
-        followerNode.OtherNodes = [leaderNode];
+        //followerNode.OtherNodes = [leaderNode]; #
 
         // act
         leaderNode.PauseNode();

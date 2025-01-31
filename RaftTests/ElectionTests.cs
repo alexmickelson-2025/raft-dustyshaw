@@ -167,8 +167,8 @@ namespace RaftTests
 			Node candidateNode = new([], null);
             candidateNode.State = Node.NodeState.Candidate;
             candidateNode.OtherNodes = [followerNode, followerNode2];
-			followerNode.OtherNodes = [candidateNode, followerNode2];
-			followerNode2.OtherNodes = [candidateNode, followerNode];
+			//followerNode.OtherNodes = [candidateNode, followerNode2];
+			//followerNode2.OtherNodes = [candidateNode, followerNode];
 
 			// Act
 			candidateNode.RecieveVoteResults(true, 100);
@@ -367,20 +367,20 @@ namespace RaftTests
 			Node node = new([], null);
 
 			var c1 = Substitute.For<INode>();
-            c1.TermNumber = 100;
+            //c1.TermNumber = 100; #
             c1.NodeId = Guid.NewGuid();
 
 			var c2 = Substitute.For<INode>();
-            c2.TermNumber = 100;
+            //c2.TermNumber = 100; #
             c2.NodeId = Guid.NewGuid();
 
             node.OtherNodes = [c1, c2];
-            c1.OtherNodes = [node, c2];
-            c2.OtherNodes = [node, c1];
+            //c1.OtherNodes = [node, c2]; #
+            //c2.OtherNodes = [node, c1]; #
 
             // Act
-            await node.RecieveAVoteRequestFromCandidate(c1.NodeId, c1.TermNumber);
-            await node.RecieveAVoteRequestFromCandidate(c2.NodeId, c2.TermNumber);
+            await node.RecieveAVoteRequestFromCandidate(c1.NodeId, 100);
+            await node.RecieveAVoteRequestFromCandidate(c2.NodeId, 100);
 
 			// Assert
 			c1.Received(1).RecieveVoteResults(true, Arg.Any<int>());
@@ -463,16 +463,16 @@ namespace RaftTests
 
 			// Arrange
 			var leader = Substitute.For<INode>();
-			leader.TermNumber = 2;
+			//leader.TermNumber = 2; #
 
 			Node candidateNode = new([], null);
             candidateNode.TermNumber = 100;
 
             candidateNode.OtherNodes = [leader];
-            leader.OtherNodes = [candidateNode];
+            //leader.OtherNodes = [candidateNode]; #
 
             // Act
-            AppendEntriesRPC rpc = new(leader);
+            AppendEntriesRPC rpc = new(2, leader.NodeId, -1, new List<Entry>(), 0); // #
             rpc.prevLogIndex = 2;
 			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
@@ -495,8 +495,8 @@ namespace RaftTests
             leaderNode.BecomeLeader();
 
             // Assert
-            AppendEntriesRPC rpc = new();
-            followerNode.Received(1).RecieveAppendEntriesRPC(rpc);
+            //AppendEntriesRPC rpc = new();
+            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
         }
 
 

@@ -6,50 +6,14 @@ namespace RaftGui;
 public class SimulationNode : INode
 {
     public readonly Node InnerNode;
-    public SimulationNode(Node node)
+	public int NetworkRequestDelay { get; set; }
+	public bool IsRunning { get; set; } = true;
+	public Guid NodeId { get => ((INode)InnerNode).NodeId; set => ((INode)InnerNode).NodeId = value; }
+
+	public SimulationNode(Node node)
     {
         this.InnerNode = node;
     }
-
-	public System.Timers.Timer aTimer { get => ((INode)InnerNode).aTimer; set => ((INode)InnerNode).aTimer = value; }
-	//public int ElectionTimeout { get => ((INode)InnerNode).ElectionTimeout; set => ((INode)InnerNode).ElectionTimeout = value; }
-
-	public int HeartbeatTimeout => ((INode)InnerNode).HeartbeatTimeout;
-
-	public Guid LeaderId { get => ((INode)InnerNode).LeaderId; set => ((INode)InnerNode).LeaderId = value; }
-	public int NetworkRequestDelay { get => ((INode)InnerNode).NetworkRequestDelay; set => ((INode)InnerNode).NetworkRequestDelay = value; }
-	public Guid NodeId { get => ((INode)InnerNode).NodeId; set => ((INode)InnerNode).NodeId = value; }
-	public INode[] OtherNodes { get => ((INode)InnerNode).OtherNodes; set => ((INode)InnerNode).OtherNodes = value; }
-	public Node.NodeState State { get => ((INode)InnerNode).State; set => ((INode)InnerNode).State = value; }
-	public int TermNumber { get => ((INode)InnerNode).TermNumber; set => ((INode)InnerNode).TermNumber = value; }
-	public int VotedForTermNumber { get => ((INode)InnerNode).VotedForTermNumber; set => ((INode)InnerNode).VotedForTermNumber = value; }
-	public Guid VoteForId { get => ((INode)InnerNode).VoteForId; set => ((INode)InnerNode).VoteForId = value; }
-	public List<bool> votesRecieved { get => ((INode)InnerNode).votesRecieved; set => ((INode)InnerNode).votesRecieved = value; }
-	public DateTime WhenTimerStarted { get => ((INode)InnerNode).WhenTimerStarted; set => ((INode)InnerNode).WhenTimerStarted = value; }
-	public int LowerBoundElectionTime { get => ((INode)InnerNode).LowerBoundElectionTime; set => ((INode)InnerNode).LowerBoundElectionTime = value; }
-	public int UpperBoundElectionTime { get => ((INode)InnerNode).UpperBoundElectionTime; set => ((INode)InnerNode).UpperBoundElectionTime = value; }
-
-	public int CommitIndex { get => ((INode)InnerNode).CommitIndex; set => ((INode)InnerNode).CommitIndex = value; }
-	public List<Entry> Entries { get => ((INode)InnerNode).Entries; set => ((INode)InnerNode).Entries = value; }
-    public bool IsRunning { get => ((INode)InnerNode).IsRunning; set => ((INode)InnerNode).IsRunning = value; }
-
-	public void BecomeLeader()
-	{
-		if (!IsRunning)
-		{
-			return;
-		}
-		((INode)InnerNode).BecomeLeader();
-	}
-
-	public bool HasMajority(List<bool> List)
-	{
-        //if (!IsRunning)
-        //{
-        //    return;
-        //}
-        return ((INode)InnerNode).HasMajority(List);
-	}
 
 	public Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
 	{
@@ -62,8 +26,6 @@ public class SimulationNode : INode
 			await InnerNode.RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
 		});
 		return Task.CompletedTask;
-
-		//return ((INode)InnerNode).RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
 	}
 
 	public void RecieveVoteResults(bool result, int termNumber)
@@ -122,54 +84,60 @@ public class SimulationNode : INode
 		//return ((INode)InnerNode).SendMyVoteToCandidate(candidateId, result);
 	}
 
-	public void SendVoteRequestRPCsToOtherNodes()
+	// As a candidate, I need to send out a vote request to other nodes...
+	public Task SendVoteRequestRPCsToOtherNodes()
 	{
-        if (!IsRunning)
-        {
-            return;
-        }
-        ((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
+		if (!IsRunning)
+		{
+			return Task.CompletedTask;
+		}
+		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+		{
+			await InnerNode.SendVoteRequestRPCsToOtherNodes();
+		});
+		return Task.CompletedTask;
+		//((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
 	}
 
-	public void StartElection()
-	{
-        if (!IsRunning)
-        {
-            return;
-        }
-        ((INode)InnerNode).StartElection();
-	}
+	//public void StartElection()
+	//{
+	//	if (!IsRunning)
+	//	{
+	//		return;
+	//	}
+	//	((INode)InnerNode).StartElection();
+	//}
 
-	public void TimeoutHasPassed()
-	{
-        if (!IsRunning)
-        {
-            return;
-        }
-        ((INode)InnerNode).TimeoutHasPassed();
-	}
+	//public void TimeoutHasPassed()
+	//{
+	//	if (!IsRunning)
+	//	{
+	//		return;
+	//	}
+	//	   ((INode)InnerNode).TimeoutHasPassed();
+	//}
 
-	public void TimeoutHasPassedForLeaders()
-	{
-		((INode)InnerNode).TimeoutHasPassedForLeaders();
-	}
+	//public void TimeoutHasPassedForLeaders()
+	//{
+	//	((INode)InnerNode).TimeoutHasPassedForLeaders();
+	//}
 
 	//public List<Entry> CalculateEntriesToSend(INode node)
 	//{
- //       if (!IsRunning)
- //       {
- //           return new List<Entry>();
- //       }
- //       return ((INode)InnerNode).CalculateEntriesToSend(node);
+	//       if (!IsRunning)
+	//       {
+	//           return new List<Entry>();
+	//       }
+	//       return ((INode)InnerNode).CalculateEntriesToSend(node);
 	//}
 
-    public void PauseNode()
-    {
-        ((INode)InnerNode).PauseNode();
-    }
+	//public void PauseNode()
+	//{
+	//    ((INode)InnerNode).PauseNode();
+	//}
 
-    public void UnpauseNode()
-    {
-        ((INode)InnerNode).UnpauseNode();
-    }
+	//public void UnpauseNode()
+	//{
+	//    ((INode)InnerNode).UnpauseNode();
+	//}
 }

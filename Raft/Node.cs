@@ -220,6 +220,14 @@ namespace Raft
 			if (rpc.term < this.TermNumber)
 			{
 				response = false;   // I have heard from a leader whos term is less than mine
+				foreach (var n in this.OtherNodes)
+				{
+					if (n.NodeId == rpc.leaderId)
+					{
+						n.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId);
+					}
+				}
+				return; // return because we don't want to replicate the incoming logs?
 			}
 
 			this.LeaderId = rpc.leaderId;
@@ -285,24 +293,13 @@ namespace Raft
 			}
 
 
-			// TODO bad;;;
+			// TODO bad;;; ???
 			if (this.CommitIndex < rpc.leaderCommit && rpc.entries.Count() > 0)
 			{
-				this.StateMachine.AddRange(rpc.entries);
+				this.StateMachine.AddRange(rpc.entries.TakeLast(rpc.entries.Count() - this.StateMachine.Count()));
 			}
 
 			this.CommitIndex = rpc.leaderCommit;
-
-			
-
-
-			foreach (var n in this.OtherNodes)
-			{
-				if (n.LeaderId == rpc.leaderId)
-				{
-					n.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId);
-				}
-			}
 
 			OtherNodes
 				.Where(node => node.NodeId == this.LeaderId)
@@ -384,11 +381,9 @@ namespace Raft
 			if (hasMajority)
 			{
 				CommitEntry();
+				// and finally, as the leader I need to respond to the client.
+				Client.RecieveLogFromLeader(this.Entries.Last());
 			}
-
-
-			// and finally, as the leader I need to respond to the client.
-			Client.RecieveLogFromLeader(this.Entries.Last());
 
 			return;
 		}
@@ -418,7 +413,7 @@ namespace Raft
 			return HasMajority(logConfirmations);
 		}
 
-		public void SendVoteRequestRPCsToOtherNodes()
+		public async Task SendVoteRequestRPCsToOtherNodes()
 		{
 			if (!IsRunning)
 			{
@@ -427,7 +422,7 @@ namespace Raft
 			// as the candidate, I am asking for votes from other nodes
 			foreach (var node in OtherNodes)
 			{
-				node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber);
+				await node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber);
 			}
 		}
 
@@ -519,6 +514,7 @@ namespace Raft
 			this.TermNumber = this.TermNumber + 1;
 
 			this.ElectionTimeout = Random.Shared.Next(LowerBoundElectionTime, UpperBoundElectionTime);
+
 
 			//aTimer.Stop();
 			//aTimer.Dispose();

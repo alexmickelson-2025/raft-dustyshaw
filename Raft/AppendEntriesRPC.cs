@@ -23,14 +23,14 @@ public record AppendEntriesRPC
         this.entries = entries;
         this.leaderCommit = leaderCommit;
     }
-    public AppendEntriesRPC(INode node)
-    {
-        term = node.TermNumber;
-        leaderId = node.NodeId;
-        prevLogIndex = node.Entries.Count - 1;
-        entries = node.Entries;
-        leaderCommit = node.CommitIndex;
-    }
+    //public AppendEntriesRPC(INode node)
+    //{
+    //    term = node.TermNumber;
+    //    leaderId = node.NodeId;
+    //    prevLogIndex = node.Entries.Count - 1;
+    //    entries = node.Entries;
+    //    leaderCommit = node.CommitIndex;
+    //}
 
 
     // For testing purposes
