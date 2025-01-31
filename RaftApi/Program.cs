@@ -1,4 +1,5 @@
 using Raft;
+using Raft.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,8 +9,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-var logger = app.Services.GetService<ILogger<Program>>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -22,16 +21,12 @@ app.UseHttpsRedirection();
 
 
 // My code
-HttpRpcNode n = new("");
-Console.WriteLine($"HttpRpcNode Made {n.NodeId}");
+Node n = new([], null);
 
 app.MapPost("/request/SendAppendEntriesRPC", (int term, int prevLogIndex, List<Entry> entries, int commitIndex) =>
 {
-	Console.WriteLine("Sending stuff!");
 	n.SendAppendEntriesRPC();
 });
-
-
 
 app.MapPost("/receive/RecieveAppendEntries", (AppendEntriesRPC rpc) =>
 {

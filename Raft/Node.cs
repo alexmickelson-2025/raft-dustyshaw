@@ -5,11 +5,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Timers;
 using System.Xml.Linq;
+using Raft.DTOs;
 using Xunit.Sdk;
 
 namespace Raft
 {
-	public partial class Node : INode
+    public partial class Node : INode
 	{
 		public Guid NodeId { get; set; } = Guid.NewGuid();
 		public Guid VoteForId { get; set; }
@@ -422,7 +423,8 @@ namespace Raft
 			// as the candidate, I am asking for votes from other nodes
 			foreach (var node in OtherNodes)
 			{
-				await node.RecieveAVoteRequestFromCandidate(this.NodeId, this.TermNumber);
+				VoteRequestFromCandidateRpc rpc = new VoteRequestFromCandidateRpc(this.NodeId, this.TermNumber);
+				await node.RecieveAVoteRequestFromCandidate(rpc);
 			}
 		}
 
@@ -466,7 +468,7 @@ namespace Raft
 		//	}
 		//}
 
-		public async Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
+		public async Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc)
 		{
 			if (!IsRunning)
 			{
@@ -474,14 +476,14 @@ namespace Raft
 			}
 			// as a server, I recieve a vote request from a candidate
 			bool result = true;
-			if (lastLogTerm < this.TermNumber || lastLogTerm == this.VotedForTermNumber)
+			if (rpc.lastLogTerm < this.TermNumber || rpc.lastLogTerm == this.VotedForTermNumber)
 			{
 				result = false;
 			}
 
-			this.VoteForId = candidateId;
-			this.VotedForTermNumber = lastLogTerm;
-			await SendMyVoteToCandidate(candidateId, result);
+			this.VoteForId = rpc.candidateId;
+			this.VotedForTermNumber = rpc.lastLogTerm;
+			await SendMyVoteToCandidate(rpc.candidateId, result);
 		}
 
 		public async Task SendMyVoteToCandidate(Guid candidateId, bool result)

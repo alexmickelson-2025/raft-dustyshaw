@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using NSubstitute;
 using Raft;
+using Raft.DTOs;
 using System.Xml.Serialization;
 using Xunit;
 
@@ -297,7 +298,7 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Candidate, n.State);   // And it is a candidate now
         }
 
-		// Testing #12 better
+		// Testing #12
 		[Fact]
 		public async Task TestCase12_CandidatesBecomeFollowersWhenRecieveLaterTermRPC()
 		{
@@ -308,11 +309,10 @@ namespace RaftTests
 			candidateNode.State = Node.NodeState.Candidate;
 			candidateNode.TermNumber = 1;
 
-
-            // Act
-            int LeaderTermNumber = 100;
-            AppendEntriesRPC rpc = new(LeaderTermNumber, Guid.NewGuid(), 0, new List<Entry>(), -1);
-            await candidateNode.RecieveAppendEntriesRPC(rpc);
+			// Act
+			int LeaderTermNumber = 100;
+			AppendEntriesRPC rpc = new(LeaderTermNumber, Guid.NewGuid(), 0, new List<Entry>(), -1);
+			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
 			// Assert
 			Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Candidate reverts to follower
@@ -339,23 +339,23 @@ namespace RaftTests
             Assert.Equal(Node.NodeState.Candidate, candidateNode.State); // Candidate stays a candidate
         }
 
-        // Testing #13
-        [Fact]
-        public async Task TestCase13_CandidatesBecomeFollowersWhenRecieveEqualTermRPC()
-        {
-            // Arrange
-            Node candidateNode = new Node([], null);
-            candidateNode.State = Node.NodeState.Candidate;
-            candidateNode.TermNumber = 100;  // equal terms
+		// Testing #13
+		[Fact]
+		public async Task TestCase13_CandidatesBecomeFollowersWhenRecieveEqualTermRPC()
+		{
+			// Arrange
+			Node candidateNode = new Node([], null);
+			candidateNode.State = Node.NodeState.Candidate;
+			candidateNode.TermNumber = 100;  // equal terms
 			int LeaderTermNumber = 100; // equal terms
 
 			// Act
 			AppendEntriesRPC rpc = new(LeaderTermNumber, Guid.NewGuid(), 0, new List<Entry>(), -1);
 			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
-            // Assert
-            Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
-        }
+			// Assert
+			Assert.Equal(Node.NodeState.Follower, candidateNode.State); // Converts to Follower
+		}
 
 		// Testing #14
 		[Fact]
@@ -379,8 +379,8 @@ namespace RaftTests
             //c2.OtherNodes = [node, c1]; #
 
             // Act
-            await node.RecieveAVoteRequestFromCandidate(c1.NodeId, 100);
-            await node.RecieveAVoteRequestFromCandidate(c2.NodeId, 100);
+            await node.RecieveAVoteRequestFromCandidate(new VoteRequestFromCandidateRpc(c1.NodeId, 100));
+            await node.RecieveAVoteRequestFromCandidate(new VoteRequestFromCandidateRpc(c2.NodeId, 100));
 
 			// Assert
 			c1.Received(1).RecieveVoteResults(true, Arg.Any<int>());
@@ -389,7 +389,7 @@ namespace RaftTests
 
 		// Testing #15
 		[Fact]
-        public void TestCase15_SecondVoteRequestFromNodeInFutureTermVotesYes()
+        public async Task TestCase15_SecondVoteRequestFromNodeInFutureTermVotesYes()
         {
             // 15.If a node receives a second request for a vote for a future term, it should vote for that node.
             // Arrange
@@ -407,8 +407,8 @@ namespace RaftTests
             candidateNode.OtherNodes = [node, candidateNode2];
 
             // Act
-            candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes
-            candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for greater term is accepted
+            await candidateNode.SendVoteRequestRPCsToOtherNodes();    // follower says yes
+            await candidateNode2.SendVoteRequestRPCsToOtherNodes();   // second vote request for greater term is accepted
 
             // Assert
             Assert.Equal(node.VoteForId, candidateNode2.NodeId);
@@ -441,24 +441,24 @@ namespace RaftTests
 		[Fact]
 		public async Task TestCase17_FollowersSendResponses()
 		{
-            // 17. When a follower node receives an AppendEntries request, it sends a response.
+			// 17. When a follower node receives an AppendEntries request, it sends a response.
 
-            // Arrange
-            var leader = Substitute.For<INode>();
+			// Arrange
+			var leader = Substitute.For<INode>();
 			var follower = new Node([leader], null);
 
 			// Act
 			AppendEntriesRPC rpc = new AppendEntriesRPC();
 			await follower.RecieveAppendEntriesRPC(rpc); // Send heartbeat
 
-            // Assert
-            leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
+			// Assert
+			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
 		}
 
 		// Testing #18
 		[Fact]
-        public async Task TestCase18_AppendEntriesFromPreviousTermsAreRejected()
-        {
+		public async Task TestCase18_AppendEntriesFromPreviousTermsAreRejected()
+		{
 			// Given a candidate receives an AppendEntries from a previous term, then it rejects.
 
 			// Arrange
@@ -466,14 +466,14 @@ namespace RaftTests
 			//leader.TermNumber = 2; #
 
 			Node candidateNode = new([], null);
-            candidateNode.TermNumber = 100;
+			candidateNode.TermNumber = 100;
 
-            candidateNode.OtherNodes = [leader];
-            //leader.OtherNodes = [candidateNode]; #
+			candidateNode.OtherNodes = [leader];
+			//leader.OtherNodes = [candidateNode]; #
 
-            // Act
-            AppendEntriesRPC rpc = new(2, leader.NodeId, -1, new List<Entry>(), 0); // #
-            rpc.prevLogIndex = 2;
+			// Act
+			AppendEntriesRPC rpc = new(2, leader.NodeId, -1, new List<Entry>(), 0); // #
+			rpc.prevLogIndex = 2;
 			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
 			// Assert
@@ -484,21 +484,21 @@ namespace RaftTests
 
 		// Testing #19
 		[Fact]
-        public void TestCase19_NewLeadersSendRPC()
-        {
-            // 19. When a candidate wins an election, it immediately sends a heartbeat.
-            var leaderNode = new Node([], null);
-            var followerNode = Substitute.For<INode>();
-            leaderNode.OtherNodes = [followerNode];
+		public void TestCase19_NewLeadersSendRPC()
+		{
+			// 19. When a candidate wins an election, it immediately sends a heartbeat.
+			var leaderNode = new Node([], null);
+			var followerNode = Substitute.For<INode>();
+			leaderNode.OtherNodes = [followerNode];
 
-            // Act
-            leaderNode.BecomeLeader();
+			// Act
+			leaderNode.BecomeLeader();
 
-            // Assert
-            //AppendEntriesRPC rpc = new();
-            followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
-        }
+			// Assert
+			//AppendEntriesRPC rpc = new();
+			followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
+		}
 
 
-    }
+	}
 }

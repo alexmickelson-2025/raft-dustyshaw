@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using Raft.DTOs;
+using System.Timers;
 
 namespace Raft
 {
@@ -7,13 +8,10 @@ namespace Raft
 		Guid NodeId { get; set; }
 
 
-		Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm);
+		Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc);
 		void RecieveVoteResults(bool result, int termNumber);
-		Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc);
-		public Task SendVoteRequestRPCsToOtherNodes();
-		public void SendAppendEntriesRPC();
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
+		Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc);
 		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId);
-
     }
 }

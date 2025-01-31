@@ -1,4 +1,4 @@
-using Raft;
+using Raft.DTOs;
 using System.Net.Http.Json;
 
 public class HttpRpcNode

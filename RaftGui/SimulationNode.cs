@@ -1,4 +1,5 @@
 ﻿using Raft;
+using Raft.DTOs;
 using System.Timers;
 
 namespace RaftGui;
@@ -6,8 +7,8 @@ namespace RaftGui;
 public class SimulationNode : INode
 {
     public readonly Node InnerNode;
-	public int NetworkRequestDelay { get; set; }
-	public bool IsRunning { get; set; } = true;
+    public bool IsRunning { get; set; } = true;
+    public int NetworkRequestDelay { get; set; } = 0;
 	public Guid NodeId { get => ((INode)InnerNode).NodeId; set => ((INode)InnerNode).NodeId = value; }
 
 	public SimulationNode(Node node)
@@ -15,7 +16,7 @@ public class SimulationNode : INode
         this.InnerNode = node;
     }
 
-	public Task RecieveAVoteRequestFromCandidate(Guid candidateId, int lastLogTerm)
+	public Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc)
 	{
         if (!IsRunning)
         {
@@ -23,7 +24,7 @@ public class SimulationNode : INode
         }
         Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
-			await InnerNode.RecieveAVoteRequestFromCandidate(candidateId, lastLogTerm);
+			await InnerNode.RecieveAVoteRequestFromCandidate(rpc);
 		});
 		return Task.CompletedTask;
 	}
@@ -57,17 +58,6 @@ public class SimulationNode : INode
 			await InnerNode.RecieveAppendEntriesRPC(rpc);
 		});
 		return Task.CompletedTask;
-
-		//return ((INode)InnerNode).RespondToAppendEntriesRPC(leaderId, TermNumber);
-	}
-
-	public void SendAppendEntriesRPC()
-	{
-        if (!IsRunning)
-        {
-            return;
-        }
-        ((INode)InnerNode).SendAppendEntriesRPC();
 	}
 
 	public Task SendMyVoteToCandidate(Guid candidateId, bool result)
@@ -81,63 +71,5 @@ public class SimulationNode : INode
 			await InnerNode.SendMyVoteToCandidate(candidateId, result);
 		});
 		return Task.CompletedTask;
-		//return ((INode)InnerNode).SendMyVoteToCandidate(candidateId, result);
 	}
-
-	// As a candidate, I need to send out a vote request to other nodes...
-	public Task SendVoteRequestRPCsToOtherNodes()
-	{
-		if (!IsRunning)
-		{
-			return Task.CompletedTask;
-		}
-		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
-		{
-			await InnerNode.SendVoteRequestRPCsToOtherNodes();
-		});
-		return Task.CompletedTask;
-		//((INode)InnerNode).SendVoteRequestRPCsToOtherNodes();
-	}
-
-	//public void StartElection()
-	//{
-	//	if (!IsRunning)
-	//	{
-	//		return;
-	//	}
-	//	((INode)InnerNode).StartElection();
-	//}
-
-	//public void TimeoutHasPassed()
-	//{
-	//	if (!IsRunning)
-	//	{
-	//		return;
-	//	}
-	//	   ((INode)InnerNode).TimeoutHasPassed();
-	//}
-
-	//public void TimeoutHasPassedForLeaders()
-	//{
-	//	((INode)InnerNode).TimeoutHasPassedForLeaders();
-	//}
-
-	//public List<Entry> CalculateEntriesToSend(INode node)
-	//{
-	//       if (!IsRunning)
-	//       {
-	//           return new List<Entry>();
-	//       }
-	//       return ((INode)InnerNode).CalculateEntriesToSend(node);
-	//}
-
-	//public void PauseNode()
-	//{
-	//    ((INode)InnerNode).PauseNode();
-	//}
-
-	//public void UnpauseNode()
-	//{
-	//    ((INode)InnerNode).UnpauseNode();
-	//}
 }

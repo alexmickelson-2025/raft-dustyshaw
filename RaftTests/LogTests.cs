@@ -1,5 +1,6 @@
 ﻿using NSubstitute;
 using Raft;
+using Raft.DTOs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace RaftTests
 {
-	public class LogTests
+    public class LogTests
 	{
 		// Testing Logs #1
 		[Fact]
@@ -217,10 +218,7 @@ namespace RaftTests
 			var f2 = Substitute.For<INode>();
 
 			Node leader = new Node([f1, f2], null);
-			leader.State = Node.NodeState.Leader;
-			leader.BecomeLeader();
-
-			// leader has recieved a command
+			// leader has recieved
 			leader.RecieveClientCommand("1", "2");
 
 			// act
@@ -231,15 +229,6 @@ namespace RaftTests
 			// make sure the leader adds the log to the state machine
 			Assert.True(leader.StateMachine.Count() > 0);
 		}
-
-		//[Fact]
-		//public void Test01_two()
-		//{
-		//	Node leader = new Node([], null);
-		//	leader.OtherNodes = [Substitute.For<INode>(), ]
-
-		//	leader.LogConfirmationsRecieved = [true, true];
-		//}
 
 		// Testing Logs #9
 		[Fact]
@@ -328,7 +317,7 @@ namespace RaftTests
 			var l = Substitute.For<INode>();
 			//l.Entries = new List<Entry>();
 
-			Node  f = new([], null);
+			Node f = new([], null);
 			f.OtherNodes = [l];
 
 			// act
@@ -418,7 +407,7 @@ namespace RaftTests
 			// no logs 
 
 			// act
-			
+
 			l.SendAppendEntriesRPC();
 
 			// assert
@@ -427,8 +416,8 @@ namespace RaftTests
 			int commitIndex = -1;
 			AppendEntriesRPC rpc = new(term, l.NodeId, prevLogIndex, new List<Entry>(), commitIndex);
 			await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(
-				actual => actual.term == rpc.term 
-				&& actual.prevLogIndex == rpc.prevLogIndex 
+				actual => actual.term == rpc.term
+				&& actual.prevLogIndex == rpc.prevLogIndex
 				&& actual.leaderCommit == rpc.leaderCommit));
 		}
 
@@ -454,14 +443,14 @@ namespace RaftTests
 
 			// assert
 			int term = 0;
-			int prevLogIndex = 0;	// prev log index is now the first one
+			int prevLogIndex = 0;   // prev log index is now the first one
 			int commitIndex = -1;
 			AppendEntriesRPC rpc = new(term, l.NodeId, prevLogIndex, entries, commitIndex);
 			await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(
-				actual => actual.term == rpc.term 
-				&& actual.prevLogIndex == rpc.prevLogIndex 
-				&& actual.leaderCommit == rpc.leaderCommit 
-				&& actual.entries.Contains(entries.First())) );
+				actual => actual.term == rpc.term
+				&& actual.prevLogIndex == rpc.prevLogIndex
+				&& actual.leaderCommit == rpc.leaderCommit
+				&& actual.entries.Contains(entries.First())));
 		}
 
 		// Testing Logs #15
@@ -477,7 +466,7 @@ namespace RaftTests
 
 			var l = Substitute.For<INode>();
 			l.NodeId = Guid.NewGuid();
-			List<Entry> leadersEntries = new List<Entry> { new Entry("1", "set a", 2), new Entry("1", "set b", 2) };	// same command, but different term
+			List<Entry> leadersEntries = new List<Entry> { new Entry("1", "set a", 2), new Entry("1", "set b", 2) };    // same command, but different term
 
 			f1.OtherNodes = [l];
 
@@ -490,7 +479,6 @@ namespace RaftTests
 			// Because the term the leader is trying to send 
 			l.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
 			//l.Received(1).RespondBackToLeader(false, f1.TermNumber, f1.CommitIndex, f1.NodeId);
-
 		}
 
 		[Fact]
@@ -510,7 +498,6 @@ namespace RaftTests
 		}
 
 		// Testing Logs #15
-		// TODO fix this test
 		//[Fact]
 		//public void TestCase15_FollowersRecieveALog()
 		//{
@@ -518,10 +505,11 @@ namespace RaftTests
 
 		//	// arrange
 		//	var f1 = Substitute.For<INode>();
-		//	var f1Entries = new List<Entry> { new Entry("1", "set a", 1) };
+		//	f1.Entries = new List<Entry> { new Entry("1", "set a", 1) };
 
 		//	var l = new Node([], null);
 		//	l.Entries = new List<Entry> { new Entry("1", "set a", 1) };  // same command, but different term
+		//	f1.OtherNodes = [l];
 		//	l.OtherNodes = [f1];
 		//	l.BecomeLeader();
 
@@ -569,7 +557,7 @@ namespace RaftTests
 		{
 			// 17. if a leader does not response from a follower,
 			// the leader continues to send the log entries in subsequent heartbeats
-			
+
 			// Substituted nodes won't actually send any methods in response, so its a good simulation for a "dead node"
 			var deadFollower = Substitute.For<INode>();
 
@@ -651,7 +639,7 @@ namespace RaftTests
 			f1.OtherNodes = [l];
 
 			// act
-			AppendEntriesRPC rpc = new(0, l.NodeId, 2, leadersEntries,-1);
+			AppendEntriesRPC rpc = new(0, l.NodeId, 2, leadersEntries, -1);
 			rpc.term = 1;
 			await f1.RecieveAppendEntriesRPC(rpc);
 
@@ -673,8 +661,8 @@ namespace RaftTests
 
 			var leader = Substitute.For<INode>();
 			var leaderEntries = new List<Entry>() { new Entry("A", "B") }; // One log ahead is ok.
-			//leader.TermNumber = 1;
-			
+																		   //leader.TermNumber = 1;
+
 			f1.OtherNodes = [leader];
 			f1.State = Node.NodeState.Follower;
 
@@ -688,8 +676,7 @@ namespace RaftTests
 		}
 
 
-		//// Testing Logs #20
-		// TODO: fix this test 20
+		// Testing Logs #20
 		//[Fact]
 		//public async Task TestCase20_NonMatchingTermsAndIndexGetRejected()
 		//{
@@ -697,8 +684,8 @@ namespace RaftTests
 		//	// you will reject the appendentry until you find a matching log
 
 		//	var leader = Substitute.For<INode>();
-		//	List<Entry> leaderEntries = new List<Entry>() { new Entry("set", "first", 1, 0), new Entry("set", "second", 2, 1), new Entry("set", "third", 2, 2) };
-		//	//leader.Entries = leadersLogs;
+		//	List<Entry> leadersLogs = new List<Entry>() { new Entry("set", "first", 1, 0), new Entry("set", "second", 2, 1), new Entry("set", "third", 2, 2) };
+		//	leader.Entries = leadersLogs;
 		//	leader.BecomeLeader();
 		//	leader.TermNumber = 100;
 
@@ -734,63 +721,35 @@ namespace RaftTests
 		//}
 
 
-		//[Fact]
-		//public async Task OtherTest()
-		//{
-		//	var f1 = Substitute.For<INode>();
-		//	f1.NodeId = Guid.NewGuid();
-		//	var f2 = Substitute.For<INode>();
-		//	f2.NodeId = Guid.NewGuid();
-
-		//	var leader = new Node([f1, f2], null);
-
-		//	leader.SendAppendEntriesRPC();
-
-		//	AppendEntriesRPC rpc = new(0, leader.NodeId, -1, new List<Entry>(), -1);
-		//	await f1.Received(1).RecieveAppendEntriesRPC(
-		//		Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term 
-		//			&& actual.prevLogIndex == rpc.prevLogIndex 
-		//			&& actual.leaderCommit == rpc.leaderCommit));
-
-
-		//	// After a leader recieves a command, it will send that new command to the followers
-		//	leader.RecieveClientCommand("a", "b");
-		//	List<Entry> leadersEntries = leader.Entries.ToList();
-
-		//	rpc = new(0, leader.NodeId, -1, new List<Entry>() { new Entry("a", "b")}, -1);
-		//	await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term
-		//		&& actual.prevLogIndex == rpc.prevLogIndex
-		//		&& actual.leaderCommit == rpc.leaderCommit
-		//		&& actual.entries.Contains(leadersEntries.First())));
-
-		//}
-
 		[Fact]
-		public void _Thingy()
+		public async Task OtherTest()
 		{
-			// n prevLogIndex = 0
-			// n prevLogTerm = 1
-			// commit = -1
+			var f1 = Substitute.For<INode>();
+			f1.NodeId = Guid.NewGuid();
+			var f2 = Substitute.For<INode>();
+			f2.NodeId = Guid.NewGuid();
 
-			var f = new Node([], null);
-			f.Entries = new List<Entry>() { new Entry("set", "a", 1) }; // follower has no entries yet
+			var leader = new Node([f1, f2], null);
 
-			var n = new Node([f], null);
-			n.Entries = new List<Entry>() { new Entry("set", "a", 1), new Entry("SECOND", "b", 1) };
-			n.BecomeLeader();
+			leader.SendAppendEntriesRPC();
 
-			f.OtherNodes = [n];
+			AppendEntriesRPC rpc = new(0, leader.NodeId, -1, new List<Entry>(), -1);
+			await f1.Received(1).RecieveAppendEntriesRPC(
+				Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term 
+					&& actual.prevLogIndex == rpc.prevLogIndex 
+					&& actual.leaderCommit == rpc.leaderCommit));
 
-			AppendEntriesRPC rpc = new(n.TermNumber, n.NodeId, n.Entries.Count() - 1, new List<Entry>() { new Entry("SECOND", "b", 1) }, -1);
 
-			f.FindMatch(rpc);
+			// After a leader recieves a command, it will send that new command to the followers
+			leader.RecieveClientCommand("a", "b");
+			List<Entry> leadersEntries = leader.Entries.ToList();
 
-			var rslt = n.CalculateEntriesToSend(f.NodeId);
+			rpc = new(0, leader.NodeId, -1, new List<Entry>() { new Entry("a", "b")}, -1);
+			await f1.Received(1).RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(actual => actual.term == rpc.term
+				&& actual.prevLogIndex == rpc.prevLogIndex
+				&& actual.leaderCommit == rpc.leaderCommit
+				&& actual.entries.Contains(leadersEntries.First())));
 
-			rpc = new(n.TermNumber, n.NodeId, n.Entries.Count() - 1, new List<Entry>() { new Entry("set", "a", 1), new Entry("SECOND", "b", 1) }, -1);
-
-			f.FindMatch(rpc);
 		}
-
 	}
 }
