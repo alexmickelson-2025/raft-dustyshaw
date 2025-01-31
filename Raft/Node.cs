@@ -284,6 +284,8 @@ namespace Raft
 				response = false;
 			}
 
+
+			// TODO bad;;;
 			if (this.CommitIndex < rpc.leaderCommit && rpc.entries.Count() > 0)
 			{
 				this.StateMachine.AddRange(rpc.entries);
@@ -531,16 +533,16 @@ namespace Raft
 			SendVoteRequestRPCsToOtherNodes();
 		}
 
-		public void RecieveClientCommand(string key, string command)
+		public bool RecieveClientCommand(string key, string command)
 		{
 			if (!IsRunning)
 			{
-				return;
+				return false;
 			}
 
 			if (this.State != NodeState.Leader)
 			{
-				return; 
+				return false; 
 			}
 
 			Entry l = new Entry(key, command);
@@ -549,6 +551,7 @@ namespace Raft
 			this.Entries.Add(l);
 
 			SendAppendEntriesRPC();
+			return true;
 		}
 
 		public void CommitEntry()

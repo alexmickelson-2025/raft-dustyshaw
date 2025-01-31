@@ -37,6 +37,10 @@
 	{
 		<button class="btn btn-outline-primary m-3" @onclick="() => SendLog(node.NodeId)">Send To @(FormatId(node.InnerNode.NodeId))</button>
 	}
+	@if (!ClientSentLogSuccessfully)
+	{
+		<div class="alert alert-danger">Warning: Your command was sent to a follower node. Command was not applied.</div>
+	}
 </div>
 
 <div class="row">
@@ -110,6 +114,8 @@
 
 	private string UserCommand { get; set; } = "";
 	private string UserKey { get; set; } = "";
+
+	private bool ClientSentLogSuccessfully = true;
 
 	void startSimulation()
 	{
@@ -206,7 +212,7 @@
 		{
 			if (n.NodeId == NodeId)
 			{
-				n.InnerNode.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
+				ClientSentLogSuccessfully = n.InnerNode.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
 			}
 		}
 	}
