@@ -11,6 +11,7 @@ public record AppendEntriesRPC
     public int term { get; set; } // leaders term
     public Guid leaderId { get; set; } // leaders GUID
     public int prevLogIndex { get; set; } // index of log entry immediately preceding new ones
+    public int prevLogTerm { get; set; } // term of log entry immediately preceding new ones
     public List<Entry> entries { get; set; } = []; // log entries to store (empty for heartbeat; may send more than one for efficiency
     public int leaderCommit { get; set; }  // leader's commitIndex
 

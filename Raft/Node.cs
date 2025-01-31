@@ -162,6 +162,11 @@ namespace Raft
 			{
 				return;
 			}
+
+			if (this.State != Node.NodeState.Leader)
+			{
+				return;
+			}
 			// As the leader, I need to send an RPC to other nodes
 			foreach (var node in OtherNodes)
 			{
@@ -173,17 +178,8 @@ namespace Raft
 
 		public List<Entry> CalculateEntriesToSend(Guid nodeId)
 		{
-			List<Entry> entriesWithIndexes = new();
+			//List<Entry> entriesWithIndexes = new();
 			List<Entry> entriesToSend = new();
-
-			// assign their indexes
-			int index = 0;
-			foreach (var entry in this.Entries)
-			{
-				entry.Index = index;
-				entriesWithIndexes.Add(entry);
-				index++;
-			}
 
 			// if I havent gotten the other indexes yet have a list of next indexes...
 			if (NextIndexes.Count <= 0)
@@ -195,14 +191,13 @@ namespace Raft
 			var differenceInLogs = (this.Entries.Count) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
 
 			//var differenceInLogs = (this.Entries.Count - 1) - nodesPrevLogIndex; // was (this.Entries.Count - 1) - nodesPrevLogIndex;
-			entriesToSend = entriesWithIndexes.TakeLast(differenceInLogs + 1).ToList();
-			
+			entriesToSend = this.Entries.TakeLast(differenceInLogs + 1).ToList();
+
 			return entriesToSend;
 		}
 
 		public async Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
 		{
-			
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
@@ -240,46 +235,38 @@ namespace Raft
 				this.CommitIndex = rpc.leaderCommit;
 			}
 
-			// Log replication
-			List<Entry> followersEntriesWithIndexes = new();
-			int index = 0;
-			foreach (var entry in this.Entries)
-			{
-				entry.Index = index;
-				followersEntriesWithIndexes.Add(entry);
-				index++;
-			}
 
-
+			// Log Replication
 			if (rpc.prevLogIndex <= this.Entries.Count) // Ensure leader logs aren't too far ahead...
 			{
 				if (rpc.entries is not null && rpc.entries.Count > 0)	// and if there are even logs to replicate...
 				{
 					bool matchFound = false;
 					int matchIndex = -1;
+
+					int leadersPrevLogIndex = rpc.prevLogIndex;
+					int myIndexes = this.Entries.Count() - 1;
+
 					foreach (var leaderLog in rpc.entries.AsEnumerable().Reverse())
 					{
-						foreach(var followerLog in followersEntriesWithIndexes.AsEnumerable().Reverse())
+						foreach (var followerLog in this.Entries.AsEnumerable().Reverse())
 						{
-							if (followerLog.Index == leaderLog.Index && leaderLog.TermReceived == followerLog.TermReceived)
+							if (myIndexes == leadersPrevLogIndex && leaderLog.TermReceived == followerLog.TermReceived)
 							{
 								matchFound = true;
-								matchIndex = followerLog.Index;
+								matchIndex = myIndexes;
+								break;
 							}
+							myIndexes = myIndexes - 1;
 						}
+						myIndexes = this.Entries.Count() - 1;
+						leadersPrevLogIndex = leadersPrevLogIndex - 1;
 					}
 
 					if (matchFound)
 					{
-						//int i = 1;
-
-						//if (i < this.Entries.Count)
-						//{
-						//	this.Entries.RemoveRange(i, this.Entries.Count - i);
-						//}
-
-						this.Entries.AddRange(rpc.entries.Skip(1));
-						response = true;	// I have replicated the logs up to the entries you have sent me
+						this.Entries.AddRange(rpc.entries.Skip(matchIndex + 1));
+						response = true;    // I have replicated the logs up to the entries you have sent me
 					}
 					else if (this.Entries.Count == 0)
 					{
@@ -297,7 +284,14 @@ namespace Raft
 				response = false;
 			}
 
+			if (this.CommitIndex < rpc.leaderCommit && rpc.entries.Count() > 0)
+			{
+				this.StateMachine.AddRange(rpc.entries);
+			}
+
 			this.CommitIndex = rpc.leaderCommit;
+
+			
 
 
 			foreach (var n in this.OtherNodes)
@@ -312,16 +306,48 @@ namespace Raft
 				.Where(node => node.NodeId == this.LeaderId)
 				.ToList()
 				.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
+		}
 
-			//OtherNodes
-			//	.Where(node => node.LeaderId == this.LeaderId)
-			//	.ToList()
-			//	.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
+		public void FindMatch(AppendEntriesRPC rpc)
+		{
+			bool matchFound = false;
+			int matchIndex = -1;
+			// Refactor this
 
-			//OtherNodes
-			//	.Where(node => node.LeaderId == this.LeaderId)
-			//	.ToList()
-			//	.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
+			int leadersPrevLogIndex = rpc.prevLogIndex;
+			int myIndexes = this.Entries.Count() - 1;
+
+			foreach (var leaderLog in rpc.entries.AsEnumerable().Reverse())
+			{
+				foreach (var followerLog in this.Entries.AsEnumerable().Reverse())
+				{
+					if (myIndexes == leadersPrevLogIndex && leaderLog.TermReceived == followerLog.TermReceived)
+					{
+						matchFound = true;
+						matchIndex = myIndexes;
+						break;
+					}
+					myIndexes = myIndexes - 1;
+				}
+				myIndexes = this.Entries.Count() - 1;
+				leadersPrevLogIndex = leadersPrevLogIndex - 1;
+			}
+
+			if (matchFound)
+			{
+				//this.Entries.AddRange()
+				this.Entries.AddRange(rpc.entries.Skip(matchIndex + 1));
+				//response = true;    // I have replicated the logs up to the entries you have sent me
+			}
+			else if (this.Entries.Count == 0)
+			{
+				this.Entries.AddRange(rpc.entries);
+				//response = true;
+			}
+			else
+			{
+				//response = false;
+			}
 		}
 
 		public void RespondBackToLeader(bool response, int fTermNumber, int fPrevLogIndex, Guid fNodeId)
@@ -531,12 +557,15 @@ namespace Raft
 			{
 				return;
 			}
-			this.CommitIndex++;
-			this.StateMachine.Clear();
-			this.StateMachine = this.Entries.Take(this.CommitIndex + 1).ToList();
-			Entry entryToSend = this.StateMachine.Last();
+			if (this.CommitIndex + 1 >= this.Entries.Count)
+			{
+				return; // Prevent committing beyond available entries
+			}
+
+			this.CommitIndex++; // Move to the next commit index
+			Entry entryToSend = this.Entries[this.CommitIndex]; // Get the new entry
+			this.StateMachine.Add(entryToSend);
 			this.Client.RecieveLogFromLeader(entryToSend);
-			
 		}
 
 		public void PauseNode()

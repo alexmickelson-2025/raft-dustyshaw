@@ -42,6 +42,7 @@ namespace RaftTests
 		{
 			Node n = new Node([], null);
 			Entry l = new Entry("1", "set a", 0);
+			n.BecomeLeader();
 
 			n.RecieveClientCommand(l.Key, l.Command);
 
@@ -783,24 +784,31 @@ namespace RaftTests
 
 		}
 
-
 		[Fact]
-		public void __TestingCalculating()
+		public void _Thingy()
 		{
-			var f1 = new Node([], null);
+			// n prevLogIndex = 0
+			// n prevLogTerm = 1
+			// commit = -1
 
-			var leader = new Node([], null);
-			leader.OtherNodes = [f1];
-			leader.BecomeLeader();
+			var f = new Node([], null);
+			f.Entries = new List<Entry>() { new Entry("set", "a", 1) }; // follower has no entries yet
 
-			leader.RecieveClientCommand("set", "a");
+			var n = new Node([f], null);
+			n.Entries = new List<Entry>() { new Entry("set", "a", 1), new Entry("SECOND", "b", 1) };
+			n.BecomeLeader();
 
-			var leadersEntries = leader.Entries;
+			f.OtherNodes = [n];
 
+			AppendEntriesRPC rpc = new(n.TermNumber, n.NodeId, n.Entries.Count() - 1, new List<Entry>() { new Entry("SECOND", "b", 1) }, -1);
 
-			var entriesToSend = leader.CalculateEntriesToSend(leader.NodeId);
+			f.FindMatch(rpc);
 
-			Assert.Single(leader.Entries);
+			var rslt = n.CalculateEntriesToSend(f.NodeId);
+
+			rpc = new(n.TermNumber, n.NodeId, n.Entries.Count() - 1, new List<Entry>() { new Entry("set", "a", 1), new Entry("SECOND", "b", 1) }, -1);
+
+			f.FindMatch(rpc);
 		}
 
 	}

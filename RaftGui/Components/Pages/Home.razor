@@ -27,7 +27,7 @@
 
 <button @onclick="startSimulation">Start (click me twice pls!!)</button>
 
-<div class="border border-1 shadow my-5 col-md-4 p-4 rounded">
+<div class="border border-1 shadow my-5 col-md-8 p-4 rounded">
 	<h3>Send a Log</h3>
 	<div class="d-flex flex-row">
 		<input @bind="UserCommand" placeholder="Enter Command" class="input-group-text m-2" />
@@ -77,11 +77,11 @@
 							{
 								@if (l.Index <= node.CommitIndex)
 								{
-                                    <p class="text-success">&check; index @l.Index <i>"@l.Command @l.Key"</i> in term @l.TermReceived </p>
+                                    <p class="text-success">&check; index:@l.Index &nbsp; <i>"@l.Command @l.Key"</i> in term @l.TermReceived </p>
 								}
 								else
 								{
-                                    <p class="text-danger">&#10005; index @l.Index <i>"@l.Command @l.Key"</i> in term @l.TermReceived</p>
+                                    <p class="text-danger">&#10005; index:@l.Index &nbsp; <i>"@l.Command @l.Key"</i> in term @l.TermReceived</p>
 								}
 							}
 						</div>
@@ -209,8 +209,5 @@
 				n.InnerNode.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
 			}
 		}
-
-		UserCommand = "";
-		UserKey = "";
 	}
 }
