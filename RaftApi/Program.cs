@@ -9,6 +9,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+var logger = app.Services.GetService<ILogger<Program>>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -20,12 +22,16 @@ app.UseHttpsRedirection();
 
 
 // My code
-Node n = new([], null);
+HttpRpcNode n = new("");
+Console.WriteLine($"HttpRpcNode Made {n.NodeId}");
 
 app.MapPost("/request/SendAppendEntriesRPC", (int term, int prevLogIndex, List<Entry> entries, int commitIndex) =>
 {
+	Console.WriteLine("Sending stuff!");
 	n.SendAppendEntriesRPC();
 });
+
+
 
 app.MapPost("/receive/RecieveAppendEntries", (AppendEntriesRPC rpc) =>
 {
