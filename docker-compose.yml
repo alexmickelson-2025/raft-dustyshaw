@@ -1,0 +1,37 @@
+services:
+  node1:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    working_dir: /app
+    user: 1000:100
+    volumes:
+      - ./:/app
+    environment:
+      - OTHER_NODES=http://node2:8080;http://node3:8080
+      - NODE_INTERVAL_SCALAR=50
+    command: dotnet watch --project RaftApi
+  node2:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    working_dir: /app
+    user: 1000:100
+    volumes:
+      - ./:/app
+    environment:
+      - OTHER_NODES=http://node1:8080;http://node3:8080
+      - NODE_INTERVAL_SCALAR=50
+    command: dotnet watch --project RaftApi
+  node3:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    working_dir: /app
+    user: 1000:100
+    volumes:
+      - ./:/app
+    environment:
+      - OTHER_NODES=http://node1:8080;http://node2:8080
+      - NODE_INTERVAL_SCALAR=50
+    command: dotnet watch --project RaftApi
