@@ -51,11 +51,6 @@ public class HttpRpcNode : INode
         throw new NotImplementedException();
     }
 
-    public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId)
-    {
-        throw new NotImplementedException();
-    }
-
 	public async Task RecieveVoteResults(VoteFromFollowerRpc vote)
 	{
 		try
@@ -70,6 +65,11 @@ public class HttpRpcNode : INode
 	}
 
 	public Task SendMyVoteToCandidate(VoteRpc vote)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void RespondBackToLeader(ResponseBackToLeader rpc)
 	{
 		throw new NotImplementedException();
 	}

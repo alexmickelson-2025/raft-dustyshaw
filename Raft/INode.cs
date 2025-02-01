@@ -12,6 +12,6 @@ namespace Raft
 		Task RecieveVoteResults(VoteFromFollowerRpc vote);
 		Task SendMyVoteToCandidate(VoteRpc vote);
 		Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc);
-		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId);
+		void RespondBackToLeader(ResponseBackToLeader rpc);
     }
 }

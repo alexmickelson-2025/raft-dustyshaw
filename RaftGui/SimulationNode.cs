@@ -29,13 +29,13 @@ public class SimulationNode : INode
 		return Task.CompletedTask;
 	}
 
-	public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId)
+	public void RespondBackToLeader(ResponseBackToLeader rpc)
 	{
         if (!IsRunning)
         {
             return;
         }
-        ((INode)InnerNode).RespondBackToLeader(response, myTermNumber, myCommitIndex, fNodeId);
+        ((INode)InnerNode).RespondBackToLeader(rpc);
 	}
 
 	public Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)

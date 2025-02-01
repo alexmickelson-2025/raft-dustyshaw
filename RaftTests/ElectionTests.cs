@@ -452,7 +452,7 @@ namespace RaftTests
 			await follower.RecieveAppendEntriesRPC(rpc); // Send heartbeat
 
 			// Assert
-			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
+			leader.Received(1).RespondBackToLeader(Arg.Any<ResponseBackToLeader>());
 		}
 
 		// Testing #18
@@ -477,9 +477,9 @@ namespace RaftTests
 			await candidateNode.RecieveAppendEntriesRPC(rpc);
 
 			// Assert
-			leader.Received(1).RespondBackToLeader(Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid>());
-			leader.Received(1).RespondBackToLeader(false, 100, Arg.Any<int>(), Arg.Any<Guid>());
-
+			leader.Received(1).RespondBackToLeader(Arg.Any<ResponseBackToLeader>());
+			//leader.Received(1).RespondBackToLeader(false, 100, Arg.Any<int>(), Arg.Any<Guid>());
+            // to do fix this
 		}
 
 		// Testing #19

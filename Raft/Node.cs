@@ -225,7 +225,7 @@ namespace Raft
 				{
 					if (n.NodeId == rpc.leaderId)
 					{
-						n.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId);
+						n.RespondBackToLeader(new ResponseBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
 					}
 				}
 				return; // return because we don't want to replicate the incoming logs?
@@ -305,7 +305,7 @@ namespace Raft
 			OtherNodes
 				.Where(node => node.NodeId == this.LeaderId)
 				.ToList()
-				.ForEach(node => node.RespondBackToLeader(response, this.TermNumber, this.Entries.Count() - 1, this.NodeId));
+				.ForEach(node => node.RespondBackToLeader(new ResponseBackToLeader( response, this.TermNumber, this.Entries.Count() - 1, this.NodeId)));
 		}
 
 		public void FindMatch(AppendEntriesRPC rpc)
@@ -350,7 +350,7 @@ namespace Raft
 			}
 		}
 
-		public void RespondBackToLeader(bool response, int fTermNumber, int fPrevLogIndex, Guid fNodeId)
+		public void RespondBackToLeader(ResponseBackToLeader rpc)
 		{
 			// As the leader, I have heard from the response as a follower
 			if (!IsRunning)
@@ -363,15 +363,15 @@ namespace Raft
 				return; // this method is only for leaders
 			}
 			
-			if (NextIndexes.ContainsKey(fNodeId))
+			if (NextIndexes.ContainsKey(rpc.fNodeId))
 			{
-				if (!response)
+				if (!rpc.response)
 				{
-					NextIndexes[fNodeId]--; 
+					NextIndexes[rpc.fNodeId]--; 
 				}
 				else
 				{
-					NextIndexes[fNodeId] = fPrevLogIndex;
+					NextIndexes[rpc.fNodeId] = rpc.fPrevLogIndex;
 				}
 			}
 
