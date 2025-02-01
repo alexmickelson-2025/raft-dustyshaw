@@ -1,7 +1,14 @@
+using System.Text.Json;
 using Raft;
 using Raft.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
+
+//var nodeId = Environment.GetEnvironmentVariable("NODE_ID") ?? throw new Exception("NODE_ID environment variable not set");
+var otherNodesRaw = Environment.GetEnvironmentVariable("OTHER_NODES") ?? throw new Exception("OTHER_NODES environment variable not set");
+var nodeIntervalScalarRaw = Environment.GetEnvironmentVariable("NODE_INTERVAL_SCALAR") ?? throw new Exception("NODE_INTERVAL_SCALAR environment variable not set");
+
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -22,40 +29,40 @@ app.UseHttpsRedirection();
 
 // My code
 Console.WriteLine("----- STARTING SIMULATION");
-HttpRpcNode n1 = new("http://node1:8080");
 
-app.MapPost("/SendAppendEntriesRPC", async (int term, int prevLogIndex, List<Entry> entries, int commitIndex) =>
-{
-	await n1.SendAppendEntriesRPC();
-});
+INode[] otherNodes = otherNodesRaw
+.Split(";")
+.Select(s => new HttpRpcNode(s)).ToArray();
 
-app.MapPost("/RecieveAppendEntries", async (AppendEntriesRPC rpc) =>
+Console.WriteLine($"other nodes {JsonSerializer.Serialize(otherNodes)}" );
+
+INode node = new Node(otherNodes, null);
+
+app.MapPost("/RecieveAppendEntriesRPC", async (AppendEntriesRPC rpc) =>
 {
-	await n1.RecieveAppendEntriesRPC(rpc);
+	await node.RecieveAppendEntriesRPC(rpc);
 });
 
 app.MapPost("/RecieveAVoteRequestFromCandidate", async (VoteRequestFromCandidateRpc rpc) =>
 {
-	await n1.RecieveAVoteRequestFromCandidate(rpc);
+	await node.RecieveAVoteRequestFromCandidate(rpc);
 });
-
 
 app.MapPost("/RecieveVoteResults", async (VoteFromFollowerRpc rpc) =>
 {
-	await n1.RecieveVoteResults(rpc);
+	await node.RecieveVoteResults(rpc);
 });
 
-// app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
-// {
-// 	await n1.RespondBackToLeader(rpc);
-// });
+app.MapPost("/SendMyVoteToCandidate", async (VoteRpc rpc) =>
+{
+	await node.SendMyVoteToCandidate(rpc);
+});
 
+app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
+{
+	await node.RespondBackToLeader(rpc);
+});
 
 
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-	public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

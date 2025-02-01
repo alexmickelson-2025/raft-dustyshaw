@@ -14,22 +14,16 @@ public class HttpRpcNode : INode
 		NodeId = Guid.NewGuid();
 		Url = url;
 	}
-
-	public async Task SendAppendEntriesRPC()
-	{
-		Console.WriteLine("something happened");
-	}
-
 	public async Task RequestAppendEntries(AppendEntriesRPC rpc)
 	{
 		try
 		{
-			Console.WriteLine("Calling Stuff from the NOde!");
+			Console.WriteLine($"Calling  RecieveAVoteRequestFromCandidate({rpc})");
 			await client.PostAsJsonAsync(Url + "/RequestAppendEntries", rpc);
 		}
-		catch 
+		catch (Exception e)
 		{
-			Console.WriteLine($"node {Url} is down");
+			Console.WriteLine($"node {NodeId} is down - RequestAppendEntries - {e.Message}");
 		}
 	}
 
@@ -40,15 +34,23 @@ public class HttpRpcNode : INode
 			Console.WriteLine($"Calling  RecieveAVoteRequestFromCandidate({rpc})");
 			await client.PostAsJsonAsync(Url + "/RecieveAVoteRequestFromCandidate", rpc);
 		}
-		catch 
+		catch (Exception e)
 		{
-			Console.WriteLine($"node {Url} is down");
+			Console.WriteLine($"node {NodeId} is down - RecieveAVoteRequestFromCandidate - {e.Message}");	// failing
 		}
     }
 
-    public Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
+    public async Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
     {
-        throw new NotImplementedException();
+        try
+		{
+			Console.WriteLine($"Calling  RecieveAppendEntriesRPC({rpc})");
+			await client.PostAsJsonAsync(Url + "/RecieveAppendEntriesRPC", rpc);
+		}
+		catch 
+		{
+			Console.WriteLine($"node {NodeId} is down - RecieveAppendEntriesRPC");
+		}
     }
 
 	public async Task RecieveVoteResults(VoteFromFollowerRpc vote)
@@ -60,17 +62,33 @@ public class HttpRpcNode : INode
 		}
 		catch
 		{
-			Console.WriteLine($"node {Url} is down");
+			Console.WriteLine($"node {NodeId} is down - RecieveVoteResults");
+		}
+	}
+	
+	public async Task RespondBackToLeader(ResponseBackToLeader rpc)
+	{
+		try
+		{
+			Console.WriteLine($"Calling  RespondBackToLeader({rpc})");
+			await client.PostAsJsonAsync(Url + "/RespondBackToLeader", rpc);
+		}
+		catch
+		{
+			Console.WriteLine($"node {NodeId} is down - RespondBackToLeader");
 		}
 	}
 
-	public Task SendMyVoteToCandidate(VoteRpc vote)
-	{
-		throw new NotImplementedException();
-	}
-	
-	public Task RespondBackToLeader(ResponseBackToLeader rpc)
-	{
-		throw new NotImplementedException();
-	}
+    public async Task SendMyVoteToCandidate(VoteRpc vote)
+    {
+        try
+		{
+			Console.WriteLine($"Calling  SendMyVoteToCandidate({vote})");
+			await client.PostAsJsonAsync(Url + "/SendMyVoteToCandidate", vote);
+		}
+		catch
+		{
+			Console.WriteLine($"node {NodeId} is down - SendMyVoteToCandidate");
+		}
+    }
 }

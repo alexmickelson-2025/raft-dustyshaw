@@ -308,48 +308,6 @@ namespace Raft
 				.ForEach(node => node.RespondBackToLeader(new ResponseBackToLeader( response, this.TermNumber, this.Entries.Count() - 1, this.NodeId)));
 		}
 
-		public void FindMatch(AppendEntriesRPC rpc)
-		{
-			bool matchFound = false;
-			int matchIndex = -1;
-			// Refactor this
-
-			int leadersPrevLogIndex = rpc.prevLogIndex;
-			int myIndexes = this.Entries.Count() - 1;
-
-			foreach (var leaderLog in rpc.entries.AsEnumerable().Reverse())
-			{
-				foreach (var followerLog in this.Entries.AsEnumerable().Reverse())
-				{
-					if (myIndexes == leadersPrevLogIndex && leaderLog.TermReceived == followerLog.TermReceived)
-					{
-						matchFound = true;
-						matchIndex = myIndexes;
-						break;
-					}
-					myIndexes = myIndexes - 1;
-				}
-				myIndexes = this.Entries.Count() - 1;
-				leadersPrevLogIndex = leadersPrevLogIndex - 1;
-			}
-
-			if (matchFound)
-			{
-				//this.Entries.AddRange()
-				this.Entries.AddRange(rpc.entries.Skip(matchIndex + 1));
-				//response = true;    // I have replicated the logs up to the entries you have sent me
-			}
-			else if (this.Entries.Count == 0)
-			{
-				this.Entries.AddRange(rpc.entries);
-				//response = true;
-			}
-			else
-			{
-				//response = false;
-			}
-		}
-
 		public async Task RespondBackToLeader(ResponseBackToLeader rpc)
 		{
 			// As the leader, I have heard from the response as a follower
