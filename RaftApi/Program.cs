@@ -40,9 +40,9 @@ app.MapPost("/RecieveAVoteRequestFromCandidate", async (VoteRequestFromCandidate
 });
 
 
-app.MapPost("/RecieveVoteResults", (bool result, int termNumber) =>
+app.MapPost("/RecieveVoteResults", async (VoteFromFollowerRpc rpc) =>
 {
-	n1.RecieveVoteResults(result, termNumber);
+	await n1.RecieveVoteResults(rpc);
 });
 
 

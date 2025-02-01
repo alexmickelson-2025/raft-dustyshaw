@@ -29,15 +29,6 @@ public class SimulationNode : INode
 		return Task.CompletedTask;
 	}
 
-	public void RecieveVoteResults(bool result, int termNumber)
-	{
-        if (!IsRunning)
-        {
-            return;
-        }
-        ((INode)InnerNode).RecieveVoteResults(result, termNumber);
-	}
-
 	public void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId)
 	{
         if (!IsRunning)
@@ -71,5 +62,14 @@ public class SimulationNode : INode
 			await InnerNode.SendMyVoteToCandidate(candidateId, result);
 		});
 		return Task.CompletedTask;
+	}
+
+	public Task RecieveVoteResults(VoteFromFollowerRpc vote)
+	{
+		if (!IsRunning)
+		{
+			return Task.CompletedTask;
+		}
+		return ((INode)InnerNode).RecieveVoteResults(vote);
 	}
 }

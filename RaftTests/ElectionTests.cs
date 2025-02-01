@@ -154,7 +154,7 @@ namespace RaftTests
 
         // Testing #8
         [Fact]
-        public void TestCase8_MajorityVotesWins()
+        public async Task TestCase8_MajorityVotesWins()
         {
             // 8. Given an election begins, when the candidate gets a majority of votes,
             // it becomes a leader.
@@ -172,8 +172,8 @@ namespace RaftTests
 			//followerNode2.OtherNodes = [candidateNode, followerNode];
 
 			// Act
-			candidateNode.RecieveVoteResults(true, 100);
-            candidateNode.RecieveVoteResults(true, 100);
+			await candidateNode.RecieveVoteResults(new VoteFromFollowerRpc(true, 100));
+			await candidateNode.RecieveVoteResults(new VoteFromFollowerRpc(true, 100));
 
             Thread.Sleep(300);
 
@@ -211,7 +211,7 @@ namespace RaftTests
 
 		// Testing #8
 		[Fact]
-		public void Test08_MajorityVotesWinWithSubstitutes()
+		public async Task Test08_MajorityVotesWinWithSubstitutes()
 		{
 			// 8. Given an election begins, when the candidate gets a majority of votes,
 			// it becomes a leader.
@@ -223,7 +223,7 @@ namespace RaftTests
             candidateNode.votesRecieved = [true]; // say he has already recieved one vote
 
 			// Act
-			candidateNode.RecieveVoteResults(true, 100);
+			await candidateNode.RecieveVoteResults(new VoteFromFollowerRpc(true, 100));
 
 			// Assert
 			Assert.Equal(Node.NodeState.Leader, candidateNode.State);
@@ -232,7 +232,7 @@ namespace RaftTests
 
 		// Testing #9
 		[Fact]
-        public void TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
+        public async Task TestCase9_MajorityVotesEvenWithUnresponsiveStillBecomeLeader()
         {
             var followerNode1 = Substitute.For<INode>();
 			var followerNode2 = Substitute.For<INode>();
@@ -251,7 +251,7 @@ namespace RaftTests
             // Say in a 5 system I recieve only 2 votes, and have one server unresponsive
             List<bool> votesRecieved = [true, true];
             candidateNode.votesRecieved = votesRecieved;
-            candidateNode.RecieveVoteResults(true, 100); // third vote should push over the edge
+            await candidateNode.RecieveVoteResults(new VoteFromFollowerRpc(true, 100)); // third vote should push over the edge
 
 			// Assert
 			Assert.Equal(Node.NodeState.Leader, candidateNode.State);
@@ -383,8 +383,8 @@ namespace RaftTests
             await node.RecieveAVoteRequestFromCandidate(new VoteRequestFromCandidateRpc(c2.NodeId, 100));
 
 			// Assert
-			c1.Received(1).RecieveVoteResults(true, Arg.Any<int>());
-			c2.Received(1).RecieveVoteResults(false, Arg.Any<int>());
+			await c1.Received(1).RecieveVoteResults(new VoteFromFollowerRpc(true, Arg.Any<int>()));
+			await c2.Received(1).RecieveVoteResults(new VoteFromFollowerRpc(false, Arg.Any<int>()));
 		}
 
 		// Testing #15

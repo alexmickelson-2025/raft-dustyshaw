@@ -428,14 +428,14 @@ namespace Raft
 			}
 		}
 
-		public void RecieveVoteResults(bool result, int termNumber)
+		public async Task RecieveVoteResults(VoteFromFollowerRpc vote)
 		{
+			// As a candidate, I am recieving votes from my followers
 			if (!IsRunning)
 			{
 				return;
 			}
-			// As a candidate, I am recieving votes from my followers
-			votesRecieved.Add(result);
+			votesRecieved.Add(vote.result);
 
 			bool won = HasMajority(votesRecieved);
 
@@ -443,7 +443,7 @@ namespace Raft
 			{
 				BecomeLeader();
 			}
-
+			await Task.CompletedTask;
 		}
 
 		public bool HasMajority(List<bool> List)
@@ -497,7 +497,7 @@ namespace Raft
 			{
 				if (node.NodeId == candidateId)
 				{
-					node.RecieveVoteResults(result, this.TermNumber);
+					await node.RecieveVoteResults(new VoteFromFollowerRpc(result, this.TermNumber));
 				}
 			}
 		}

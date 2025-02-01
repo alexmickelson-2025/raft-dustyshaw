@@ -46,19 +46,6 @@ public class HttpRpcNode : INode
 		}
     }
 
-    public void RecieveVoteResults(bool result, int termNumber)
-    {
-        try
-		{
-			Console.WriteLine($"Calling  RecieveVoteResults({result}, {termNumber})");
-			client.PostAsJsonAsync(Url + "/RecieveVoteResults", result);
-		}
-		catch 
-		{
-			Console.WriteLine($"node {Url} is down");
-		}
-    }
-
     public Task SendMyVoteToCandidate(Guid candidateId, bool result)
     {
         throw new NotImplementedException();
@@ -74,4 +61,16 @@ public class HttpRpcNode : INode
         throw new NotImplementedException();
     }
 
+	public async Task RecieveVoteResults(VoteFromFollowerRpc vote)
+	{
+		try
+		{
+			Console.WriteLine($"Calling  RecieveVoteResults({vote})");
+			await client.PostAsJsonAsync(Url + "/RecieveVoteResults", vote);
+		}
+		catch
+		{
+			Console.WriteLine($"node {Url} is down");
+		}
+	}
 }

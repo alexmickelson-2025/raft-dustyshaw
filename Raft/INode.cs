@@ -9,7 +9,7 @@ namespace Raft
 
 
 		Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc);
-		void RecieveVoteResults(bool result, int termNumber);
+		Task RecieveVoteResults(VoteFromFollowerRpc vote);
 		Task SendMyVoteToCandidate(Guid candidateId, bool result);
 		Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc);
 		void RespondBackToLeader(bool response, int myTermNumber, int myCommitIndex, Guid fNodeId);
