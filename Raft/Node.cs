@@ -483,10 +483,10 @@ namespace Raft
 
 			this.VoteForId = rpc.candidateId;
 			this.VotedForTermNumber = rpc.lastLogTerm;
-			await SendMyVoteToCandidate(rpc.candidateId, result);
+			await SendMyVoteToCandidate(new VoteRpc(rpc.candidateId, result));
 		}
 
-		public async Task SendMyVoteToCandidate(Guid candidateId, bool result)
+		public async Task SendMyVoteToCandidate(VoteRpc rpc)
 		{
 			if (!IsRunning)
 			{
@@ -495,9 +495,9 @@ namespace Raft
 			// as a follower, I am sending a candidate my vote
 			foreach (var node in OtherNodes)
 			{
-				if (node.NodeId == candidateId)
+				if (node.NodeId == rpc.candidateId)
 				{
-					await node.RecieveVoteResults(new VoteFromFollowerRpc(result, this.TermNumber));
+					await node.RecieveVoteResults(new VoteFromFollowerRpc(rpc.result, this.TermNumber));
 				}
 			}
 		}

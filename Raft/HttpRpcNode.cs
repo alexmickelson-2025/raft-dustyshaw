@@ -46,11 +46,6 @@ public class HttpRpcNode : INode
 		}
     }
 
-    public Task SendMyVoteToCandidate(Guid candidateId, bool result)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)
     {
         throw new NotImplementedException();
@@ -72,5 +67,10 @@ public class HttpRpcNode : INode
 		{
 			Console.WriteLine($"node {Url} is down");
 		}
+	}
+
+	public Task SendMyVoteToCandidate(VoteRpc vote)
+	{
+		throw new NotImplementedException();
 	}
 }

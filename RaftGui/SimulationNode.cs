@@ -51,7 +51,7 @@ public class SimulationNode : INode
 		return Task.CompletedTask;
 	}
 
-	public Task SendMyVoteToCandidate(Guid candidateId, bool result)
+	public Task SendMyVoteToCandidate(VoteRpc rpc)
 	{
         if (!IsRunning)
         {
@@ -59,7 +59,7 @@ public class SimulationNode : INode
         }
         Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
 		{
-			await InnerNode.SendMyVoteToCandidate(candidateId, result);
+			await InnerNode.SendMyVoteToCandidate(rpc);
 		});
 		return Task.CompletedTask;
 	}
