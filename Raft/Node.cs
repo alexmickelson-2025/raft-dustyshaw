@@ -350,7 +350,7 @@ namespace Raft
 			}
 		}
 
-		public void RespondBackToLeader(ResponseBackToLeader rpc)
+		public async Task RespondBackToLeader(ResponseBackToLeader rpc)
 		{
 			// As the leader, I have heard from the response as a follower
 			if (!IsRunning)
@@ -386,7 +386,7 @@ namespace Raft
 				Client.RecieveLogFromLeader(this.Entries.Last());
 			}
 
-			return;
+			await Task.CompletedTask;
 		}
 
 		public bool HasMajorityLogConfirmations()

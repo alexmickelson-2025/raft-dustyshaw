@@ -45,6 +45,11 @@ app.MapPost("/RecieveVoteResults", async (VoteFromFollowerRpc rpc) =>
 	await n1.RecieveVoteResults(rpc);
 });
 
+// app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
+// {
+// 	await n1.RespondBackToLeader(rpc);
+// });
+
 
 
 

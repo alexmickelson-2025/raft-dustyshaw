@@ -29,13 +29,17 @@ public class SimulationNode : INode
 		return Task.CompletedTask;
 	}
 
-	public void RespondBackToLeader(ResponseBackToLeader rpc)
+	public Task RespondBackToLeader(ResponseBackToLeader rpc)
 	{
         if (!IsRunning)
         {
-            return;
+            return Task.CompletedTask;
         }
-        ((INode)InnerNode).RespondBackToLeader(rpc);
+		Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
+		{
+			await InnerNode.RespondBackToLeader(rpc);
+		});
+		return Task.CompletedTask;
 	}
 
 	public Task RecieveAppendEntriesRPC(AppendEntriesRPC rpc)

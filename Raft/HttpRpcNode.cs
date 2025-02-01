@@ -68,8 +68,8 @@ public class HttpRpcNode : INode
 	{
 		throw new NotImplementedException();
 	}
-
-	public void RespondBackToLeader(ResponseBackToLeader rpc)
+	
+	public Task RespondBackToLeader(ResponseBackToLeader rpc)
 	{
 		throw new NotImplementedException();
 	}
