@@ -499,6 +499,22 @@ namespace RaftTests
 			followerNode.Received(1).RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
 		}
 
+        [Fact]
+        public void CandidateResetsTimeout()
+        {
+			var f1 = Substitute.For<INode>();
+			var f2 = Substitute.For<INode>();
+
+			Node n = new([f1, f2], null);
+
+            var oldTimer = n.aTimer;
+
+            n.TimeoutHasPassed();
+
+
+            Assert.NotEqual(n.aTimer, oldTimer);
+
+        }
 
 	}
 }

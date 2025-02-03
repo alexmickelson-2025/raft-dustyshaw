@@ -10,7 +10,7 @@ public class HttpRpcNode : INode
 
 	public HttpRpcNode(string url)
 	{
-		Console.WriteLine($"New Node Made {url}");
+		Console.WriteLine($"---- New Node Made {url}");
 		NodeId = Guid.NewGuid();
 		Url = url;
 	}
@@ -18,12 +18,12 @@ public class HttpRpcNode : INode
 	{
 		try
 		{
-			Console.WriteLine($"Calling  RecieveAVoteRequestFromCandidate({rpc})");
+			Console.WriteLine($"---- Calling  RequestAppendEntries({rpc})");
 			await client.PostAsJsonAsync(Url + "/RequestAppendEntries", rpc);
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine($"node {NodeId} is down - RequestAppendEntries - {e.Message}");
+			Console.WriteLine($"---- node {NodeId} is down - RequestAppendEntries - {e.Message}");
 		}
 	}
 
@@ -31,12 +31,12 @@ public class HttpRpcNode : INode
     {
        try
 		{
-			Console.WriteLine($"Calling  RecieveAVoteRequestFromCandidate({rpc})");
+			Console.WriteLine($"---- Calling  RecieveAVoteRequestFromCandidate({rpc})");
 			await client.PostAsJsonAsync(Url + "/RecieveAVoteRequestFromCandidate", rpc);
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine($"node {NodeId} is down - RecieveAVoteRequestFromCandidate - {e.Message}");	// failing
+			Console.WriteLine($"---- node {NodeId} is down - RecieveAVoteRequestFromCandidate - {e.Message}");	// failing
 		}
     }
 
@@ -44,12 +44,12 @@ public class HttpRpcNode : INode
     {
         try
 		{
-			Console.WriteLine($"Calling  RecieveAppendEntriesRPC({rpc})");
+			Console.WriteLine($"---- Calling  RecieveAppendEntriesRPC({rpc})");
 			await client.PostAsJsonAsync(Url + "/RecieveAppendEntriesRPC", rpc);
 		}
 		catch 
 		{
-			Console.WriteLine($"node {NodeId} is down - RecieveAppendEntriesRPC");
+			Console.WriteLine($"---- node {NodeId} is down - RecieveAppendEntriesRPC");
 		}
     }
 
@@ -57,12 +57,12 @@ public class HttpRpcNode : INode
 	{
 		try
 		{
-			Console.WriteLine($"Calling  RecieveVoteResults({vote})");
+			Console.WriteLine($"---- Calling  RecieveVoteResults({vote})");
 			await client.PostAsJsonAsync(Url + "/RecieveVoteResults", vote);
 		}
 		catch
 		{
-			Console.WriteLine($"node {NodeId} is down - RecieveVoteResults");
+			Console.WriteLine($"---- node {NodeId} is down - RecieveVoteResults");
 		}
 	}
 	
@@ -75,7 +75,7 @@ public class HttpRpcNode : INode
 		}
 		catch
 		{
-			Console.WriteLine($"node {NodeId} is down - RespondBackToLeader");
+			Console.WriteLine($"---- node {NodeId} is down - RespondBackToLeader");
 		}
 	}
 
@@ -83,12 +83,12 @@ public class HttpRpcNode : INode
     {
         try
 		{
-			Console.WriteLine($"Calling  SendMyVoteToCandidate({vote})");
+			Console.WriteLine($"---- Calling  SendMyVoteToCandidate({vote})");
 			await client.PostAsJsonAsync(Url + "/SendMyVoteToCandidate", vote);
 		}
 		catch
 		{
-			Console.WriteLine($"node {NodeId} is down - SendMyVoteToCandidate");
+			Console.WriteLine($"---- node {NodeId} is down - SendMyVoteToCandidate");
 		}
     }
 }

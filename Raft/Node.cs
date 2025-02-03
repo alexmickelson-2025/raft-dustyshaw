@@ -18,7 +18,7 @@ namespace Raft
 		public Guid LeaderId { get; set; }
 
 		public int ElectionTimeout { get; set; } // in ms
-		public System.Timers.Timer aTimer { get; set; }
+		public System.Timers.Timer aTimer { get; set; } = new();
 		public DateTime WhenTimerStarted { get; set; }
 		public int HeartbeatTimeout { get; set; } = 50; // in ms
 
@@ -301,6 +301,7 @@ namespace Raft
 			}
 
 			this.CommitIndex = rpc.leaderCommit;
+			this.TermNumber = rpc.term;
 
 			OtherNodes
 				.Where(node => node.NodeId == this.LeaderId)
@@ -428,11 +429,12 @@ namespace Raft
 
 		public async Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc)
 		{
+			// as a node, I recieve a vote request from a candidate wanting to become leader
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
 			}
-			// as a server, I recieve a vote request from a candidate
+
 			bool result = true;
 			if (rpc.lastLogTerm < this.TermNumber || rpc.lastLogTerm == this.VotedForTermNumber)
 			{
@@ -460,7 +462,7 @@ namespace Raft
 			}
 		}
 
-		public void StartElection()
+		public async Task StartElection()
 		{
 			if (!IsRunning)
 			{
@@ -479,14 +481,15 @@ namespace Raft
 			//aTimer.Stop();
 			//aTimer.Dispose();
 			aTimer = new System.Timers.Timer(ElectionTimeout);
-			//aTimer.Elapsed += (s, e) => { StartElection(); };
+			aTimer.Elapsed += (s, e) => { TimeoutHasPassed(); };
+			aTimer.AutoReset = false;
 			aTimer.Start();
 			WhenTimerStarted = DateTime.Now;
 
 			//StartElectionTimer();
 
 			// Send vote requests
-			SendVoteRequestRPCsToOtherNodes();
+			await SendVoteRequestRPCsToOtherNodes();
 		}
 
 		public bool RecieveClientCommand(string key, string command)
