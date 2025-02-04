@@ -8,10 +8,10 @@ public class HttpRpcNode : INode
 	public string Url { get; }
 	private HttpClient client = new();
 
-	public HttpRpcNode(string url)
+	public HttpRpcNode(string url, Guid guid)
 	{
-		Console.WriteLine($"---- New Node Made {url}");
-		NodeId = Guid.NewGuid();
+		Console.WriteLine($"---- New Node Made {url} and guid {guid}");
+		NodeId = guid;
 		Url = url;
 	}
 	public async Task RequestAppendEntries(AppendEntriesRPC rpc)

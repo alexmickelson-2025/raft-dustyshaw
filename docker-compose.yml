@@ -1,3 +1,7 @@
+# node1: 1a708791-25de-4fa6-b44a-0acae9bc9e3c
+# node2: 2dad91a2-bac6-406e-9d38-17a40f4c3f5e
+# node3: 3a7bd5b2-1750-4333-8b47-e77a8652f52d
+
 services:
   node1:
     build:
@@ -8,8 +12,8 @@ services:
     volumes:
       - ./:/app
     environment:
-      - NODE_ID=1
-      - OTHER_NODES=http://node2:8080;http://node3:8080
+      - NODE_ID=1a708791-25de-4fa6-b44a-0acae9bc9e3c
+      - OTHER_NODES=http://node2:8080,2dad91a2-bac6-406e-9d38-17a40f4c3f5e;http://node3:8080,3a7bd5b2-1750-4333-8b47-e77a8652f52d
       - NODE_INTERVAL_SCALAR=50
     command: dotnet watch --project RaftApi
     healthcheck:
@@ -27,8 +31,8 @@ services:
     volumes:
       - ./:/app
     environment:
-      - NODE_ID=2
-      - OTHER_NODES=http://node1:8080;http://node3:8080
+      - NODE_ID=2dad91a2-bac6-406e-9d38-17a40f4c3f5e
+      - OTHER_NODES=http://node1:8080,1a708791-25de-4fa6-b44a-0acae9bc9e3c;http://node3:8080,3a7bd5b2-1750-4333-8b47-e77a8652f52d
       - NODE_INTERVAL_SCALAR=50
     command: dotnet watch --project RaftApi
     healthcheck:
@@ -46,8 +50,8 @@ services:
     volumes:
       - ./:/app
     environment:
-      - NODE_ID=3
-      - OTHER_NODES=http://node1:8080;http://node2:8080
+      - NODE_ID=3a7bd5b2-1750-4333-8b47-e77a8652f52d
+      - OTHER_NODES=http://node1:8080,1a708791-25de-4fa6-b44a-0acae9bc9e3c;http://node2:8080,2dad91a2-bac6-406e-9d38-17a40f4c3f5e
       - NODE_INTERVAL_SCALAR=50
     command: dotnet watch --project RaftApi
     healthcheck:
@@ -67,5 +71,5 @@ services:
     volumes:
       - ./:/app
     environment:
-      - NODE_URLS=http://node1:8080;http://node2:8080;http://node3:8080
+      - NODE_URLS=http://node1:8080,1a708791-25de-4fa6-b44a-0acae9bc9e3c;http://node2:8080,2dad91a2-bac6-406e-9d38-17a40f4c3f5e;http://node3:8080,3a7bd5b2-1750-4333-8b47-e77a8652f52d
     command: dotnet watch --project RaftDockerClient

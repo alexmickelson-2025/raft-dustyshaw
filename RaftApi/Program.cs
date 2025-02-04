@@ -32,7 +32,11 @@ Console.WriteLine("----- STARTING SIMULATION");
 
 INode[] otherNodes = otherNodesRaw
 .Split(";")
-.Select(s => new HttpRpcNode(s)).ToArray();
+.Select(x =>
+{
+	var parts = x.Split(",");
+	return new HttpRpcNode(parts[0], Guid.Parse(parts[1]));
+}).ToArray();
 
 Console.WriteLine($"other nodes {JsonSerializer.Serialize(otherNodes)}" );
 
