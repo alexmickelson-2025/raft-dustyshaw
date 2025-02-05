@@ -1,6 +1,5 @@
 ﻿using Raft;
 using Raft.DTOs;
-using System.Timers;
 
 namespace RaftGui;
 

@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 public class HttpRpcNode : INode
 {
 	public Guid NodeId { get; set; }
-	public string Url { get; }
+    public string Url { get; }
 	private HttpClient client = new();
 
 	public HttpRpcNode(string url, Guid guid)

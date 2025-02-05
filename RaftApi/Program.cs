@@ -40,7 +40,7 @@ INode[] otherNodes = otherNodesRaw
 
 Console.WriteLine($"other nodes {JsonSerializer.Serialize(otherNodes)}" );
 
-INode node = new Node(otherNodes, null);
+Node node = new Node(otherNodes, null);
 
 app.MapPost("/RecieveAppendEntriesRPC", async (AppendEntriesRPC rpc) =>
 {
@@ -67,6 +67,20 @@ app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
 	await node.RespondBackToLeader(rpc);
 });
 
+app.MapGet("/nodeData", () =>
+{
+	return new NodeData()
+	{
+		NodeId = node.NodeId,
+		ElectionTimeout = node.ElectionTimeout,
+		CommitIndex = node.CommitIndex,
+		Entries = node.Entries,
+		LeaderId = node.LeaderId,
+		State = node.State,
+		Term = node.TermNumber,
+		WhenTimeStarted = node.WhenTimerStarted,
+	};
+});
 
 
 app.Run();

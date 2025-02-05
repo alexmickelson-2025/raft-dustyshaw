@@ -10,6 +10,16 @@
 <p><strong>NODE_URLS:</strong> @NodeUrls</p>
 
 
+@* 
+<div>
+    <label for="speed">
+        Election timeout between @(150 * Node.IntervalScalar) and @(300 *
+        Node.IntervalScalar) ms.
+        <br>
+        <input type="range" id="speed" name="speed" min="1" max="100" @bind:event="oninput"
+               @bind=Node.IntervalScalar @onchange=UpdateTimer /> @Node.IntervalScalar
+    </label>
+</div> *@
 
 <div>
     <label for="NetworkRequestDelay">
@@ -22,7 +32,7 @@
 
 
 <button @onclick="startSimulation">Start (click me twice pls!!)</button>
-@* 
+
 <div class="border border-1 shadow my-5 col-md-8 p-4 rounded">
     <h3>Send a Log</h3>
     <div class="d-flex flex-row">
@@ -31,7 +41,7 @@
     </div>
     @foreach (var node in nodes)
     {
-        <button class="btn btn-outline-primary m-3" @onclick="() => SendLog(node.InnerNode.NodeId)">Send To @(FormatId(node.InnerNode.NodeId))</button>
+        <button class="btn btn-outline-primary m-3" @onclick="() => SendLog(node.NodeId)">Send To @(FormatId(node.NodeId))</button>
     }
     @if (!ClientSentLogSuccessfully)
     {
@@ -46,7 +56,7 @@
 <div class="row">
     @foreach (var node in nodes)
     {
-        var timeoutRemaining = ((node.InnerNode.WhenTimerStarted + TimeSpan.FromMilliseconds(node.InnerNode.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
+        var timeoutRemaining = ((node.WhenTimeStarted + TimeSpan.FromMilliseconds(node.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
         var maxIntervalSeconds = 300 * Node.IntervalScalar;
         var percentageRemaining = (100 * (timeoutRemaining / (double)maxIntervalSeconds));
 
@@ -54,11 +64,11 @@
         <div class="p-3 col-4">
             <div class="border p-3 rounded-3">
                 <div class="d-flex flex-column justify-content-between">
-                    <h1> @(FormatId(node.InnerNode.NodeId))</h1>
-                    <div class="@StateClass(node)">@node.InnerNode.State</div>
-                    <p>Election Timeout: @(@node.InnerNode.ElectionTimeout) ms.</p>
-                    <h2>Term #@node.InnerNode.TermNumber</h2>
-                    <p>Leader Id: @(FormatId(node.InnerNode.LeaderId))</p>
+                    <h1> @(FormatId(node.NodeId))</h1>
+                    <div class="@StateClass(node)">@node.State</div>
+                    <p>Election Timeout: @(@node.ElectionTimeout) ms.</p>
+                    <h2>Term #@node.Term</h2>
+                    <p>Leader Id: @(FormatId(node.LeaderId))</p>
                     <div class="progress" role="progressbar"
                          aria-label="Basic example"
                          aria-valuenow=@(Math.Abs(timeoutRemaining) )
@@ -67,20 +77,20 @@
                         <div class="progress-bar bg-dark-subtle" style="width: @(percentageRemaining)%;"></div>
                     </div>
                     <hr />
-                    <p>Commit Index: @node.InnerNode.CommitIndex</p>
-                    <div class="border-1 border-light m-2 p-2">
+                    <p>Commit Index: @node.CommitIndex</p>
+                    @* <div class="border-1 border-light m-2 p-2">
                         <strong>State Machine</strong>
-                        @foreach (var commitedEntry in node.InnerNode.StateMachine)
+                        @foreach (var commitedEntry in node.StateMachine)
                         {
                             <p>@commitedEntry.Index, @commitedEntry.Command, @commitedEntry.Key, @commitedEntry.TermReceived</p>
                         }
-                    </div>
+                    </div> *@
                     <h4 />
                     <div class="mt-3">
                         <div>
-                            @foreach (var l in node.InnerNode.Entries)
+                            @foreach (var l in node.Entries)
                             {
-                                @if (l.Index <= node.InnerNode.CommitIndex)
+                                @if (l.Index <= node.CommitIndex)
                                 {
                                     <p class="text-success">&check; index:@l.Index &nbsp; <i>"@l.Command @l.Key"</i> in term @l.TermReceived </p>
                                 }
@@ -90,20 +100,20 @@
                                 }
                             }
                         </div>
-                        @if (node.IsRunning)
+                       @*  @if (node.IsRunning)
                         {
                             <button @onclick="() => pauseNode(node.InnerNode.NodeId)" class="btn btn-outline-primary">|| Pause Node</button>
                         }
                         else
                         {
                             <button @onclick="() => unpauseNode(node.InnerNode.NodeId)" class="btn btn-outline-success"> |> Play Node</button>
-                        }
+                        } *@
                     </div>
                 </div>
             </div>
         </div>
     }
-</div> *@
+</div>
 
 @code {
     private string NodeUrls;
@@ -113,9 +123,9 @@
         NodeUrls = Environment.GetEnvironmentVariable("NODE_URLS") ?? "Not Set";
     }
 
+    List<string> Urls;
 
-
-    List<HttpRpcNode> nodes = new();
+    List<NodeData> nodes = new();
 
     private Timer? timer;
     bool isRunning = false;
@@ -128,20 +138,40 @@
 
     private bool ClientSentLogSuccessfully = true;
 
-    void startSimulation()
+    async Task startSimulation()
     {
-        List<HttpRpcNode> OtherNodes = NodeUrls.Split(";")
-            .Select(x =>
-            {
-                var parts = x.Split(",");
-                return new HttpRpcNode(parts[0], Guid.Parse(parts[1]));
-            }).ToList();
+        HttpClient client = new();
+        Urls = NodeUrls.Split(";").ToList();
 
-        var node1 = new Node([], NetworkRequestDelay);
-        var node2 = new Node([], NetworkRequestDelay);
-        var node3 = new Node([], NetworkRequestDelay);
 
-        nodes = OtherNodes;
+        foreach (var url in Urls)
+        {
+            // Something like "http://node2:8080/nodeData
+            var nodeStuff = await client.GetFromJsonAsync<NodeData>($"{url}/nodeData");
+            nodes.Add(nodeStuff);
+        }
+
+
+
+
+        // List<HttpRpcNode> OtherNodes = NodeUrls.Split(";")
+        //     .Select(x =>
+        //     {
+        //         var parts = x.Split(",");
+        //         return new HttpRpcNode(parts[0], Guid.Parse(parts[1]));
+        //     }).ToList();
+
+
+        // var nodeData = await client.PostAsJsonAsync("/nodeData", new NodeData());
+
+        
+
+
+        // var node1 = new Node([], NetworkRequestDelay);
+        // var node2 = new Node([], NetworkRequestDelay);
+        // var node3 = new Node([], NetworkRequestDelay);
+
+        // nodes = OtherNodes;
 
         isRunning = true;
         timer = new Timer(_ =>
@@ -154,8 +184,8 @@
     // {
     //     foreach (var node in nodes)
     //     {
-    //         node.InnerNode.LowerBoundElectionTime = 150 * Node.IntervalScalar;
-    //         node.InnerNode.UpperBoundElectionTime = 300 * Node.IntervalScalar;
+    //         node.LowerBoundElectionTime = 150 * Node.IntervalScalar;
+    //         node.UpperBoundElectionTime = 300 * Node.IntervalScalar;
     //     }
 
     //     timer?.Dispose();
@@ -166,40 +196,40 @@
 
     // }
 
-    // string StateClass(SimulationNode node)
-    // {
-    //     if (node.InnerNode.State == Node.NodeState.Leader)
-    //     {
-    //         return "bg-primary text-white p-1 rounded";
-    //     }
-    //     if (node.InnerNode.State == Node.NodeState.Candidate)
-    //     {
-    //         return "bg-success text-white p-1 rounded";
-    //     }
-    //     if (node.InnerNode.State == Node.NodeState.Follower)
-    //     {
-    //         return "bg-secondary text-white p-1 rounded";
-    //     }
-    //     return "";
-    // }
+    string StateClass(NodeData node)
+    {
+        if (node.State == Node.NodeState.Leader)
+        {
+            return "bg-primary text-white p-1 rounded";
+        }
+        if (node.State == Node.NodeState.Candidate)
+        {
+            return "bg-success text-white p-1 rounded";
+        }
+        if (node.State == Node.NodeState.Follower)
+        {
+            return "bg-secondary text-white p-1 rounded";
+        }
+        return "";
+    }
 
-    // public static string FormatMilliSeconds(double milliSeconds)
-    // {
-    //     return $"{milliSeconds / 1000.0:F1}";
-    // }
+    public static string FormatMilliSeconds(double milliSeconds)
+    {
+        return $"{milliSeconds / 1000.0:F1}";
+    }
 
-    // public static string FormatId(Guid id)
-    // {
-    //     return id.ToString("N").Substring(0, 4);
-    // }
+    public static string FormatId(Guid id)
+    {
+        return id.ToString("N").Substring(0, 4);
+    }
 
     // void pauseNode(Guid NodeId)
     // {
     //     foreach (var n in nodes)
     //     {
-    //         if (n.InnerNode.NodeId == NodeId)
+    //         if (n.NodeId == NodeId)
     //         {
-    //             n.InnerNode.PauseNode();
+    //             n.PauseNode();
     //         }
     //     }
     // }
@@ -208,21 +238,21 @@
     // {
     //     foreach (var n in nodes)
     //     {
-    //         if (n.InnerNode.NodeId == NodeId)
+    //         if (n.NodeId == NodeId)
     //         {
-    //             n.InnerNode.UnpauseNode();
+    //             n.UnpauseNode();
     //         }
     //     }
     // }
 
-    // void SendLog(Guid NodeId)
-    // {
-    //     foreach (var n in nodes)
-    //     {
-    //         if (n.InnerNode.NodeId == NodeId)
-    //         {
-    //             ClientSentLogSuccessfully = n.InnerNode.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
-    //         }
-    //     }
-    // }
+    void SendLog(Guid NodeId)
+    {
+        foreach (var n in nodes)
+        {
+            if (n.NodeId == NodeId)
+            {
+                //ClientSentLogSuccessfully = n.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
+            }
+        }
+    }
 }
