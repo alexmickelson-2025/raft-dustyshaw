@@ -71,5 +71,5 @@ services:
     volumes:
       - ./:/app
     environment:
-      - NODE_URLS=http://node1:8080,1a708791-25de-4fa6-b44a-0acae9bc9e3c;http://node2:8080,2dad91a2-bac6-406e-9d38-17a40f4c3f5e;http://node3:8080,3a7bd5b2-1750-4333-8b47-e77a8652f52d
+      - NODE_URLS=http://node1:8080;http://node2:8080;http://node3:8080
     command: dotnet watch --project RaftDockerClient

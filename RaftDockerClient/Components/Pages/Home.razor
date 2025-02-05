@@ -7,7 +7,26 @@
 
 <h3>Environment Variables</h3>
 
-<p><strong>NODE_URLS:</strong> @NodeUrls</p>
+<strong>NODE_URLS:</strong>
+
+@if(!Urls.Any())
+{
+    <div class="alert alert-danger">No urls...</div>
+}
+
+@SecretsString
+
+@if(!nodeDict.Any())
+{
+    <div class="alert alert-danger">Error: no nodes</div>
+}
+
+<p>Parsed Strings</p>
+@foreach (var str in Urls)
+{
+    <p>@str</p>
+}
+
 
 
 @* 
@@ -31,8 +50,6 @@
 </div>
 
 
-<button @onclick="startSimulation">Start (click me twice pls!!)</button>
-
 <div class="border border-1 shadow my-5 col-md-8 p-4 rounded">
     <h3>Send a Log</h3>
     <div class="d-flex flex-row">
@@ -54,9 +71,9 @@
 </div>
 
 <div class="row">
-    @foreach (var node in nodes)
+    @foreach (KeyValuePair<Guid , NodeData> node in nodeDict)
     {
-        var timeoutRemaining = ((node.WhenTimeStarted + TimeSpan.FromMilliseconds(node.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
+        var timeoutRemaining = ((node.Value.WhenTimeStarted + TimeSpan.FromMilliseconds(node.Value.ElectionTimeout)) - DateTime.Now).TotalMilliseconds;
         var maxIntervalSeconds = 300 * Node.IntervalScalar;
         var percentageRemaining = (100 * (timeoutRemaining / (double)maxIntervalSeconds));
 
@@ -64,11 +81,11 @@
         <div class="p-3 col-4">
             <div class="border p-3 rounded-3">
                 <div class="d-flex flex-column justify-content-between">
-                    <h1> @(FormatId(node.NodeId))</h1>
-                    <div class="@StateClass(node)">@node.State</div>
-                    <p>Election Timeout: @(@node.ElectionTimeout) ms.</p>
-                    <h2>Term #@node.Term</h2>
-                    <p>Leader Id: @(FormatId(node.LeaderId))</p>
+                    <h1> @(FormatId(node.Value.NodeId))</h1>
+                    <div class="@StateClass(node.Value)">@node.Value.State</div>
+                    <p>Election Timeout: @(@node.Value.ElectionTimeout) ms.</p>
+                    <h2>Term #@node.Value.Term</h2>
+                    <p>Leader Id: @(FormatId(node.Value.LeaderId))</p>
                     <div class="progress" role="progressbar"
                          aria-label="Basic example"
                          aria-valuenow=@(Math.Abs(timeoutRemaining) )
@@ -77,7 +94,7 @@
                         <div class="progress-bar bg-dark-subtle" style="width: @(percentageRemaining)%;"></div>
                     </div>
                     <hr />
-                    <p>Commit Index: @node.CommitIndex</p>
+                    <p>Commit Index: @node.Value.CommitIndex</p>
                     @* <div class="border-1 border-light m-2 p-2">
                         <strong>State Machine</strong>
                         @foreach (var commitedEntry in node.StateMachine)
@@ -88,9 +105,9 @@
                     <h4 />
                     <div class="mt-3">
                         <div>
-                            @foreach (var l in node.Entries)
+                            @foreach (var l in node.Value.Entries)
                             {
-                                @if (l.Index <= node.CommitIndex)
+                                @if (l.Index <= node.Value.CommitIndex)
                                 {
                                     <p class="text-success">&check; index:@l.Index &nbsp; <i>"@l.Command @l.Key"</i> in term @l.TermReceived </p>
                                 }
@@ -116,16 +133,13 @@
 </div>
 
 @code {
-    private string NodeUrls;
+    private string SecretsString = string.Empty;
 
-    protected override void OnInitialized()
-    {
-        NodeUrls = Environment.GetEnvironmentVariable("NODE_URLS") ?? "Not Set";
-    }
-
-    List<string> Urls;
+    List<string> Urls = new();
 
     List<NodeData> nodes = new();
+
+    public Dictionary<Guid, NodeData> nodeDict = new();
 
     private Timer? timer;
     bool isRunning = false;
@@ -138,63 +152,49 @@
 
     private bool ClientSentLogSuccessfully = true;
 
-    async Task startSimulation()
+    protected override async Task OnInitializedAsync()
     {
+        SecretsString = Environment.GetEnvironmentVariable("NODE_URLS") ?? throw new Exception("Node urls not set");
+
         HttpClient client = new();
-        Urls = NodeUrls.Split(";").ToList();
+        Urls = SecretsString.Split(";").ToList();
 
+        Console.WriteLine("\n\n\nNODE URLS ");
 
-        foreach (var url in Urls)
-        {
-            // Something like "http://node2:8080/nodeData
-            var nodeStuff = await client.GetFromJsonAsync<NodeData>($"{url}/nodeData");
-            nodes.Add(nodeStuff);
-        }
+        Console.WriteLine("\n\n\nSTARTING CLIENT SIM");
 
-
-
-
-        // List<HttpRpcNode> OtherNodes = NodeUrls.Split(";")
-        //     .Select(x =>
-        //     {
-        //         var parts = x.Split(",");
-        //         return new HttpRpcNode(parts[0], Guid.Parse(parts[1]));
-        //     }).ToList();
-
-
-        // var nodeData = await client.PostAsJsonAsync("/nodeData", new NodeData());
-
-        
-
-
-        // var node1 = new Node([], NetworkRequestDelay);
-        // var node2 = new Node([], NetworkRequestDelay);
-        // var node3 = new Node([], NetworkRequestDelay);
-
-        // nodes = OtherNodes;
-
+   
         isRunning = true;
-        timer = new Timer(_ =>
+        timer = new Timer(async _ =>
         {
-            InvokeAsync(StateHasChanged);
+            try
+            {
+                foreach (var url in Urls)
+                {
+                    // Something like "http://node2:8080/nodeData
+                    var nodeStuff = await client.GetFromJsonAsync<NodeData>($"{url}/nodeData");
+                    if (nodeStuff is null)
+                    {
+                        throw new Exception("Node stuff is null");
+                    }
+                    if (nodeDict.ContainsKey(nodeStuff.NodeId))
+                    {
+                        nodeDict[nodeStuff.NodeId] = nodeStuff;
+                    }
+                    else
+                    {
+                        nodeDict.Add(nodeStuff.NodeId, nodeStuff);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception, ", e);
+            }
+            await InvokeAsync(StateHasChanged);
         }, null, 0, 200);
     }
 
-    // public void UpdateTimer()
-    // {
-    //     foreach (var node in nodes)
-    //     {
-    //         node.LowerBoundElectionTime = 150 * Node.IntervalScalar;
-    //         node.UpperBoundElectionTime = 300 * Node.IntervalScalar;
-    //     }
-
-    //     timer?.Dispose();
-    //     timer = new Timer(_ =>
-    //     {
-    //         InvokeAsync(StateHasChanged);
-    //     }, null, 0, 100 * (int)Node.IntervalScalar);
-
-    // }
 
     string StateClass(NodeData node)
     {
@@ -222,28 +222,6 @@
     {
         return id.ToString("N").Substring(0, 4);
     }
-
-    // void pauseNode(Guid NodeId)
-    // {
-    //     foreach (var n in nodes)
-    //     {
-    //         if (n.NodeId == NodeId)
-    //         {
-    //             n.PauseNode();
-    //         }
-    //     }
-    // }
-
-    // void unpauseNode(Guid NodeId)
-    // {
-    //     foreach (var n in nodes)
-    //     {
-    //         if (n.NodeId == NodeId)
-    //         {
-    //             n.UnpauseNode();
-    //         }
-    //     }
-    // }
 
     void SendLog(Guid NodeId)
     {

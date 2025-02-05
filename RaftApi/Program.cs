@@ -41,6 +41,7 @@ INode[] otherNodes = otherNodesRaw
 Console.WriteLine($"other nodes {JsonSerializer.Serialize(otherNodes)}" );
 
 Node node = new Node(otherNodes, null);
+Node.IntervalScalar = 50;
 
 app.MapPost("/RecieveAppendEntriesRPC", async (AppendEntriesRPC rpc) =>
 {
@@ -69,6 +70,7 @@ app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
 
 app.MapGet("/nodeData", () =>
 {
+	Console.WriteLine("Client is calling!");
 	return new NodeData()
 	{
 		NodeId = node.NodeId,

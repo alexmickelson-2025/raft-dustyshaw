@@ -18,12 +18,12 @@ public class HttpRpcNode : INode
 	{
 		try
 		{
-			Console.WriteLine($"---- Calling  RequestAppendEntries({rpc})");
+			Console.WriteLine($"---- Calling  RequestAppendEntries({rpc}), {Url}");
 			await client.PostAsJsonAsync(Url + "/RequestAppendEntries", rpc);
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine($"---- node {NodeId} is down - RequestAppendEntries - {e.Message}");
+			Console.WriteLine($"---- node {NodeId} is down - RequestAppendEntries - {e.Message} endmessage, url:{Url}");
 		}
 	}
 
@@ -31,12 +31,12 @@ public class HttpRpcNode : INode
     {
        try
 		{
-			Console.WriteLine($"---- Calling  RecieveAVoteRequestFromCandidate({rpc})");
+			Console.WriteLine($"---- Calling  RecieveAVoteRequestFromCandidate({rpc}), {Url}");
 			await client.PostAsJsonAsync(Url + "/RecieveAVoteRequestFromCandidate", rpc);
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine($"---- node {NodeId} is down - RecieveAVoteRequestFromCandidate - {e.Message}");	// failing
+			Console.WriteLine($"\n\n---- node {NodeId.ToString()[0]} is down - RecieveAVoteRequestFromCandidate - {e.Message} endmessage, url:{Url}");	// failing
 		}
     }
 
@@ -44,7 +44,7 @@ public class HttpRpcNode : INode
     {
         try
 		{
-			Console.WriteLine($"---- Calling  RecieveAppendEntriesRPC({rpc})");
+			Console.WriteLine($"---- Calling  RecieveAppendEntriesRPC({rpc}), {Url}");
 			await client.PostAsJsonAsync(Url + "/RecieveAppendEntriesRPC", rpc);
 		}
 		catch 
@@ -57,12 +57,12 @@ public class HttpRpcNode : INode
 	{
 		try
 		{
-			Console.WriteLine($"---- Calling  RecieveVoteResults({vote})");
+			Console.WriteLine($"---- Calling  RecieveVoteResults({vote}), {Url}");
 			await client.PostAsJsonAsync(Url + "/RecieveVoteResults", vote);
 		}
 		catch
 		{
-			Console.WriteLine($"---- node {NodeId} is down - RecieveVoteResults");
+			Console.WriteLine($"---- node {NodeId} is down - RecieveVoteResults endmessage, url:{Url}");
 		}
 	}
 	
@@ -70,12 +70,12 @@ public class HttpRpcNode : INode
 	{
 		try
 		{
-			Console.WriteLine($"Calling  RespondBackToLeader({rpc})");
+			Console.WriteLine($"Calling  RespondBackToLeader({rpc}), {Url}");
 			await client.PostAsJsonAsync(Url + "/RespondBackToLeader", rpc);
 		}
 		catch
 		{
-			Console.WriteLine($"---- node {NodeId} is down - RespondBackToLeader");
+			Console.WriteLine($"---- node {NodeId} is down - RespondBackToLeader endmessage, url:{Url}");
 		}
 	}
 
@@ -83,7 +83,7 @@ public class HttpRpcNode : INode
     {
         try
 		{
-			Console.WriteLine($"---- Calling  SendMyVoteToCandidate({vote})");
+			Console.WriteLine($"---- Calling  SendMyVoteToCandidate({vote}), {Url}");
 			await client.PostAsJsonAsync(Url + "/SendMyVoteToCandidate", vote);
 		}
 		catch
