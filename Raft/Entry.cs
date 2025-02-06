@@ -13,24 +13,26 @@ public class Entry
     public int TermReceived { get; set; }
     public int Index { get; set; }
 
-    public Entry(string Key, string Command)
+    public Entry() { }
+
+    public Entry(string _Key, string _Command)
     {
-        this.Key = Key;
-        this.Command = Command;
+        this.Key = _Key;
+        this.Command = _Command;
     }
 
-	public Entry(string Key, string Command, int TermReceived)
+	public Entry(string _Key, string _Command, int _TermReceived)
 	{
-		this.Key = Key;
-		this.Command = Command;
-        this.TermReceived = TermReceived;
+		this.Key = _Key;
+		this.Command = _Command;
+        this.TermReceived = _TermReceived;
 	}
 
-	public Entry(string Key, string Command, int TermReceived, int Index)
+	public Entry(string _Key, string _Command, int _TermReceived, int _Index)
 	{
-		this.Key = Key;
-		this.Command = Command;
-		this.TermReceived = TermReceived;
-		this.Index = Index;
+		this.Key = _Key;
+		this.Command = _Command;
+		this.TermReceived = _TermReceived;
+		this.Index = _Index;
 	}
 }

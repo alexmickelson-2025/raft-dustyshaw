@@ -53,7 +53,22 @@ namespace Raft
 			this.OtherNodes = OtherNodes;
 		}
 
-		public void StartElectionTimer()
+		// Pass In Node ID for Client Raft Simulation
+        public Node(INode[] OtherNodes, int? NetworkDelayInMs, string NodeId)
+        {
+			this.NodeId = new Guid(NodeId);
+            HeartbeatTimeout = 50 * Node.IntervalScalar;
+            NetworkRequestDelay = NetworkDelayInMs ?? 0;
+
+            Client = new Client();
+            Entries = new();
+
+            StartElectionTimer();
+
+            this.OtherNodes = OtherNodes;
+        }
+
+        public void StartElectionTimer()
 		{
 			if (!IsRunning)
 			{
@@ -484,7 +499,7 @@ namespace Raft
 			await SendVoteRequestRPCsToOtherNodes();
 		}
 
-		public bool RecieveClientCommand(string key, string command)
+		public async Task<bool> RecieveClientCommand(ClientCommandDto clientCommand)
 		{
 			if (!IsRunning)
 			{
@@ -496,12 +511,13 @@ namespace Raft
 				return false; 
 			}
 
-			Entry l = new Entry(key, command);
+			Entry l = new Entry(clientCommand.Key, clientCommand.Command);
 			l.TermReceived = this.TermNumber;
 
 			this.Entries.Add(l);
 
 			SendAppendEntriesRPC();
+			//await Task.CompletedTask;
 			return true;
 		}
 

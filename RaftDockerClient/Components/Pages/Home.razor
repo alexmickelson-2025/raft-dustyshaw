@@ -1,4 +1,5 @@
 ﻿@using Raft;
+@using Raft.DTOs
 
 @page "/"
 @rendermode InteractiveServer
@@ -56,9 +57,9 @@
         <input @bind="UserCommand" placeholder="Enter Command" class="input-group-text m-2" />
         <input @bind="UserKey" placeholder="Enter Key" class="input-group-text m-2" />
     </div>
-    @foreach (var node in nodes)
+    @foreach (KeyValuePair<Guid, NodeData> node in nodeDict)
     {
-        <button class="btn btn-outline-primary m-3" @onclick="() => SendLog(node.NodeId)">Send To @(FormatId(node.NodeId))</button>
+        <button class="btn btn-outline-primary m-3" @onclick="() => SendLog(node.Value.NodeId)">Send To @(FormatId(node.Value.NodeId))</button>
     }
     @if (!ClientSentLogSuccessfully)
     {
@@ -159,11 +160,7 @@
         HttpClient client = new();
         Urls = SecretsString.Split(";").ToList();
 
-        Console.WriteLine("\n\n\nNODE URLS ");
 
-        Console.WriteLine("\n\n\nSTARTING CLIENT SIM");
-
-   
         isRunning = true;
         timer = new Timer(async _ =>
         {
@@ -171,25 +168,19 @@
             {
                 foreach (var url in Urls)
                 {
-                    // Something like "http://node2:8080/nodeData
                     var nodeStuff = await client.GetFromJsonAsync<NodeData>($"{url}/nodeData");
                     if (nodeStuff is null)
                     {
                         throw new Exception("Node stuff is null");
                     }
-                    if (nodeDict.ContainsKey(nodeStuff.NodeId))
-                    {
-                        nodeDict[nodeStuff.NodeId] = nodeStuff;
-                    }
-                    else
-                    {
-                        nodeDict.Add(nodeStuff.NodeId, nodeStuff);
-                    }
+                    nodeStuff.Url = url;
+                   
+                    nodeDict[nodeStuff.NodeId] = nodeStuff;
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception, ", e);
+                Console.WriteLine($"Exception, Something went wrong in Home.Razor in Docker Client {e.Message}");
             }
             await InvokeAsync(StateHasChanged);
         }, null, 0, 200);
@@ -223,13 +214,20 @@
         return id.ToString("N").Substring(0, 4);
     }
 
-    void SendLog(Guid NodeId)
+    async Task SendLog(Guid NodeId)
     {
-        foreach (var n in nodes)
+        foreach (KeyValuePair<Guid, NodeData> n in nodeDict)
         {
-            if (n.NodeId == NodeId)
+            if (n.Value.NodeId == NodeId)
             {
-                //ClientSentLogSuccessfully = n.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
+                ClientCommandDto clientCommand = new();
+                clientCommand.Command = UserCommand.ToString();
+                clientCommand.Key = UserKey.ToString();
+
+                HttpClient client = new();
+                //Console.WriteLine("Endpoint I am Calling: ")
+                await client.PostAsJsonAsync($"{n.Value.Url}/RecieveClientCommand", clientCommand);
+                //ClientSentLogSuccessfully = n.Value.RecieveClientCommand(clientCommand);
             }
         }
     }

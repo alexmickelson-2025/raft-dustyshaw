@@ -17,5 +17,6 @@ namespace Raft
         public List<Entry> Entries { get; set; }
         public int NodeInteralScalar { get; set; }
         public DateTime WhenTimeStarted { get; set; }
+        public string? Url { get; set; }
     }
 }

@@ -5,7 +5,7 @@ using Raft.DTOs;
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
-//var nodeId = Environment.GetEnvironmentVariable("NODE_ID") ?? throw new Exception("NODE_ID environment variable not set");
+var nodeId = Environment.GetEnvironmentVariable("NODE_ID") ?? throw new Exception("NODE_ID environment variable not set");
 var otherNodesRaw = Environment.GetEnvironmentVariable("OTHER_NODES") ?? throw new Exception("OTHER_NODES environment variable not set");
 var nodeIntervalScalarRaw = Environment.GetEnvironmentVariable("NODE_INTERVAL_SCALAR") ?? throw new Exception("NODE_INTERVAL_SCALAR environment variable not set");
 
@@ -40,8 +40,14 @@ INode[] otherNodes = otherNodesRaw
 
 Console.WriteLine($"other nodes {JsonSerializer.Serialize(otherNodes)}" );
 
-Node node = new Node(otherNodes, null);
+Node node = new Node(otherNodes, null, nodeId);
 Node.IntervalScalar = 50;
+
+app.MapPost("/RecieveClientCommand", async (ClientCommandDto dto) =>
+{
+	Console.WriteLine("\n\n\n **** ***** *** ***** ***Client Requested Something!!");
+    await node.RecieveClientCommand(dto);
+});
 
 app.MapPost("/RecieveAppendEntriesRPC", async (AppendEntriesRPC rpc) =>
 {
@@ -70,7 +76,6 @@ app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
 
 app.MapGet("/nodeData", () =>
 {
-	Console.WriteLine("Client is calling!");
 	return new NodeData()
 	{
 		NodeId = node.NodeId,
