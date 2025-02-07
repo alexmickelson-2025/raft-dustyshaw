@@ -524,7 +524,7 @@ namespace Raft
 			this.Entries.Add(l);
 
 			SendAppendEntriesRPC();
-			//await Task.CompletedTask;
+			await Task.CompletedTask;
 			return true;
 		}
 

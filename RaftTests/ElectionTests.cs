@@ -382,9 +382,11 @@ namespace RaftTests
             await node.RecieveAVoteRequestFromCandidate(new VoteRequestFromCandidateRpc(c1.NodeId, 100));
             await node.RecieveAVoteRequestFromCandidate(new VoteRequestFromCandidateRpc(c2.NodeId, 100));
 
-			// Assert
-			await c1.Received(1).RecieveVoteResults(new VoteFromFollowerRpc(true, Arg.Any<int>()));
-			await c2.Received(1).RecieveVoteResults(new VoteFromFollowerRpc(false, Arg.Any<int>()));
+            // Assert
+            await c1.Received(1).RecieveVoteResults(Arg.Is<VoteFromFollowerRpc>(actual => 
+                actual.result == true));
+            await c2.Received(1).RecieveVoteResults(Arg.Is<VoteFromFollowerRpc>(actual =>
+                actual.result == false));
 		}
 
 		// Testing #15
