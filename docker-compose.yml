@@ -7,8 +7,8 @@ services:
     build:
       context: .
       dockerfile: dev-slow.Dockerfile
-    working_dir: /app
-    user: 1000:1000
+    # working_dir: /app
+    # user: 1000:1000
     # volumes:
     #   - ./:/app
     environment:
@@ -20,8 +20,8 @@ services:
     build:
       context: .
       dockerfile: dev-slow.Dockerfile
-    working_dir: /app
-    user: 1000:1000
+    # working_dir: /app
+    # user: 1000:1000
     # volumes:
     #   - ./:/app
     environment:
@@ -33,8 +33,8 @@ services:
     build:
       context: .
       dockerfile: dev-slow.Dockerfile
-    working_dir: /app
-    user: 1000:1000
+    # working_dir: /app
+    # user: 1000:1000
     # volumes:
     #   - ./:/app
     environment:
@@ -46,8 +46,8 @@ services:
     build:
       context: .
       dockerfile: dev-slow.Dockerfile
-    working_dir: /app
-    user: 1000:1000
+    # working_dir: /app
+    # user: 1000:1000
     ports:
     - 1024:8080
     # volumes:
