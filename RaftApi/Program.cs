@@ -74,6 +74,20 @@ app.MapPost("/RespondBackToLeader", async (ResponseBackToLeader rpc) =>
 	await node.RespondBackToLeader(rpc);
 });
 
+app.MapPost("/ToggleNode", (ToggleNodeDto dto) =>
+{
+	Console.WriteLine("*** *** *** *** *** ** Toggling Node from ", dto.IsRunning);
+	if (dto.IsRunning)
+	{
+		node.PauseNode();
+	}
+	else
+	{
+        node.UnpauseNode();
+
+    }
+});
+
 app.MapGet("/nodeData", () =>
 {
 	return new NodeData()
@@ -86,6 +100,8 @@ app.MapGet("/nodeData", () =>
 		State = node.State,
 		Term = node.TermNumber,
 		WhenTimeStarted = node.WhenTimerStarted,
+		IsRunning = node.IsRunning,	
+		StateMachine = node.StateMachine,
 	};
 });
 

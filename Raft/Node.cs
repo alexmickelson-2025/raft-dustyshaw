@@ -209,6 +209,7 @@ namespace Raft
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
+				return;
 			}
 			bool response = true;
 
@@ -321,6 +322,7 @@ namespace Raft
 			// As the leader, I have heard from the response as a follower
 			if (!IsRunning)
 			{
+				await Task.CompletedTask;
 				return;
 			}
 
@@ -384,6 +386,7 @@ namespace Raft
 		{
 			if (!IsRunning)
 			{
+				await Task.CompletedTask;
 				return;
 			}
 			// as the candidate, I am asking for votes from other nodes
@@ -399,6 +402,7 @@ namespace Raft
 			// As a candidate, I am recieving votes from my followers
 			if (!IsRunning)
 			{
+				await Task.CompletedTask;
 				return;
 			}
 			votesRecieved.Add(vote.result);
@@ -440,6 +444,7 @@ namespace Raft
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
+				return;
 			}
 
 			bool result = true;
@@ -458,6 +463,7 @@ namespace Raft
 			if (!IsRunning)
 			{
 				await Task.CompletedTask;
+				return;
 			}
 			// as a follower, I am sending a candidate my vote
 			foreach (var node in OtherNodes)
@@ -473,6 +479,7 @@ namespace Raft
 		{
 			if (!IsRunning)
 			{
+				await Task.CompletedTask;
 				return;
 			}
 

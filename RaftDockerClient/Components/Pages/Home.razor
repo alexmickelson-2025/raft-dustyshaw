@@ -82,7 +82,7 @@
         <div class="p-3 col-4">
             <div class="border p-3 rounded-3">
                 <div class="d-flex flex-column justify-content-between">
-                    <h1> @(FormatId(node.Value.NodeId))</h1>
+                    <h1>@(FormatId(node.Value.NodeId))</h1>
                     <div class="@StateClass(node.Value)">@node.Value.State</div>
                     <p>Election Timeout: @(@node.Value.ElectionTimeout) ms.</p>
                     <h2>Term #@node.Value.Term</h2>
@@ -96,13 +96,14 @@
                     </div>
                     <hr />
                     <p>Commit Index: @node.Value.CommitIndex</p>
-                    @* <div class="border-1 border-light m-2 p-2">
+                    <div class="border-1 border-light m-2 p-2">
                         <strong>State Machine</strong>
-                        @foreach (var commitedEntry in node.StateMachine)
+                        <p>count: @node.Value.StateMachine.Count()</p> 
+                         @foreach (var commitedEntry in node.Value.StateMachine)
                         {
                             <p>@commitedEntry.Index, @commitedEntry.Command, @commitedEntry.Key, @commitedEntry.TermReceived</p>
-                        }
-                    </div> *@
+                        } 
+                    </div>
                     <h4 />
                     <div class="mt-3">
                         <div>
@@ -118,14 +119,16 @@
                                 }
                             }
                         </div>
-                       @*  @if (node.IsRunning)
+                        <hr />
+                        <h4>Running: @node.Value.IsRunning</h4>
+                        @if (node.Value.IsRunning)
                         {
-                            <button @onclick="() => pauseNode(node.InnerNode.NodeId)" class="btn btn-outline-primary">|| Pause Node</button>
+                            <button @onclick="() => toggleNodeOnOff(node.Value.NodeId)" class="btn btn-outline-primary">|| Pause Node</button>
                         }
-                        else
+                       else
                         {
-                            <button @onclick="() => unpauseNode(node.InnerNode.NodeId)" class="btn btn-outline-success"> |> Play Node</button>
-                        } *@
+                            <button @onclick="() => toggleNodeOnOff(node.Value.NodeId)" class="btn btn-outline-success"> |> Play Node</button>
+                        } 
                     </div>
                 </div>
             </div>
@@ -143,10 +146,8 @@
     public Dictionary<Guid, NodeData> nodeDict = new();
 
     private Timer? timer;
-    bool isRunning = false;
 
     public int NetworkRequestDelay = 0;
-
 
     private string UserCommand { get; set; } = "";
     private string UserKey { get; set; } = "";
@@ -155,13 +156,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Node.IntervalScalar = 50; // trying to slow it down...
         SecretsString = Environment.GetEnvironmentVariable("NODE_URLS") ?? throw new Exception("Node urls not set");
 
         HttpClient client = new();
         Urls = SecretsString.Split(";").ToList();
 
-
-        isRunning = true;
         timer = new Timer(async _ =>
         {
             try
@@ -174,7 +174,7 @@
                         throw new Exception("Node stuff is null");
                     }
                     nodeStuff.Url = url;
-                   
+
                     nodeDict[nodeStuff.NodeId] = nodeStuff;
                 }
             }
@@ -220,14 +220,24 @@
         {
             if (n.Value.NodeId == NodeId)
             {
-                ClientCommandDto clientCommand = new();
-                clientCommand.Command = UserCommand.ToString();
-                clientCommand.Key = UserKey.ToString();
+                ClientCommandDto clientCommand = new(UserKey.ToString(), UserCommand.ToString());
 
                 HttpClient client = new();
-                //Console.WriteLine("Endpoint I am Calling: ")
                 await client.PostAsJsonAsync($"{n.Value.Url}/RecieveClientCommand", clientCommand);
-                //ClientSentLogSuccessfully = n.Value.RecieveClientCommand(clientCommand);
+            }
+        }
+    }
+
+    async Task toggleNodeOnOff(Guid NodeId)
+    {
+        HttpClient client = new();
+
+        foreach (var n in nodeDict)
+        {
+            if (n.Value.NodeId == NodeId)
+            {
+                ToggleNodeDto dto = new() { IsRunning = n.Value.IsRunning };
+                await client.PostAsJsonAsync($"{n.Value.Url}/ToggleNode", dto);
             }
         }
     }

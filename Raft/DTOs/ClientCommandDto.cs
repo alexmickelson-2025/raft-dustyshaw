@@ -10,4 +10,9 @@ public class ClientCommandDto
 {
     public string Key { get; set; } = string.Empty;
     public string Command { get; set; } = string.Empty;
+    public ClientCommandDto(string Key, string Command)
+    {
+        this.Key = Key;
+        this.Command = Command;
+    }
 }

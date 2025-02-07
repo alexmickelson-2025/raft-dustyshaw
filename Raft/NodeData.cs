@@ -18,5 +18,7 @@ namespace Raft
         public int NodeInteralScalar { get; set; }
         public DateTime WhenTimeStarted { get; set; }
         public string? Url { get; set; }
+        public bool IsRunning { get; set; }
+        public List<Entry> StateMachine { get; set; }
     }
 }

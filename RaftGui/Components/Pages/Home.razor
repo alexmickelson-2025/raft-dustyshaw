@@ -1,4 +1,5 @@
 ﻿@using Raft;
+@using Raft.DTOs
 
 @page "/"
 @rendermode InteractiveServer
@@ -209,13 +210,14 @@
 		}
 	}
 
-	void SendLog(Guid NodeId)
+	async Task SendLog(Guid NodeId)
 	{
 		foreach (var n in nodes)
 		{
 			if (n.InnerNode.NodeId == NodeId)
 			{
-				ClientSentLogSuccessfully = n.InnerNode.RecieveClientCommand(UserCommand.ToString(), UserKey.ToString());
+				ClientCommandDto clientCommand = new(UserCommand.ToString(), UserCommand.ToString());
+				ClientSentLogSuccessfully = await n.InnerNode.RecieveClientCommand(clientCommand);
 			}
 		}
 	}

@@ -15,7 +15,7 @@ namespace RaftTests
 	{
 		// Testing Logs #1
 		[Fact]
-		public void TestCase01_LeadersSendRPCToFollowersWhenRecieveAnEntry()
+		public async Task TestCase01_LeadersSendRPCToFollowersWhenRecieveAnEntry()
 		{
 			// when a leader receives a client command, the leader sends the
 			// log entry in the next appendentries RPC to all nodes
@@ -32,22 +32,22 @@ namespace RaftTests
 			n.OtherNodes = [follower];
 
 			// Act
-			n.RecieveClientCommand(l.Key, l.Command);
+			await n.RecieveClientCommand(new ClientCommandDto(l.Key, l.Command));
 
 			// Assert
-			follower.Received(1).RecieveAppendEntriesRPC(new AppendEntriesRPC(0, n.NodeId, 0, ent, 0));
+			await follower.Received(1).RecieveAppendEntriesRPC(new AppendEntriesRPC(0, n.NodeId, 0, ent, 0));
 		}
 
 
 		// Testing Logs #2
 		[Fact]
-		public void TestCase02_NodesRecieveCommands()
+		public async Task TestCase02_NodesRecieveCommands()
 		{
 			Node n = new Node([], null);
 			Entry l = new Entry("1", "set a", 0);
 			n.BecomeLeader();
 
-			n.RecieveClientCommand(l.Key, l.Command);
+			await n.RecieveClientCommand(new ClientCommandDto(l.Key, l.Command));
 
 			Assert.True(n.Entries.Count() > 0);
 			Assert.Contains(l.Command, n.Entries.First().Command);
@@ -211,7 +211,7 @@ namespace RaftTests
 
 		// Testing Logs #8
 		[Fact]
-		public void TestCase08_LeadersCommitEntriesWithMajorityConfirmation()
+		public async Task TestCase08_LeadersCommitEntriesWithMajorityConfirmation()
 		{
 			//  8. when the leader has received a majority confirmation of a log, it commits it
 			var f1 = Substitute.For<INode>();
@@ -219,11 +219,11 @@ namespace RaftTests
 
 			Node leader = new Node([f1, f2], null);
 			// leader has recieved
-			leader.RecieveClientCommand("1", "2");
+			await leader.RecieveClientCommand(new ClientCommandDto("1", "2"));
 
 			// act
-			leader.RespondBackToLeader(new ResponseBackToLeader(true, 1, 1, f1.NodeId));
-			leader.RespondBackToLeader(new ResponseBackToLeader(true, 1, 1, f2.NodeId));
+			await leader.RespondBackToLeader(new ResponseBackToLeader(true, 1, 1, f1.NodeId));
+			await leader.RespondBackToLeader(new ResponseBackToLeader(true, 1, 1, f2.NodeId));
 
 			// assert
 			// make sure the leader adds the log to the state machine
@@ -331,7 +331,7 @@ namespace RaftTests
 
 		// Testing Logs #12
 		[Fact]
-		public void TestCase12_LeadersSendCLIENTConfirmation()
+		public async Task TestCase12_LeadersSendCLIENTConfirmation()
 		{
 			// 12. when a leader receives a majority responses from the clients after a log replication heartbeat,
 			// the leader sends a confirmation
@@ -340,7 +340,7 @@ namespace RaftTests
 
 			var leader = new Node([], null);
 			leader.BecomeLeader();
-			leader.RecieveClientCommand("A", "B");
+			await leader.RecieveClientCommand(new ClientCommandDto("A", "B"));
 			var leadersEntry = leader.Entries.First();
 			leader.Client = Client;
 
@@ -581,14 +581,14 @@ namespace RaftTests
 
 		// Testing Logs #18
 		[Fact]
-		public void TestCase18_IfLeadersDontCommitEntryThenTheyDontSendResponseToClient()
+		public async Task TestCase18_IfLeadersDontCommitEntryThenTheyDontSendResponseToClient()
 		{
 			// 18. if a leader cannot commit an entry, it does not send a response to the client
 			var Client = Substitute.For<IClient>();
 
 			var leader = new Node([], null);
 			leader.BecomeLeader();
-			leader.RecieveClientCommand("A", "B");
+			await leader.RecieveClientCommand(new ClientCommandDto("A", "B"));
 			var leadersEntry = leader.Entries.First();
 			leader.Client = Client;
 
@@ -745,7 +745,7 @@ namespace RaftTests
 
 
 			// After a leader recieves a command, it will send that new command to the followers
-			leader.RecieveClientCommand("a", "b");
+			await leader.RecieveClientCommand(new ClientCommandDto("a", "b"));
 			List<Entry> leadersEntries = leader.Entries.ToList();
 
 			rpc = new(0, leader.NodeId, -1, new List<Entry>() { new Entry("a", "b")}, -1);
