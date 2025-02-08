@@ -426,18 +426,6 @@ namespace Raft
 			return false;
 		}
 
-		//public void HasLogMajority(List<bool> List)
-		//{
-		//	if (!IsRunning)
-		//	{
-		//		return;
-		//	}
-		//	if (List.Count(x => x) > OtherNodes.Count() / 2)
-		//	{
-		//		CommitEntry();
-		//	}
-		//}
-
 		public async Task RecieveAVoteRequestFromCandidate(VoteRequestFromCandidateRpc rpc)
 		{
 			// as a node, I recieve a vote request from a candidate wanting to become leader

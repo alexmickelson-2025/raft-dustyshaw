@@ -39,12 +39,6 @@ namespace RaftTests
 
             // Assert
             await follower.Received().RecieveAppendEntriesRPC(Arg.Any<AppendEntriesRPC>());
-    //        await follower.Received().RecieveAppendEntriesRPC(Arg.Is<AppendEntriesRPC>(actual =>
-				//actual.term == 0 && 
-				//actual.prevLogIndex == 0 &&
-				//actual.entries == ent &&
-				//actual.leaderCommit == 0));
-            //await follower.Received(1).RecieveAppendEntriesRPC(new AppendEntriesRPC(0, n.NodeId, 0, ent, 0));
 		}
 
 
@@ -517,37 +511,9 @@ namespace RaftTests
 			leader.NextIndexes[followersId] = 0;
 		}
 
-		// Testing Logs #15
-		//[Fact]
-		//public void TestCase15_FollowersRecieveALog()
-		//{
-		//	// Followers recieve a log successfully
-
-		//	// arrange
-		//	var f1 = Substitute.For<INode>();
-		//	f1.Entries = new List<Entry> { new Entry("1", "set a", 1) };
-
-		//	var l = new Node([], null);
-		//	l.Entries = new List<Entry> { new Entry("1", "set a", 1) };  // same command, but different term
-		//	f1.OtherNodes = [l];
-		//	l.OtherNodes = [f1];
-		//	l.BecomeLeader();
-
-
-		//	l.RecieveClientCommand("1", "set b");
-		//	List<Entry> logsToSend = l.CalculateEntriesToSend(f1.NodeId); // Should be the last one ("send b") one
-
-
-		//	// act
-		//	l.SendAppendEntriesRPC();
-
-		//	// assert
-		//	Assert.True(f1.Entries.Count == 1);
-		//}
-
 		// Testing Logs #16
 		[Fact]
-		public void Testing16_NonMajorityConfirmationsDontGetCommitted()
+		public void TestCase16_NonMajorityConfirmationsDontGetCommitted()
 		{
 			// 16. when a leader sends a heartbeat with a log,
 			// but does not receive responses from a majority of nodes,
@@ -573,7 +539,7 @@ namespace RaftTests
 
 		// Testing Logs #17
 		[Fact]
-		public async Task Testing17_NoResponseFromFollowersLeaderContinuesToSendLogEntries()
+		public async Task TestCase17_NoResponseFromFollowersLeaderContinuesToSendLogEntries()
 		{
 			// 17. if a leader does not response from a follower,
 			// the leader continues to send the log entries in subsequent heartbeats
@@ -610,7 +576,7 @@ namespace RaftTests
 
 			// Act
 			// leader can't commit entry if followers respond false
-			leader.RespondBackToLeader(new ResponseBackToLeader(false, 0, 0, Guid.NewGuid()));
+			await leader.RespondBackToLeader(new ResponseBackToLeader(false, 0, 0, Guid.NewGuid()));
 
 			// Assert
 			// followers recieve an empty heartbeat with the new commit index
